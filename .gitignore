@@ -1,0 +1,12 @@
+# fable-it run reports (generated per run — never commit)
+.fable-it-reports/
+.taskstate/
+
+# Environment / secrets
+.env
+.env.*
+*.credentials
+.full.credentials
+
+# OS / editor noise
+.DS_Store

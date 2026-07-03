@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#0d1a2b"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .mono { font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="600" rx="20" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1198" height="598" rx="19" fill="none" stroke="#1e2d44" stroke-width="2"/>
+
+  <!-- title -->
+  <text x="600" y="78" text-anchor="middle" font-size="46" font-weight="700" fill="#e8eefc">plan-it</text>
+  <text x="600" y="116" text-anchor="middle" font-size="21" fill="#7dd3fc">Turn a fuzzy idea into a buildable delivery package.</text>
+  <text x="600" y="146" text-anchor="middle" font-size="15" class="mono" fill="#5b6b85">discovery → spec → agile split — plan-it plans it, fable-it builds it</text>
+
+  <!-- fuzzy demand (left) -->
+  <rect x="40" y="300" width="150" height="96" rx="12" fill="#16233c" stroke="#33415c" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="115" y="332" text-anchor="middle" font-size="16" font-weight="600" fill="#cbd5e1">fuzzy demand</text>
+  <text x="115" y="354" text-anchor="middle" font-size="11" class="mono" fill="#64748b">brain-dump</text>
+  <text x="115" y="371" text-anchor="middle" font-size="11" class="mono" fill="#64748b">transcription</text>
+  <text x="115" y="388" text-anchor="middle" font-size="11" class="mono" fill="#64748b">one-liner</text>
+
+  <!-- fan-out arrows -->
+  <path d="M196 348 C 300 348, 320 224, 404 224" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M196 348 L 404 348" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M196 348 C 300 348, 320 472, 404 472" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- burst 1: discovery -->
+  <g>
+    <rect x="410" y="190" width="364" height="68" rx="12" fill="#101c30" stroke="#1e3148" stroke-width="1.5"/>
+    <rect x="410" y="190" width="6" height="68" rx="3" fill="#38bdf8"/>
+    <text x="434" y="218" font-size="17" font-weight="600" fill="#e2e8f0" class="mono">discovery</text>
+    <text x="434" y="242" font-size="13" class="mono" fill="#38bdf8">parallel research teams · path:line cited</text>
+    <rect x="700" y="200" width="64" height="22" rx="11" fill="#2a2113" stroke="#7c5a1d"/>
+    <text x="732" y="215" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#fbbf24">⏸ G1</text>
+  </g>
+  <!-- burst 2: spec -->
+  <g>
+    <rect x="410" y="314" width="364" height="68" rx="12" fill="#101c30" stroke="#1e3148" stroke-width="1.5"/>
+    <rect x="410" y="314" width="6" height="68" rx="3" fill="#34d399"/>
+    <text x="434" y="342" font-size="17" font-weight="600" fill="#e2e8f0" class="mono">spec</text>
+    <text x="434" y="366" font-size="13" class="mono" fill="#34d399">design docs in dependency order · one decision gate</text>
+    <rect x="700" y="324" width="64" height="22" rx="11" fill="#2a2113" stroke="#7c5a1d"/>
+    <text x="732" y="339" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#fbbf24">⏸ G2</text>
+  </g>
+  <!-- burst 3: agile split -->
+  <g>
+    <rect x="410" y="438" width="364" height="68" rx="12" fill="#101c30" stroke="#1e3148" stroke-width="1.5"/>
+    <rect x="410" y="438" width="6" height="68" rx="3" fill="#a78bfa"/>
+    <text x="434" y="466" font-size="17" font-weight="600" fill="#e2e8f0" class="mono">agile split</text>
+    <text x="434" y="490" font-size="13" class="mono" fill="#a78bfa">frozen CONTRACT · PRDs + epics + Test Contracts</text>
+    <rect x="700" y="448" width="64" height="22" rx="11" fill="#2a2113" stroke="#7c5a1d"/>
+    <text x="732" y="463" text-anchor="middle" font-size="11" font-weight="700" class="mono" fill="#fbbf24">⏸ G3</text>
+  </g>
+
+  <!-- converge arrows -->
+  <path d="M780 224 C 880 224, 900 348, 986 348" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M780 348 L 986 348" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M780 472 C 880 472, 900 348, 986 348" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- delivery package (right) -->
+  <rect x="992" y="300" width="168" height="96" rx="12" fill="#13241c" stroke="#2f5b43" stroke-width="1.5"/>
+  <text x="1076" y="332" text-anchor="middle" font-size="16" font-weight="600" fill="#bbf7d0">delivery package</text>
+  <text x="1076" y="354" text-anchor="middle" font-size="11" class="mono" fill="#5e8b6f">docs/ + delivery/</text>
+  <text x="1076" y="371" text-anchor="middle" font-size="11" class="mono" fill="#5e8b6f">CONTRACT v1.0 ✓</text>
+  <text x="1076" y="388" text-anchor="middle" font-size="11" class="mono" fill="#7dd3fc">→ /fable-it</text>
+
+  <!-- caption -->
+  <text x="600" y="566" text-anchor="middle" font-size="14" fill="#5b6b85">Three human gates, one frozen <tspan class="mono" fill="#7dd3fc">CONTRACT</tspan>, and every epic ends in a binding <tspan class="mono" fill="#7dd3fc">Test Contract</tspan> — 100% pass = done.</text>
+</svg>

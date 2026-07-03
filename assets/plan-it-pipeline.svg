@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1220"/>
+      <stop offset="1" stop-color="#0d1a2b"/>
+    </linearGradient>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .mono2 { font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace; }
+      .chip  { fill: #101c30; stroke: #1e3148; stroke-width: 1.5; }
+      .lbl   { fill: #e2e8f0; font-size: 15px; font-weight: 600; }
+      .sub   { fill: #64748b; font-size: 11px; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="660" rx="20" fill="url(#bg2)"/>
+  <rect x="1" y="1" width="1198" height="658" rx="19" fill="none" stroke="#1e2d44" stroke-width="2"/>
+
+  <text x="600" y="62" text-anchor="middle" font-size="30" font-weight="700" fill="#e8eefc">The ~10-phase pipeline</text>
+  <text x="600" y="92" text-anchor="middle" font-size="15" class="mono2" fill="#5b6b85">autonomous bursts between three human gates — ⏸ G1 scope · ⏸ G2 decisions · ⏸ G3 delivery</text>
+
+  <!-- ============ ROW 1 ============ -->
+  <!-- P0 -->
+  <rect x="40" y="140" width="160" height="72" rx="12" class="chip"/>
+  <rect x="40" y="140" width="6" height="72" rx="3" fill="#38bdf8"/>
+  <text x="62" y="169" class="lbl">0–1 · Intake</text>
+  <text x="62" y="188" class="sub mono2">raw vision + pointers</text>
+  <text x="62" y="203" class="sub mono2">→ numbered DoD</text>
+
+  <!-- P2 (gate G1) -->
+  <path d="M204 176 L 226 176" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="230" y="140" width="160" height="72" rx="12" class="chip" stroke="#7c5a1d"/>
+  <rect x="230" y="140" width="6" height="72" rx="3" fill="#fbbf24"/>
+  <text x="252" y="169" class="lbl">2 · Scope <tspan class="mono2" fill="#fbbf24" font-size="12">⏸ G1</tspan></text>
+  <text x="252" y="188" class="sub mono2">size S/M/L + shape</text>
+  <text x="252" y="203" class="sub mono2">confirm first</text>
+
+  <!-- P3 -->
+  <path d="M394 176 L 416 176" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="420" y="140" width="160" height="72" rx="12" class="chip"/>
+  <rect x="420" y="140" width="6" height="72" rx="3" fill="#38bdf8"/>
+  <text x="442" y="169" class="lbl">3 · Pre-ground</text>
+  <text x="442" y="188" class="sub mono2">exact paths first</text>
+  <text x="442" y="203" class="sub mono2">repo = hypothesis</text>
+
+  <!-- P4 (fan-out) -->
+  <path d="M584 176 L 606 176" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="610" y="140" width="180" height="72" rx="12" class="chip"/>
+  <rect x="610" y="140" width="6" height="72" rx="3" fill="#34d399"/>
+  <text x="632" y="169" class="lbl">4 · Discovery <tspan class="mono2" fill="#34d399" font-size="12">⑂ fan-out</tspan></text>
+  <text x="632" y="188" class="sub mono2">N teams, 1 slice each</text>
+  <text x="632" y="203" class="sub mono2">cite path:line</text>
+
+  <!-- P5 -->
+  <path d="M794 176 L 816 176" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="820" y="140" width="160" height="72" rx="12" class="chip"/>
+  <rect x="820" y="140" width="6" height="72" rx="3" fill="#38bdf8"/>
+  <text x="842" y="169" class="lbl">5 · Synthesis</text>
+  <text x="842" y="188" class="sub mono2">reconcile conflicts</text>
+  <text x="842" y="203" class="sub mono2">01-findings.md</text>
+
+  <!-- P6 -->
+  <path d="M984 176 L 1006 176" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="1000" y="140" width="160" height="72" rx="12" class="chip"/>
+  <rect x="1000" y="140" width="6" height="72" rx="3" fill="#34d399"/>
+  <text x="1022" y="169" class="lbl">6 · Spec docs</text>
+  <text x="1022" y="188" class="sub mono2">in dependency order</text>
+  <text x="1022" y="203" class="sub mono2">evidence-based</text>
+
+  <!-- bend down to row 2 -->
+  <path d="M1080 216 C 1080 280, 1080 280, 1080 306" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+
+  <!-- ============ ROW 2 (right to left) ============ -->
+  <!-- P7 (gate G2) -->
+  <rect x="1000" y="310" width="160" height="72" rx="12" class="chip" stroke="#7c5a1d"/>
+  <rect x="1000" y="310" width="6" height="72" rx="3" fill="#fbbf24"/>
+  <text x="1022" y="339" class="lbl">7 · Decisions <tspan class="mono2" fill="#fbbf24" font-size="12">⏸ G2</tspan></text>
+  <text x="1022" y="358" class="sub mono2">ONE batched round</text>
+  <text x="1022" y="373" class="sub mono2">lock owner + date</text>
+
+  <!-- P8 -->
+  <path d="M996 346 L 974 346" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="790" y="310" width="180" height="72" rx="12" class="chip" stroke="#7c5a1d"/>
+  <rect x="790" y="310" width="6" height="72" rx="3" fill="#fbbf24"/>
+  <text x="812" y="339" class="lbl">8 · Freeze <tspan class="mono2" fill="#fbbf24" font-size="12">⏸ G3</tspan></text>
+  <text x="812" y="358" class="sub mono2">CONTRACT v1.0 = law</text>
+  <text x="812" y="373" class="sub mono2">plan + STATUS board</text>
+
+  <!-- P9 (fan-out) -->
+  <path d="M786 346 L 764 346" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="560" y="310" width="200" height="72" rx="12" class="chip"/>
+  <rect x="560" y="310" width="6" height="72" rx="3" fill="#a78bfa"/>
+  <text x="582" y="339" class="lbl">9 · Squads <tspan class="mono2" fill="#a78bfa" font-size="12">⑂ fan-out</tspan></text>
+  <text x="582" y="358" class="sub mono2">1 squad per repo lane</text>
+  <text x="582" y="373" class="sub mono2">PRDs+epics vs CONTRACT</text>
+
+  <!-- P10 -->
+  <path d="M556 346 L 534 346" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="340" y="310" width="190" height="72" rx="12" class="chip"/>
+  <rect x="340" y="310" width="6" height="72" rx="3" fill="#a78bfa"/>
+  <text x="362" y="339" class="lbl">10 · Verify + handoff</text>
+  <text x="362" y="358" class="sub mono2">consistency lint</text>
+  <text x="362" y="373" class="sub mono2">KICKOFF + prompt</text>
+
+  <!-- handoff -->
+  <path d="M336 346 L 314 346" fill="none" stroke="#33415c" stroke-width="2" marker-end="url(#arr2)"/>
+  <rect x="120" y="310" width="190" height="72" rx="12" fill="#13241c" stroke="#2f5b43" stroke-width="1.5"/>
+  <text x="215" y="341" text-anchor="middle" font-size="16" font-weight="600" fill="#bbf7d0">/fable-it builds it</text>
+  <text x="215" y="362" text-anchor="middle" font-size="11" class="mono2" fill="#5e8b6f">DoD = the Test Contract</text>
+  <text x="215" y="377" text-anchor="middle" font-size="11" class="mono2" fill="#5e8b6f">100% pass or /iterate</text>
+
+  <!-- ============ RULES STRIP ============ -->
+  <text x="600" y="452" text-anchor="middle" font-size="16" font-weight="700" fill="#7dd3fc">The non-negotiable rules</text>
+
+  <rect x="40" y="474" width="266" height="120" rx="12" class="chip"/>
+  <rect x="40" y="474" width="6" height="120" rx="3" fill="#38bdf8"/>
+  <text x="62" y="504" class="lbl">Freeze the CONTRACT</text>
+  <text x="62" y="526" class="sub">Entities, schema, interface, enums,</text>
+  <text x="62" y="543" class="sub">repo map, "shipped." Squads write TO</text>
+  <text x="62" y="560" class="sub">it; discoveries fold BACK as dated</text>
+  <text x="62" y="577" class="sub">amendments. No contract → no squads.</text>
+
+  <rect x="326" y="474" width="266" height="120" rx="12" class="chip"/>
+  <rect x="326" y="474" width="6" height="120" rx="3" fill="#fbbf24"/>
+  <text x="348" y="504" class="lbl">ONE decision gate</text>
+  <text x="348" y="526" class="sub">Never pre-decide the irreversible.</text>
+  <text x="348" y="543" class="sub">Batch every human call into one</text>
+  <text x="348" y="560" class="sub">numbered round, each with a</text>
+  <text x="348" y="577" class="sub">recommendation. Lock owner + date.</text>
+
+  <rect x="612" y="474" width="266" height="120" rx="12" class="chip"/>
+  <rect x="612" y="474" width="6" height="120" rx="3" fill="#a78bfa"/>
+  <text x="634" y="504" class="lbl">Idle ≠ delivered</text>
+  <text x="634" y="526" class="sub">A team going quiet does not mean it</text>
+  <text x="634" y="543" class="sub">wrote files. Verify every output on</text>
+  <text x="634" y="560" class="sub">disk, non-empty, before proceeding.</text>
+  <text x="634" y="577" class="sub">Never trust a "done."</text>
+
+  <rect x="898" y="474" width="262" height="120" rx="12" class="chip"/>
+  <rect x="898" y="474" width="6" height="120" rx="3" fill="#34d399"/>
+  <text x="920" y="504" class="lbl">Ground on the LIVE system</text>
+  <text x="920" y="526" class="sub">The repo is a hypothesis; deployed</text>
+  <text x="920" y="543" class="sub">reality is the truth. Hit configs,</text>
+  <text x="920" y="560" class="sub">dump live registries, verify creds</text>
+  <text x="920" y="577" class="sub">actually work — before the freeze.</text>
+
+  <text x="600" y="630" text-anchor="middle" font-size="14" fill="#5b6b85">Every epic ends in a binding <tspan class="mono2" fill="#7dd3fc">Test Contract</tspan> — up to ~20 type-selected scenarios, expected outputs registered at planning time.</text>
+</svg>
