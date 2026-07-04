@@ -58,7 +58,7 @@ You describe a feature in three paragraphs and dispatch an agent overnight. In t
 None of that is a capability problem. It's a *planning* problem: no frozen contract for parallel work to agree on, no single gate where the human injects the decisions only a human can make, and no pre-registered definition of what "working" even means. `plan-it` fixes all three structurally — with a frozen `CONTRACT.md` that squads write *to*, one numbered decision round with a recommendation attached to every item, and a Test Contract authored *at planning time*, so the build agent inherits its Definition of Done instead of improvising one.
 
 <a href="#how-it-works">
-  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /fable-it — plus the four non-negotiable rules" width="100%">
+  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /fable-it — plus the five non-negotiable rules" width="100%">
 </a>
 
 ## Installation
@@ -185,6 +185,13 @@ so the build agent inherits structure instead of prose. On agents that can't run
 Node, everything degrades to plain JSON files and manual checks — the script is
 an accelerator, not a dependency.
 
+**v2.1 goes one step further on Claude Code plugin installs:** a `PreToolUse`
+hook (`scripts/hooks/planit-guard.mjs`) *hard-blocks* writes to PRD/epic
+deliverables while the run's CONTRACT is unfrozen — the rule stops being an
+instruction the model follows and becomes something the harness refuses, with
+the deny reason (and the fix) returned to the model. Fail-open by design: it
+never interferes with non-plan-it work.
+
 ## The Test Contract
 
 The single thing that most raises delivered code quality: **every epic ends by
@@ -249,9 +256,10 @@ human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
 ## Status
 
-`2.0.0` — the "deterministic core" release: the pipeline is now an explicit
-statechart with persisted run state and executable gate guards (see
-[The deterministic core](#the-deterministic-core-v2)). The underlying pipeline,
+`2.1.0` — the "deterministic core" line: the pipeline is an explicit statechart
+with persisted run state and executable gate guards (`2.0.0`), plus hard gate
+enforcement via a PreToolUse hook on Claude Code plugin installs (`2.1.0`) — see
+[The deterministic core](#the-deterministic-core-v2). The underlying pipeline,
 gates, packaging shapes, and Test Contract discipline are unchanged from `1.0.0`
 and were reverse-engineered from real multi-squad planning runs — including the
 live-grounding rules, which trace one-for-one to failures where a repo-derived
