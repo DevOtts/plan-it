@@ -19,10 +19,14 @@ description: >-
   conductor agents: a conductor that
   receives a new demand runs /plan-it to produce the package before dispatching
   workers. The inverse of /fable-it (which builds) and predecessor to
-  /next-session-prompt (which hands off the finished plan).
+  /next-session-prompt (which hands off the finished plan). v2 adds a
+  deterministic core: the pipeline is an explicit statechart (machine.json), every
+  run persists its position in .plan-it/state.json (crash/compaction-resumable),
+  and guarded transitions run executable checks (scripts/gate-check.mjs) whose
+  exit code — not prose discipline — decides whether the pipeline advances.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 1.0.0
+version: 2.0.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
@@ -50,7 +54,7 @@ demand and must turn it into a delivery package before dispatching workers.
 
 ---
 
-## The three non-negotiable rules (enforce these — don't just suggest them)
+## The five non-negotiable rules (enforce these — don't just suggest them)
 
 These are the load-bearing rules reverse-engineered from every successful run.
 If you violate one, the build downstream drifts or silently fails.
@@ -82,6 +86,41 @@ If you violate one, the build downstream drifts or silently fails.
    from the deployed catalog), a config value that was present-but-pointing-at-a-dead-host,
    "to-be-built" components that were already deployed, and a found credential that was
    the *wrong* one. See Phase 3's live-grounding gate for the concrete checks.
+
+5. **Run the machine, not the prose.** The pipeline's control flow lives in
+   `machine.json` (the explicit statechart), not in this document — this prose
+   *explains* the machine. On invocation, read or initialize `.plan-it/state.json`
+   (in the target project) and resume from its `state`; write it on **every**
+   transition. At every guarded transition, run the guard's mapped subcommand
+   (`node scripts/gate-check.mjs <check> …`) and **never advance on a non-zero
+   exit** — fix, re-run, then transition. If Node is unavailable, perform the same
+   checks manually and record them in the state file (degrade, never break). Full
+   protocol: `references/machine.md`.
+
+---
+
+## The deterministic core (v2) — why a machine
+
+Control flow written as prose ("do step 1, never skip the gate") is what the
+determinism literature calls **prose control flow**: it relies on the model's
+discipline across a long, summarization-prone context, and sometimes the model
+won't follow it. v2 inverts that at the right altitude — *non-determinism at the
+edges, determinism at the core*:
+
+- **`machine.json`** — XState v5-compatible statechart of the pipeline: 15 states,
+  the three human gates (`meta.gate` + `meta.human`), guarded transitions, and an
+  `AMENDMENT` self-loop on `parallelPlanning`. Paste into stately.ai/viz to see it.
+- **`.plan-it/state.json`** — the persisted run: current state, gate approvals
+  (owner + date), contract version, verified-artifact registry, history. This is
+  what makes a run survive a crash or a fresh session.
+- **`scripts/gate-check.mjs`** — the guards as exit codes: `verify` (Rule 3,
+  idle ≠ delivered), `freeze` (Rule 1, no contract → no squads), `handoff` (the
+  mechanizable half of playbooks §F), `state` (Rule 2, gates recorded).
+
+The fuzzy phases — discovery, synthesis, spec authoring, judgment — stay
+LLM-at-the-node (tagged `llmAtTheNode` in the machine). Do not formalize them;
+modeling is not ceremony only when it replaces confusion. Details, state-file
+schema, and the resume protocol: `references/machine.md`.
 
 ---
 
@@ -153,6 +192,12 @@ Everything between gates runs unattended. Recommend `/effort xhigh` at the start
 
 ## Phase 0 — Intake
 
+**Machine first (Rule 5):** if `.plan-it/state.json` exists in the target project,
+run `node scripts/gate-check.mjs state .plan-it/state.json` and **resume from the
+printed state** — do not restart phases already in `history`. If it doesn't exist,
+create it now in state `intake` (schema in `references/machine.md`) and keep it
+updated on every transition for the rest of the run.
+
 Accept the demand in whatever form it arrives: a brain-dump, a pasted
 transcription, a list of wants, or a one-liner. **Expect pointers, not content** —
 session names (`/read-chat "<name>"`), repo paths, doc folders. Your job is to go
@@ -217,6 +262,8 @@ Confirm both with the user.
 Same phases regardless — only the artifact count and form change. **Don't give a
 feature a 4-squad org; don't give a brownfield refactor a greenfield vision doc.**
 Present the chosen size + shape + the numbered DoD and get a yes before proceeding.
+On yes, record `G1 = {approved, owner, date}` plus the chosen size/shape in
+`.plan-it/state.json` — the `G1_APPROVED` transition is guarded by `gateRecorded`.
 
 ---
 
@@ -285,9 +332,12 @@ Shared mechanics for any fan-out:
 - **Stage findings to disk immediately** (`_research/NN-<slice>.md`) so nothing is
   lost to summarization.
 - **Tell each agent: "you MUST run the tools and return findings; do not stop early."**
-- **Apply Rule 3 — pull idle teammates.** After fan-out, verify each output exists
-  on disk; `SendMessage` any silent agent to deliver; **re-dispatch any team that did
-  0 work** (this happens — caught and recovered live during the skill's own build-out).
+- **Apply Rule 3 — pull idle teammates.** After fan-out, run
+  `node scripts/gate-check.mjs verify <every expected output path>` — the
+  `FANOUT_COMPLETE` transition is guarded by it. On failure, `SendMessage` any
+  silent agent to deliver; **re-dispatch any team that did 0 work** (this happens —
+  caught and recovered live during the skill's own build-out). Record each passing
+  artifact in `.plan-it/state.json` → `artifacts`.
 - **Adversarial reconciliation** — when agents contradict, adjudicate in synthesis;
   don't average.
 - **Independently verify the centerpiece** yourself rather than trust the team blind.
@@ -319,6 +369,13 @@ Author the design docs **in dependency order** (skeletons in
 7. `06` Roadmap & open questions — phased plan, first vertical slice, risks, the decision list
 
 Methodology to honor while authoring:
+- **Model the confusing parts** — when discovery surfaced a workflow that is
+  multi-step, approval-gated, agentic, concurrent, or retry/escalation-laden, the
+  spec MUST include an explicit model of it (statechart, state-transition table,
+  or equivalent — a given/when/then transition list is enough), and the epics that
+  build it reference the model. The CONTRACT carries these under "Core-logic
+  models." Only the confusing parts — modeling is not ceremony when it replaces
+  confusion, and only then.
 - **Never greenfield when code exists** — every doc shows what's already built and
   how to *promote* it (mapping tables), not just what's new.
 - **Contradiction-driven** — start from pain (01), derive principles (02),
@@ -341,7 +398,9 @@ section (lives in the roadmap doc `06 §4`). For each: state it, attach a
 numbered. The user answers numbered.
 
 Then:
-- **Lock** each answer into the docs, marked "locked," with **owner + date**.
+- **Lock** each answer into the docs, marked "locked," with **owner + date** —
+  and record `G2 = {approved, owner, date}` in `.plan-it/state.json`
+  (`G2_ANSWERED` is guarded by `gateRecorded`).
 - If the user introduced a *new concept* (they often do here), thread it through —
   add/rewrite the affected doc (e.g. a new `07`) and **run a coherence pass**
   (grep for now-stale terms the new decision invalidated; fix them).
@@ -361,6 +420,12 @@ backbone **first**, because squads build their PRDs against it:
 3. `delivery/STATUS.md` — the live board, all epics in backlog.
 
 (For size S/M, fold these into fewer files — a contract section + a single plan.)
+
+Record `G3 = {approved, owner, date}` on the user's yes. Then, before any squad
+fan-out, run `node scripts/gate-check.mjs freeze delivery/CONTRACT.md` (or the
+file carrying the inlined contract section) — the `CONTRACT_FROZEN` transition is
+guarded by it, and Rule 1 is now an exit code, not a plea. Record the contract
+version + path in `.plan-it/state.json` → `contract`.
 
 ---
 
@@ -394,7 +459,10 @@ emit the breakdown onto a live GitHub Projects board via a `ghp.sh` helper
 (epic = parent issue, tasks = native sub-issues, status single-select; GitHub is
 source of truth, `tracker.md` a cache). Offer this when the user wants a live board.
 
-Apply Rule 3 after the fan-out — verify every PRD/epic file exists and is non-empty.
+Apply Rule 3 after the fan-out — `node scripts/gate-check.mjs verify prds/ epics/`
+(the `SQUADS_COMPLETE` transition is guarded by it). Each `AMENDMENT` bumps the
+contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
+`parallelPlanning` — the machine's self-loop.
 
 ---
 
@@ -405,6 +473,10 @@ Apply Rule 3 after the fan-out — verify every PRD/epic file exists and is non-
   cases (those needing a live target). DoD = 100% pass via `/full-qa` + `/iterate`.
   No `[REAL]` case may be marked VERIFIED on a mock — unreachable target →
   IMPLEMENTED-NOT-VERIFIED, never a fake green.
+- **Run the mechanizable lint first:** `node scripts/gate-check.mjs handoff delivery/`
+  — the `LINT_CLEAN` transition is guarded by it. It checks ID grammar, declared-vs-
+  counted case totals, `[REAL]` tallies, per-epic Test Contract presence, and token
+  lint. The judgment half below still needs you.
 - **Run the pre-handoff consistency gate** (`references/playbooks.md` §F) — the lint
   that makes a package build *unattended*: counts add up (count tags, don't hand-type);
   every goal & governance rule has a test; the CONTRACT verb/API surface reconciles
@@ -446,6 +518,10 @@ locked decisions, and the launch prompt.
 
 ## References (read the one you need before authoring)
 
+- **`references/machine.md`** — the deterministic core: `machine.json` explained,
+  the `.plan-it/state.json` schema + resume protocol, `gate-check` usage, the
+  degrade-gracefully rule, and the "model the confusing parts" output discipline.
+  Read at Phase 0 (resume) and before every guarded transition.
 - **`references/templates.md`** — doc + delivery skeletons (PARTS A–C) **and the 5
   packaging shapes + use-case→shape map (PART D)**. Read PART D at Gate G1 to pick
   the shape; read A–C before authoring.

@@ -106,6 +106,11 @@ evidence → design → decisions → test/acceptance plan → risks.
 5. Enums & constants (every literal: states, levels, slugs, flags)
 6. Repo ownership & branch conventions
 7. Definition of "shipped" (epic DoD)
+8. Core-logic models — one explicit model (statechart / state-transition table /
+   given-when-then transition list) per confusing workflow surfaced in discovery
+   (multi-step, approval-gated, agentic, concurrent, retry/escalation). Epics that
+   build a modeled workflow MUST reference its model here. Only the confusing
+   parts get modeled.
 [Changelog v1.0 → v1.x — one line per amendment, with owner]
 ```
 Amendments fold cross-cutting squad findings back here so squads can't drift.
