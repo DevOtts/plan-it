@@ -119,6 +119,18 @@ The `handoff` lint is deliberately only the **mechanizable half** of playbooks
 still need the model's judgment. The script buys certainty on the half that
 kept shipping as defects; the model keeps the half that needs reading.
 
+## 3b. Hard enforcement (v2.1 — plugin installs on Claude Code)
+
+The plugin ships a `PreToolUse` hook (`hooks/hooks.json` →
+`scripts/hooks/planit-guard.mjs`) that hard-blocks the one invariant a hook can
+enforce crisply: **no PRD/epic deliverable writes while
+`.plan-it/state.json` has `contract.version == null`** (Rule 1). The denial
+reason is returned to the model, naming the fix (freeze the contract via
+`gate-check freeze`, record the version, retry). Fail-open by design — any
+error, missing state file, or non-plan-it project allows the write, so the hook
+never interferes with unrelated work. Skill-only installs (no plugin) don't get
+the hook; they rely on Rule 5's skill-instructed discipline.
+
 ## 4. Degrade, never break
 
 On an agent that can't run Node: perform the same checks manually (read the

@@ -176,5 +176,30 @@ T-E3-07/08 fixtures; IDs are stable, not renumbered.)
 Single repo `DevOtts/plan-it`, branch `v2/deterministic-core` off `main`, one PR,
 merge on Test Contract green. Commit trailer per house rules.
 
+## 10. v2.1 addendum — hard enforcement (E6)
+
+Executes locked decision D3 (same session, user-directed). Scope: the one
+invariant that is crisp and reliably hook-enforceable — **Rule 1 as a hard
+block**. A `PreToolUse` hook (`plugins/plan-it/hooks/hooks.json` →
+`scripts/hooks/planit-guard.mjs`) denies Write/Edit calls targeting PRD/epic
+deliverables while the active run's `.plan-it/state.json` has
+`contract.version == null`, returning the reason to the model via
+`permissionDecision: deny`. Fail-open by design: any error, missing state file,
+or non-plan-it project → allow, so the hook never breaks unrelated work.
+Claude-Code-only (plugin install); skill-only installs keep v2.0's
+skill-instructed enforcement. Agent-fanout blocking was descoped: current hook
+docs support no PreToolUse matcher for the Task tool.
+
+### Test Contract — v2.1 E6   (BINDING: 100% pass or /iterate)
+Types: [integration] · Count: 5 · Surfaces: node hook script via stdin protocol
+
+| ID | Type | Given / When / Then | Assertion |
+|---|---|---|---|
+| T-E6-01 | integration | state with null contract / Write to prds/prd-1-core.md / deny | stdout JSON permissionDecision=deny, reason mentions freeze |
+| T-E6-02 | integration | contract frozen v1.0 / same write / allow | no output, exit 0 |
+| T-E6-03 | integration | null contract / write to docs/02-vision.md / allow | non-deliverables never blocked |
+| T-E6-04 | integration | no .plan-it/state.json / deliverable write / allow | fail-open |
+| T-E6-05 | integration | malformed state.json / deliverable write / allow | fail-open |
+
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._

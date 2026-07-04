@@ -215,6 +215,7 @@ IMPLEMENTED-NOT-VERIFIED, never a fake green.
 | `plan-it` skill | The ~10-phase pipeline: intake, scope governor, pre-grounding, discovery fan-out, spec authoring, decision gate, contract freeze, squad fan-out, lint + handoff. |
 | `machine.json` | The pipeline's explicit statechart (XState v5-compatible) — the source of truth the skill prose explains. |
 | `scripts/gate-check.mjs` | Executable guards: `verify` · `freeze` · `handoff` · `state`. Exit code decides whether the pipeline advances. |
+| `hooks/` + `scripts/hooks/planit-guard.mjs` | v2.1 hard enforcement (plugin installs): a PreToolUse hook that *denies* PRD/epic writes while the run's CONTRACT is unfrozen. Fail-open — never touches non-plan-it work. |
 | `references/machine.md` | The deterministic core explained: state-file schema, resume protocol, degrade-gracefully rule. |
 | `references/templates.md` | Doc + delivery skeletons, and the 5+ packaging shapes with the use-case→shape map. |
 | `references/formats.md` | The composable atomic formats: decision log, governance blocks, the 4 test-case grammars, test-tier matrix, DoD ladder, honest run-report. |

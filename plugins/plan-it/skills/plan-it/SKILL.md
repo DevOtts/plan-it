@@ -26,7 +26,7 @@ description: >-
   exit code — not prose discipline — decides whether the pipeline advances.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 2.0.0
+version: 2.1.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
@@ -121,6 +121,12 @@ The fuzzy phases — discovery, synthesis, spec authoring, judgment — stay
 LLM-at-the-node (tagged `llmAtTheNode` in the machine). Do not formalize them;
 modeling is not ceremony only when it replaces confusion. Details, state-file
 schema, and the resume protocol: `references/machine.md`.
+
+**Hard enforcement (v2.1, plugin installs on Claude Code only):** a `PreToolUse`
+hook (`scripts/hooks/planit-guard.mjs`) *denies* Write/Edit calls on PRD/epic
+deliverables while the run's contract is unfrozen — Rule 1 stops being an
+instruction and becomes something the harness refuses. Fail-open: it never
+touches non-plan-it work. Skill-only installs rely on Rule 5 discipline instead.
 
 ---
 

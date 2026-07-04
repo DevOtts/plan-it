@@ -205,6 +205,56 @@ t("T-E3-11", "gate-check.mjs imports node: builtins only (zero npm deps)", () =>
   }
 });
 
+// ---------- E6 (v2.1): planit-guard hook ----------
+const GUARD = join(ROOT, "scripts", "hooks", "planit-guard.mjs");
+
+function runGuard(hookInput) {
+  const out = execFileSync("node", [GUARD], { encoding: "utf8", input: JSON.stringify(hookInput) });
+  return out.trim();
+}
+
+function guardCwd(contractVersion) {
+  const dir = mkdtempSync(join(tmpdir(), "planit-"));
+  const state = JSON.parse(readFileSync(join(FIX, "state-valid.json"), "utf8"));
+  state.contract.version = contractVersion;
+  execSync(`mkdir -p "${join(dir, ".plan-it")}"`);
+  writeFileSync(join(dir, ".plan-it", "state.json"), JSON.stringify(state));
+  return dir;
+}
+
+t("T-E6-01", "guard denies PRD write while contract unfrozen, reason names freeze", () => {
+  const cwd = guardCwd(null);
+  const out = runGuard({ tool_name: "Write", cwd, tool_input: { file_path: join(cwd, "delivery/prds/prd-1-core.md") } });
+  assert(out.includes('"permissionDecision":"deny"') || out.includes('"permissionDecision": "deny"'), `expected deny, got: ${out || "(allow)"}`);
+  assert(/freeze/i.test(out), "reason does not mention freezing the contract");
+});
+
+t("T-E6-02", "guard allows PRD write once contract is frozen (v1.0)", () => {
+  const cwd = guardCwd("1.0");
+  const out = runGuard({ tool_name: "Write", cwd, tool_input: { file_path: join(cwd, "delivery/prds/prd-1-core.md") } });
+  assert(out === "", `expected allow (no output), got: ${out}`);
+});
+
+t("T-E6-03", "guard allows non-deliverable writes with contract unfrozen", () => {
+  const cwd = guardCwd(null);
+  const out = runGuard({ tool_name: "Write", cwd, tool_input: { file_path: join(cwd, "docs/02-vision.md") } });
+  assert(out === "", `expected allow (no output), got: ${out}`);
+});
+
+t("T-E6-04", "guard fails open when no .plan-it/state.json exists", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "planit-"));
+  const out = runGuard({ tool_name: "Write", cwd, tool_input: { file_path: join(cwd, "prds/prd-1.md") } });
+  assert(out === "", `expected allow (no output), got: ${out}`);
+});
+
+t("T-E6-05", "guard fails open on malformed state.json", () => {
+  const cwd = mkdtempSync(join(tmpdir(), "planit-"));
+  execSync(`mkdir -p "${join(cwd, ".plan-it")}"`);
+  writeFileSync(join(cwd, ".plan-it", "state.json"), "{not json");
+  const out = runGuard({ tool_name: "Write", cwd, tool_input: { file_path: join(cwd, "prds/prd-1.md") } });
+  assert(out === "", `expected allow (no output), got: ${out}`);
+});
+
 // ---------- E4: doc checks ----------
 t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => {
   const text = readFileSync(join(ROOT, "SKILL.md"), "utf8");
@@ -215,9 +265,13 @@ t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => 
 });
 
 // ---------- E5: packaging ----------
-t("T-E5-01", "plugin.json version is 2.0.0", () => {
+t("T-E5-01", "plugin.json version is 2.1.0 and hooks.json is valid", () => {
   const pj = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/.claude-plugin/plugin.json"), "utf8"));
-  assert(pj.version === "2.0.0", `version is ${pj.version}`);
+  assert(pj.version === "2.1.0", `version is ${pj.version}`);
+  const hooks = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/hooks/hooks.json"), "utf8"));
+  const pre = hooks.hooks?.PreToolUse;
+  assert(Array.isArray(pre) && pre.length > 0, "no PreToolUse hooks declared");
+  assert(pre[0].hooks[0].command.includes("${CLAUDE_PLUGIN_ROOT}"), "hook command not plugin-root-relative");
 });
 
 t("T-E5-02", "root and plugin copies are byte-identical", () => {
@@ -229,6 +283,7 @@ t("T-E5-02", "root and plugin copies are byte-identical", () => {
     ["references/templates.md", "plugins/plan-it/skills/plan-it/references/templates.md"],
     ["references/playbooks.md", "plugins/plan-it/skills/plan-it/references/playbooks.md"],
     ["references/machine.md", "plugins/plan-it/skills/plan-it/references/machine.md"],
+    ["scripts/hooks/planit-guard.mjs", "plugins/plan-it/scripts/hooks/planit-guard.mjs"],
   ];
   for (const [a, b] of pairs) {
     assert(existsSync(join(ROOT, b)), `missing plugin copy: ${b}`);
