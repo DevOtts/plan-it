@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "plan-it",
-  "version": "1.0.0",
-  "description": "Turn a fuzzy idea, brain-dump, or transcription into a COMPLETE spec set + agile delivery package, ready to hand to a build agent. Runs a ~10-phase discovery → spec → agile-split pipeline: pre-grounds the codebase, fans out parallel research teams, authors design docs in dependency order, pauses at ONE batched human-decision gate, freezes a shared CONTRACT, then fans out squad teams to write PRDs + epics against it — each epic ending in a BINDING Test Contract the build must pass 100% before 'done'. The planning front-end to /fable-it: plan-it plans it, fable-it builds it.",
+  "version": "2.1.0",
+  "description": "Turn a fuzzy idea, brain-dump, or transcription into a COMPLETE spec set + agile delivery package, ready to hand to a build agent. Runs a ~10-phase discovery → spec → agile-split pipeline: pre-grounds the codebase, fans out parallel research teams, authors design docs in dependency order, pauses at ONE batched human-decision gate, freezes a shared CONTRACT, then fans out squad teams to write PRDs + epics against it — each epic ending in a BINDING Test Contract the build must pass 100% before 'done'. v2 adds a deterministic core: the pipeline is an explicit statechart (machine.json), runs persist to .plan-it/state.json, and gate transitions are guarded by an executable gate-check script. The planning front-end to /fable-it: plan-it plans it, fable-it builds it.",
   "author": {
     "name": "DevOtts",
     "url": "https://github.com/DevOtts"
