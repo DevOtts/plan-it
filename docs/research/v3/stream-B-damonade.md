@@ -1,0 +1,81 @@
+# Stream B: damon-ade (ADE) — Fable-behavior & builder-orchestration mechanisms
+
+## What I examined (paths/URLs, with citations)
+- Repo root: `/tmp/planit-v3-ext/damon-ade` (source: https://github.com/per-simmons/damon-ade)
+- `README.md`, `AGENTS.md`, `CODEX.md`, `WARP.md`, `cli.json` (repo-root contributor-facing config)
+- `docs/memory.md` (memory/bridge architecture design doc)
+- `.agents/commands/task-run.md` (59 lines, read in full)
+- `.agents/commands/create-plan.md` (380 lines, read in full — "Superset Execution Plans / ExecPlan" guide)
+- `packages/agent/src/superagent.ts` (284 lines, read in full — the actual Mastra-based agent-execution core)
+- `apps/desktop/src/main/lib/agent-scaffold.ts` (473 lines, read in full — memory/bridge/reflection-hook implementation)
+- `apps/desktop/src/main/lib/agent-setup/agent-wrappers-claude-codex-opencode.ts` (151 lines, read in full — CLI wrapper + desktop notify-hook injection)
+
+Not read (lower priority, did not change any conclusion): `packages/agent/src/index.ts`, `packages/agent/README.md`, `packages/agent/src/tools/*.ts`, `notify-hook.ts`, `agent-memory-backfill.ts`, remaining `.agents/commands/*.md` (ci-check, clean-neon-branches, create-pr, deslop, respond-to-pr-comments, task), repo-root `opencode.json`/`.mcp.json`, `packages/chat-mastra`, `packages/mcp`, `packages/desktop-mcp`.
+
+## Findings (numbered, each with evidence: file:line or quote)
+
+1. **ADE is a fork/derivative, not built from scratch.** README explicitly states it is "a modified derivative of Superset (Copyright Superset, Inc.), distributed under the Elastic License 2.0." This explains why `AGENTS.md`/`CODEX.md`/`WARP.md` are generic "Superset Monorepo Guide" boilerplate rather than ADE-specific documentation.
+
+2. **Memory architecture is explicitly adapted, not invented.** `docs/memory.md:5`: memory design "adapted from NousResearch/hermes-agent (MIT)" — copies Hermes' *shape* but replaces its custom memory-tool mechanism with each CLI's native context-file feature. Same doc states "ADE never forks or patches a CLI."
+
+3. **No automatic escalate-on-struggle model-tiering exists anywhere in the codebase.** `packages/agent/src/superagent.ts:68-93`, `resolveModel()`, resolves a model string purely from `requestContext.get("modelId") ?? "anthropic/claude-sonnet-4-5"` — a static per-request lookup with a **Sonnet fallback default, not top-tier**. No retry/failure-detection/struggle-detection code path exists in this file or anywhere else found. The only model-switching mechanism in all of ADE is the manual, human-driven "model bar" UI feature (confirmed across README.md, docs/memory.md, and now the agent-execution core itself).
+
+4. **Prompt-scaffold composition pattern (real, implemented).** `superagent.ts:179-246` — the system prompt is assembled from 5 modular, individually-named string constants (`IDENTITY`, `DOING_TASKS`, `TOOL_USAGE`, `CAREFUL_EXECUTION`, `TONE_AND_STYLE`) joined with `\n\n`, with a code comment inviting future editors to "Add, remove, or reorder sections here."
+
+5. **Dual-enforced read-only sub-agent (planning delegate).** `superagent.ts:106-152`, `PLANNING_AGENT_INSTRUCTIONS` — the main "Super Agent" delegates large/ambiguous tasks or architecture-understanding to a separate `planningAgent`, always passed `maxSteps: 50`. Restriction is enforced at **two independent layers**: (a) prompt-level, an explicit "STRICTLY PROHIBITED" tool list plus a "COMMAND SAFETY" section forbidding bare/interactive/long-running shell commands; (b) workspace/tool-level, `mastra_workspace_write_file/edit_file/delete/mkdir: { enabled: false }`. Belt-and-suspenders, not prompt-only.
+
+6. **Structured, bounded sub-agent output contract.** Same planning-agent prompt mandates a fixed required footer — "### Critical files for implementation," exactly 3-5 files each with a brief reason — plus explicit anti-verbosity rules ("Be concise. No emojis. No time estimates.").
+
+7. **Reversibility/blast-radius decision framework.** The `CAREFUL_EXECUTION` prompt section (superagent.ts) enumerates three categories — destructive, hard-to-reverse, visible-to-others operations — that govern when the agent must pause and ask before acting, rather than a vague "use judgment" instruction.
+
+8. **Stop-hook-enforced reflection mechanism — CONFIRMED REAL, NOT README-ware.** `apps/desktop/src/main/lib/agent-scaffold.ts:282-309`, `reflectHookScript()`, generates a real executable Node.js script written to `<worktree>/.claude/reflect-on-stop.mjs`, wired via a real `<worktree>/.claude/settings.json` (`hooks.Stop[0].hooks[0] = {type:"command", command:"node <path>", timeout:120}`). The script reads Claude Code's hook JSON from stdin, checks the standard `stop_hook_active` anti-loop guard, and otherwise returns `{decision:"block", reason:"<reflection prompt>"}`, forcing one additional "review and update memory/skills" turn before the agent may finish. This directly verifies the design claim at `docs/memory.md:59` — resolves this stream's central README-ware-vs-implemented question in favor of **implemented**.
+
+9. **A second, separate, stacked Stop-hook system exists for desktop notifications — must not be conflated with #8.** `apps/desktop/src/main/lib/agent-setup/agent-wrappers-claude-codex-opencode.ts:47-65`, `getClaudeSettingsContent()`, wires `UserPromptSubmit`/`Stop`/`PostToolUse`/`PostToolUseFailure`/`PermissionRequest` all to one shared notify script, written to a *different* settings file (`HOOKS_DIR`) than the per-worktree reflection settings.json. `createClaudeWrapper()` (lines 83-90) force-injects `--settings "<settingsPath>"` on every `claude` invocation ADE launches. This layers **on top of**, not in place of, the per-worktree reflection hook — two independent stacked hook-injection layers serving unrelated concerns (global telemetry/notification vs. per-agent memory/reflection).
+
+10. **Idempotent, non-clobbering write pattern, used consistently.** `agent-scaffold.ts:73-76`, `writeIfEmpty()` — writes only if target is missing/empty, so launch-time backfill can re-run over an existing agent without clobbering a canonical file the user has already edited. Same discipline appears in `cleanupGlobalOpenCodePlugin()`'s signature-check-before-delete (`OPENCODE_PLUGIN_SIGNATURE = "// Superset opencode plugin"`, only deletes if content contains this marker).
+
+11. **Bridge-file git-exclusion, verified in code (not just docs).** `scaffoldAgentMemory()` appends `BRIDGE_EXCLUDES = ["CLAUDE.md", ".claude/", "opencode.json", "AGENTS.md"]` to `<worktree>/.git/info/exclude`, guarded against duplicate insertion.
+
+12. **Per-runtime bridge mechanism matches docs/memory.md's bridge table exactly.** `agent-scaffold.ts:82-273, 319-336`: Claude Code gets a 3-line `CLAUDE_BRIDGE` using native `@import` syntax plus native `autoMemoryDirectory`/`autoMemoryEnabled`; OpenCode gets a generated `opencode.json` with an `instructions` array of 4 relative paths; Codex gets `regenerateCodexAgentsMd()` — a full concatenation of AGENT.md+USER.md+MEMORY.md+.writeback-protocol.md into `<codexHome>/AGENTS.md`, explicitly "regenerated on each codex launch" since "Codex cannot @import."
+
+13. **ExecPlan template (`.agents/commands/create-plan.md`, 380 lines) — Superset-legacy but content-rich, and the single strongest analogue to plan-it's own phase.** Structured process: Discovery → Clarification → Draft → Resolve → Approval-Gate → Implementation → Closeout. Mandatory living-document sections: Progress (with timestamps), Surprises & Discoveries, Decision Log, Outcomes & Retrospective. An explicit "Common Failure Modes (Avoid These)" anti-pattern list: undefined jargon, letter-of-the-law implementations, outsourcing key decisions, assuming context, validation theater, incomplete state transitions. A "Spike/Prototyping Milestones" pattern for time-boxed de-risking. "Additive-then-subtractive" / "Parallel implementations" / "Feature flags" safe-refactoring guidance.
+
+14. **README-ware vs. implemented — confirmed fork residue in contributor tooling.** `.agents/commands/task-run.md` is a literal, unmodified Superset slash-command using `mcp__superset__create_task`, `mcp__superset__list_members`, `mcp__superset__create_workspace`, `mcp__superset__start_agent_session` MCP tools directly — evidence that some of ADE's contributor-facing tooling is inherited-but-unrebranded, not written for ADE. Reinforced by naming residue in `agent-wrappers-claude-codex-opencode.ts`: `CLAUDE_SETTINGS_FILE`, `OPENCODE_PLUGIN_SIGNATURE = "// Superset opencode plugin"`.
+
+15. **Two scopes must not be conflated when citing this repo.** Repo-root AI-tool config files (`AGENTS.md`, `CODEX.md`, `WARP.md`, root `opencode.json`, `.mcp.json`) serve ADE's **own contributor workflow** (generic, Superset-legacy). The per-agent memory/bridge-file system (`docs/memory.md` + `agent-scaffold.ts` + the per-agent-generated `opencode.json` under `<agent-home>/worktree/`) is a **product feature** of ADE, for the coding agents it orchestrates. Likewise, the two Stop-hook systems (finding #8 vs #9) are unrelated and must be cited distinctly.
+
+## Mechanisms plan-it v3 could adopt (max 8, each: name → what it enforces → which phase/state → cost)
+
+1. **ExecPlan "Common Failure Modes" anti-pattern checklist** → enforces a plan draft is checked against a named list (undefined jargon, letter-of-the-law implementations, outsourced decisions, assumed context, validation theater, incomplete state transitions) before it can proceed → PRD/CONTRACT authoring, gate-check.mjs (G1/G2 adjacent) → **low cost**: add a checklist to the PRD template / gate-check guard, no new state.
+
+2. **Reversibility/blast-radius tagging for epic tasks** → every task tagged destructive / hard-to-reverse / visible-to-others vs. safe, driving whether execution must pause for human confirmation vs. proceed autonomously → epic authoring / Test Contract → **medium cost**: new field in epic schema + gate-check validation that high-risk tasks carry an explicit confirmation checkpoint.
+
+3. **Structured bounded sub-agent output contract** (fixed footer + anti-verbosity rules) → discovery/research sub-agents in plan-it's fan-out phase must end with a fixed-format footer (e.g. "Critical files," 3-5 items) instead of free prose, making parent-side synthesis deterministic → discovery / parallel research fan-out → **low cost**: prompt-template change to existing subagent dispatch instructions.
+
+4. **Idempotent `writeIfEmpty` scaffolding pattern** → re-running plan-it on a project never clobbers PRD/epic/CONTRACT/CLAUDE.md content the user has already edited; only fills genuinely-empty slots → applies across phases where plan-it writes files, especially the AMENDMENT self-loop and FD-1's "register test-convention knowledge in CLAUDE.md" → **low-medium cost**: wrap file-writing steps in an existence/emptiness check (complements, doesn't replace, the existing PreToolUse hook that denies writes pre-freeze).
+
+5. **Per-tool "bridge file" pattern for model-tier/persona hints** → instead of each downstream execution agent (Claude Code / Codex / OpenCode) re-deriving how to behave, the frozen CONTRACT emits a small per-tool bridge stub carrying model-tier hints, escalation rules, and a pointer to the canonical plan doc, safely regenerable → CONTRACT freeze → downstream execution handoff → **medium-high cost**: new artifact type + per-target-CLI regeneration logic; only pays off once plan-it targets multiple downstream tools.
+
+6. **Decision Log + timestamped Progress sections** → keeps the CONTRACT/PRD a living record of why decisions were made and when state changed, directly closing the "cross-session handoff" gap the dogfood research found (execution struggling to reload context) → PRD/epic authoring, carried through the AMENDMENT loop → **low cost**: mandate two sections in the existing PRD/epic template.
+
+7. **Spike/Prototyping Milestone gating** → for epics touching an unknown flagged by discovery (including FD-1's test-convention-discovery subagent), the plan mandates a small time-boxed spike task before the Test Contract is frozen, instead of freezing on an assumption → spec / CONTRACT freeze → **medium cost**: new task type in epic schema + a gate condition requiring spike completion before freeze when an "unknown" flag is set.
+
+8. **Prompt-section composition/modularity pattern** → plan-it's own agent/subagent prompts (discovery agent, spec author, gate reviewer) become independently editable named sections with an explicit "add/remove/reorder here" seam, rather than monolithic strings — making v3's own planned additions (FD-1 test-convention discovery, FD-2 explicit Test-Contract review) cleanly insertable without a full prompt rewrite → infra/tooling, cuts across all phases → **low cost**: refactor existing prompt strings into named constants; no behavior change by itself.
+
+## Out-of-scope but valuable (fable-it backlog candidates)
+- **Full memory/bridge/reflection-hook system** (Stop-hook-enforced "reflect before finishing," verified real in `agent-scaffold.ts`) — could give fable-it's execution agents a forced post-task memory/skill-update turn.
+- **Dual-stacked-hook architecture** — a global wrapper-injected notify-hook layer (`--settings` flag force-injection at CLI-wrapper level) layered on top of a per-worktree reflection-hook layer — worth studying if fable-it ever needs both a global telemetry layer and a per-task behavioral layer without one clobbering the other.
+- **Mastra-based sub-agent delegation pattern** itself — read-only planning sub-agent, `maxSteps: 50`, dual prompt+workspace-level tool restriction — as a general-purpose "read-only planning delegate" recipe for fable-it's own build-phase orchestration.
+- **Per-runtime bridge-file generation logic** (Claude Code `@import`, OpenCode `instructions` array, Codex full-regeneration-on-launch) — a reusable pattern for any fable-it feature that needs to project canonical instructions into multiple different CLI tools' native context mechanisms.
+- **Workspace-level tool-capability restriction** (`mastra_workspace_write_file/edit_file/delete/mkdir: {enabled:false}`) — template for fable-it enforcing read-only sub-agents at the infrastructure level, not just by prompt instruction.
+- **`writeIfEmpty` / signature-based non-destructive cleanup idioms** — general safe-rerun-scaffolding utilities fable-it could adopt for any of its own file-generation steps.
+
+## TL;DR (≤8 bullets)
+- ADE is a Superset fork (Elastic License 2.0), not built-from-scratch — generic `AGENTS.md`/`CODEX.md`/`WARP.md` and a literal unmodified Superset slash-command (`task-run.md`) are fork residue, not ADE-specific.
+- **No automatic "escalate-on-struggle" model-tiering exists anywhere in ADE** — `superagent.ts`'s `resolveModel()` is a static per-request lookup with a Sonnet (not top-tier) default; the only model switch is a manual human-driven UI control.
+- The Stop-hook-enforced reflection mechanism from `docs/memory.md` **is real, working code** (verified in `agent-scaffold.ts`), not README-ware — and it's one of *two* separate, stacked Stop-hook systems (reflection vs. desktop notification), which must not be conflated.
+- Richest "Fable-behavior" mechanisms are prompt-scaffold patterns: a 5-section composable system prompt, a dual prompt+workspace-enforced read-only sub-agent, and a structured bounded output-contract footer for that sub-agent.
+- `create-plan.md` (ExecPlan template) is the strongest single adoption candidate for plan-it v3 — its anti-pattern checklist, Decision Log, and Spike-milestone pattern map directly onto plan-it's PRD/epic/CONTRACT phases.
+- 8 concrete plan-it v3 adoption candidates identified: anti-pattern checklist, reversibility tagging, bounded subagent output contract, idempotent `writeIfEmpty` scaffolding, per-tool bridge-file hints, decision-log/progress sections, spike-milestone gating, prompt-section modularity.
+- Builder/execution-only mechanisms (full memory/bridge/reflection system, dual-hook architecture, Mastra sub-agent delegation, workspace-level tool restriction) filed to the fable-it backlog — out of plan-it v3 scope per SHARED-CONTEXT.md.
+- File written to `/Users/macbook/Workspace/Devotts/plan-it/docs/research/v3/stream-B-damonade.md`.
