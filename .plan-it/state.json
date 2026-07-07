@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": {
+    "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
+    "startedAt": "2026-07-07T00:00:00Z"
+  },
+  "state": "discovery",
+  "size": "M",
+  "shape": 3,
+  "gates": {
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-07",
+      "decisions": {
+        "scope": "plan-it v3 first; builder-side ECs -> fable-it backlog doc",
+        "size_shape": "M, existing-repo shape (digest -> design -> CONTRACT+PRDs/epics)",
+        "tiering": "haiku fetch / sonnet analyze; Fable 5 main-thread synthesis+freeze only",
+        "build_today": "Plan only; build later on Opus/Sonnet with escalate-on-struggle"
+      }
+    },
+    "G2": {
+      "approved": false
+    },
+    "G3": {
+      "approved": false
+    }
+  },
+  "contract": {
+    "version": null,
+    "path": null,
+    "frozenAt": null
+  },
+  "artifacts": [],
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-07-07T00:00:00Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-07-07T00:05:00Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_PRESENTED",
+      "at": "2026-07-07T00:10:00Z"
+    },
+    {
+      "state": "preGround",
+      "event": "G1_APPROVED",
+      "at": "2026-07-07T00:15:00Z"
+    },
+    {
+      "state": "discovery",
+      "event": "GROUNDED",
+      "at": "2026-07-07T00:30:00Z"
+    }
+  ]
+}
