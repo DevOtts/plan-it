@@ -11,7 +11,7 @@
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
  */
-import { readFileSync, statSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -207,9 +207,16 @@ function findMachine(explicit) {
   return null;
 }
 
-function cmdState([statePath, machinePath]) {
+function cmdState(rawArgs) {
+  const { dir: rootFlag, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`state: ${dirErr}`);
+    return finish("run state valid");
+  }
+  const statePath = rootFlag ? join(rootFlag, ".plan-it", "state.json") : rest[0];
+  const machinePath = rootFlag ? rest[0] : rest[1];
   if (!statePath) {
-    fail("state: usage: gate-check state <state.json> [machine.json]");
+    fail("state: usage: gate-check state <state.json> [machine.json] | gate-check state --dir <repo-root> [machine.json]");
     return finish("run state valid");
   }
   let state;
@@ -221,6 +228,20 @@ function cmdState([statePath, machinePath]) {
   }
   for (const k of STATE_REQUIRED_KEYS) {
     if (!(k in state)) fail(`missing required key "${k}" in ${statePath}`);
+  }
+
+  // v3 root-aware payload checks (Epics A3/A4) run only when a repo root is
+  // derivable — a --dir call or a canonical <root>/.plan-it/state.json path.
+  // Bare state.json paths (v2 fixtures, T-E2-*) skip them: additive, zero
+  // regression for existing callers (PRD prd-1-gatecheck-fd §2 D5).
+  const root = rootFlag ?? (resolve(statePath).endsWith(join(".plan-it", "state.json")) ? dirname(dirname(resolve(statePath))) : null);
+  if (root && state.testConventions?.registered === true) {
+    // Case A3 (FD-1) — stale test-convention receipt.
+    const claudePath = join(root, "CLAUDE.md");
+    const claude = existsSync(claudePath) ? stripCode(readFileSync(claudePath, "utf8")) : "";
+    if (!claude.includes(CONVENTIONS_OPEN)) {
+      fail(`A3 (FD-1): stale test-conventions receipt — state.json records registered:true but ${claudePath} no longer contains the ${CONVENTIONS_OPEN} block (re-verify, not silent pass)`);
+    }
   }
   const mp = findMachine(machinePath);
   if (!mp) {
@@ -379,16 +400,81 @@ function cmdContract(rawArgs) {
   finish(label);
 }
 
+// ---------------------------------------------------------------- testconv
+// Epic A3 — FD-1 test-convention discovery/registration (draft cases A1/A2/A4
+// + enforcement C-W1-02). --dir-only verb (D2/D4). Exit codes: 0 = a receipt
+// exists or was written (registered OR declined — FD-1 registers the
+// disposition either way); 2 = no block and no receipt: research → ask user →
+// REGISTER (gate-check's only non-binary exit, sanctioned by AMD-3,
+// delivery/decisions.md 2026-07-08); 1 = usage/structural failure.
+function cmdTestconv(rawArgs) {
+  const label = "test-conventions discovery (FD-1)";
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr || !dir) {
+    fail(`testconv: ${dirErr ?? "usage: gate-check testconv --dir <repo-root> [--register [text] | --decline]"}`);
+    return finish(label);
+  }
+  const claudePath = join(dir, "CLAUDE.md");
+  const claudeRaw = existsSync(claudePath) ? readFileSync(claudePath, "utf8") : "";
+  const blockPresent = stripCode(claudeRaw).includes(CONVENTIONS_OPEN);
+  const state = readState(dir) ?? {};
+  const now = new Date().toISOString();
+
+  const writeReceipt = (receipt) => {
+    state.testConventions = receipt;
+    mkdirSync(join(dir, ".plan-it"), { recursive: true });
+    writeFileSync(join(dir, ".plan-it", "state.json"), JSON.stringify(state, null, 2) + "\n");
+  };
+
+  if (rest.includes("--decline")) {
+    if (state.testConventions?.declined !== true) writeReceipt({ declined: true, by: "user", at: now });
+    ok(`declined-by-user receipt in ${join(dir, ".plan-it", "state.json")} — a valid FD-1 disposition (case A4)`);
+    return finish(label);
+  }
+
+  const regIdx = rest.indexOf("--register");
+  if (regIdx !== -1) {
+    if (!blockPresent) {
+      // C-W1-02: the block is regex-checked above before writing — a rerun is
+      // a no-op, never a duplicate fenced block.
+      const text = rest.slice(regIdx + 1).join(" ").trim() || "Test conventions registered via gate-check testconv --register.";
+      writeFileSync(claudePath, `${claudeRaw}\n${CONVENTIONS_OPEN}\n${text}\n${CONVENTIONS_CLOSE}\n`);
+      ok(`conventions block written to ${claudePath}`);
+    } else {
+      ok(`conventions block already present in ${claudePath} — idempotent no-op (C-W1-02)`);
+    }
+    if (state.testConventions?.registered !== true) writeReceipt({ registered: true, source: blockPresent ? "found" : "registered", at: now });
+    return finish(label);
+  }
+
+  if (blockPresent) {
+    if (state.testConventions?.registered !== true) writeReceipt({ registered: true, source: "found", at: now });
+    ok(`conventions block present in ${claudePath}; receipt in .plan-it/state.json (case A1)`);
+    return finish(label);
+  }
+  if (state.testConventions?.declined === true) {
+    ok(`no conventions block, but a declined-by-user receipt exists (${state.testConventions.at}) — FD-1 accepts decline as a registered disposition (case A4)`);
+    return finish(label);
+  }
+  console.error(`testconv: no ${CONVENTIONS_OPEN} block in ${claudePath} and no receipt in .plan-it/state.json.`);
+  console.error("  → research the target repo's test conventions, ask the user, then REGISTER the outcome:");
+  console.error('      gate-check testconv --dir <repo-root> --register "<conventions text>"  (adopt)');
+  console.error("      gate-check testconv --dir <repo-root> --decline                        (decline — FD-1 registers either way)");
+  console.error("  GROUNDED is rejected until a receipt exists (case A2).");
+  process.exit(2);
+}
+
 // ---------------------------------------------------------------- main
 const [, , cmd, ...args] = process.argv;
-const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, contract: cmdContract };
+const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, contract: cmdContract, testconv: cmdTestconv };
 if (!cmd || !(cmd in commands)) {
-  console.error("usage: gate-check <verify|freeze|handoff|state|contract> [args...]");
+  console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv> [args...]");
   console.error("  verify  <path...>                    files/dirs exist and are non-empty");
   console.error("  freeze  <CONTRACT.md>                frozen-contract structural check");
   console.error("  handoff <delivery-dir>               pre-handoff consistency lint");
   console.error("  state   <state.json> [machine.json]  validate run state, print next events");
   console.error("  contract <--dir repo-root|CONTRACT.md>  W1 hygiene lint + computed tally (W5)");
+  console.error("  testconv --dir <repo-root> [--register [text] | --decline]  FD-1 conventions discovery (exit 2 = needs registration)");
   process.exit(1);
 }
 commands[cmd](args);

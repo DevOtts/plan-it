@@ -321,6 +321,28 @@ t("T-V3-A2-04", "contract tally-drift failure names both numbers (hand-typed 5 v
   assert(/C-W5-01/.test(r.out) && /\b5\b/.test(r.out) && /\b2\b/.test(r.out), `does not name both numbers: ${r.out}`);
 });
 
+t("T-A3-A1", "testconv exits 0 on a repo whose CLAUDE.md already has the block (receipt in state.json)", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "conventions-present")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-A3-A2", "testconv exits 2 (needs-human-input) with the research→ask→REGISTER instruction when no block exists", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "no-conventions")]);
+  assert(r.code === 2, `expected exit 2, got ${r.code}: ${r.out}`);
+  assert(/REGISTER/.test(r.out) && /research/i.test(r.out), `instruction does not name research→ask→REGISTER: ${r.out}`);
+});
+
+t("T-A3-A3", "state flags a stale test-conventions receipt (registered:true but block deleted)", () => {
+  const r = gc(["state", join(FIX3, "conventions-stale", ".plan-it", "state.json")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/stale/i.test(r.out) && /re-verify, not silent pass/.test(r.out), `does not flag the stale receipt: ${r.out}`);
+});
+
+t("T-A3-A4", "testconv exits 0 on a declined-by-user receipt (FD-1 registers either way)", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "conventions-declined")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
 // ---------- v3 (Wave 0+) ----------
 // Binding cases are discovered from delivery/v3/CONTRACT.md's own "## Cases"
 // table (COMPUTED, W5 — never a hand-copied list of the 26 enforcement rows)
