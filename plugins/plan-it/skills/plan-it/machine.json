@@ -87,7 +87,17 @@
         "llmAtTheNode": true
       },
       "on": {
-        "FANOUT_COMPLETE": { "target": "synthesis", "guard": "artifactsOnDisk" }
+        "FANOUT_COMPLETE": { "target": "preflight", "guard": "artifactsOnDisk" }
+      }
+    },
+    "preflight": {
+      "meta": {
+        "phase": 4,
+        "title": "Preflight (env facts)",
+        "does": "Probe the real environment before synthesis locks anything in: emit ENV-FACTS.md (S-shape 6-probe minimal set; M/L full 9-probe set). Probes record PRESENT/ABSENT/TIMEOUT with evidence — never guessed."
+      },
+      "on": {
+        "PREFLIGHT_VERIFIED": { "target": "synthesis" }
       }
     },
     "synthesis": {
