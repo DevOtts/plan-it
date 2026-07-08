@@ -238,6 +238,40 @@ function cmdHandoff(args) {
   } else if (allCaseIds.size > 0) {
     ok(`${allCaseIds.size} distinct test-case IDs found across ${files.length} files`);
   }
+
+  // 8. (C-W6-04, PRD §D8) plugin↔marketplace parity — scoped: only fires when
+  //    the package carries packaging files (both manifests under the dir).
+  const pkg = { plugin: null, marketplace: null };
+  (function findPkg(d) {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      if (e.name.startsWith(".") && e.name !== ".claude-plugin") continue;
+      const p = join(d, e.name);
+      if (e.isDirectory()) findPkg(p);
+      else if (e.name === "plugin.json" && !pkg.plugin) pkg.plugin = p;
+      else if (e.name === "marketplace.json" && !pkg.marketplace) pkg.marketplace = p;
+    }
+  })(dir);
+  if (pkg.plugin && pkg.marketplace) {
+    try {
+      const pj = JSON.parse(readFileSync(pkg.plugin, "utf8"));
+      const mk = JSON.parse(readFileSync(pkg.marketplace, "utf8"));
+      const entry = (mk.plugins ?? []).find((x) => x?.name === pj.name) ?? (mk.plugins ?? [])[0];
+      if (!entry) {
+        fail(`${pkg.marketplace}: no plugins[] entry matching plugin.json name "${pj.name}"`);
+      } else {
+        let drift = false;
+        for (const field of ["name", "version", "license"]) {
+          if (field in entry && field in pj && entry[field] !== pj[field]) {
+            fail(`packaging parity: ${pkg.plugin} ${field} "${pj[field]}" ≠ ${pkg.marketplace} plugins[] ${field} "${entry[field]}" — one release, one version story`);
+            drift = true;
+          }
+        }
+        if (!drift) ok(`packaging parity: ${pkg.plugin} ↔ ${pkg.marketplace} agree on name/version/license`);
+      }
+    } catch (e) {
+      fail(`packaging parity: unparseable manifest — ${e.message}`);
+    }
+  }
   finish("pre-handoff lint (mechanizable half — the judgment half stays with the model)");
 }
 
@@ -406,11 +440,68 @@ function cmdPluginlint([root]) {
   finish("plugin loader/metadata lint (EC-D7)");
 }
 
+// ---------------------------------------------------------------- mirror-check
+// PRD §D7: the skill is shipped twice (repo root + plugins/plan-it). These 8
+// pairs must stay byte-identical; drift → exit 2 listing every drifted pair.
+const MIRROR_PAIRS = [
+  ["SKILL.md", "plugins/plan-it/skills/plan-it/SKILL.md"],
+  ["machine.json", "plugins/plan-it/skills/plan-it/machine.json"],
+  ["scripts/gate-check.mjs", "plugins/plan-it/skills/plan-it/scripts/gate-check.mjs"],
+  ["scripts/hooks/planit-guard.mjs", "plugins/plan-it/scripts/hooks/planit-guard.mjs"],
+  ["references/formats.md", "plugins/plan-it/skills/plan-it/references/formats.md"],
+  ["references/machine.md", "plugins/plan-it/skills/plan-it/references/machine.md"],
+  ["references/playbooks.md", "plugins/plan-it/skills/plan-it/references/playbooks.md"],
+  ["references/templates.md", "plugins/plan-it/skills/plan-it/references/templates.md"],
+];
+
+function cmdMirrorCheck(args) {
+  // Fixture mode: `mirror-check --dir <root>` compares <root>/root/<file> vs
+  // <root>/plugins/plan-it/<file>. Real mode (no args): the fixed 8-pair list
+  // from the repo root.
+  let pairs = MIRROR_PAIRS;
+  let base = ".";
+  if (args[0] === "--dir" && args[1]) {
+    base = args[1];
+    const rootDir = join(base, "root");
+    if (!existsSync(rootDir)) {
+      console.error(`mirror-check: fixture root not found: ${rootDir}`);
+      process.exit(2);
+    }
+    pairs = readdirSync(rootDir).map((n) => [join("root", n), join("plugins", "plan-it", n)]);
+  }
+  const drifted = [];
+  for (const [rootRel, plugRel] of pairs) {
+    const a = join(base, rootRel);
+    const b = join(base, plugRel);
+    if (!existsSync(a) || !existsSync(b)) {
+      drifted.push(`${rootRel} ↔ ${plugRel}: missing counterpart (${!existsSync(a) ? a : b})`);
+      continue;
+    }
+    const ba = readFileSync(a);
+    const bb = readFileSync(b);
+    if (ba.equals(bb)) {
+      ok(`${rootRel} ≡ ${plugRel} (${ba.length} bytes)`);
+      continue;
+    }
+    let off = 0;
+    const n = Math.min(ba.length, bb.length);
+    while (off < n && ba[off] === bb[off]) off++;
+    drifted.push(`${rootRel} ↔ ${plugRel}: drift at byte offset ${off} (sizes ${ba.length} vs ${bb.length})`);
+  }
+  if (drifted.length === 0) {
+    console.log(`PASS — mirror-check: ${pairs.length} pair(s) byte-identical`);
+    process.exit(0);
+  }
+  console.error(`FAIL — mirror-check: ${drifted.length} of ${pairs.length} pair(s) drifted`);
+  for (const d of drifted) console.error(`  ✗ ${d}`);
+  process.exit(2); // distinct drift exit, per T-C3-06
+}
+
 // ---------------------------------------------------------------- main
 const [, , cmd, ...args] = process.argv;
-const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, pluginlint: cmdPluginlint };
+const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, pluginlint: cmdPluginlint, "mirror-check": cmdMirrorCheck };
 if (!cmd || !(cmd in commands)) {
-  console.error("usage: gate-check <verify|freeze|handoff|state|pluginlint> [args...]");
+  console.error("usage: gate-check <verify|freeze|handoff|state|pluginlint|mirror-check> [args...]");
   console.error("  verify  <path...>                    files/dirs exist and are non-empty");
   console.error("  freeze  <CONTRACT.md>                frozen-contract structural check");
   console.error("  handoff <delivery-dir>               pre-handoff consistency lint");
