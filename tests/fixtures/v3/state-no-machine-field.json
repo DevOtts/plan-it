@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture: no machine field, must default to machine.json", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "specAuthoring",
+  "size": "M",
+  "shape": 2,
+  "gates": {
+    "G1": { "approved": true, "owner": "Fernando Ott", "date": "2026-07-08" }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [],
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-07-08T00:00:00Z" }
+  ]
+}

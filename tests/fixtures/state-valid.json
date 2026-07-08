@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture run for the v2 test contract", "startedAt": "2026-07-04T14:00:00Z" },
+  "state": "specAuthoring",
+  "size": "M",
+  "shape": 2,
+  "gates": {
+    "G1": { "approved": true, "owner": "Fernando", "date": "2026-07-04" },
+    "G2": { "approved": false },
+    "G3": { "approved": false }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [
+    { "path": "docs/01-current-state-and-findings.md", "phase": 5, "verifiedAt": "2026-07-04T15:02:00Z" }
+  ],
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-07-04T14:05:00Z" },
+    { "state": "dodLock", "event": "DOD_LOCKED", "at": "2026-07-04T14:12:00Z" },
+    { "state": "scopeGate", "event": "G1_APPROVED", "at": "2026-07-04T14:20:00Z" },
+    { "state": "preGround", "event": "GROUNDED", "at": "2026-07-04T14:40:00Z" },
+    { "state": "discovery", "event": "FANOUT_COMPLETE", "at": "2026-07-04T15:00:00Z" },
+    { "state": "synthesis", "event": "SYNTHESIZED", "at": "2026-07-04T15:10:00Z" }
+  ]
+}

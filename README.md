@@ -58,7 +58,7 @@ You describe a feature in three paragraphs and dispatch an agent overnight. In t
 None of that is a capability problem. It's a *planning* problem: no frozen contract for parallel work to agree on, no single gate where the human injects the decisions only a human can make, and no pre-registered definition of what "working" even means. `plan-it` fixes all three structurally — with a frozen `CONTRACT.md` that squads write *to*, one numbered decision round with a recommendation attached to every item, and a Test Contract authored *at planning time*, so the build agent inherits its Definition of Done instead of improvising one.
 
 <a href="#how-it-works">
-  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /fable-it — plus the four non-negotiable rules" width="100%">
+  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /fable-it — plus the five non-negotiable rules" width="100%">
 </a>
 
 ## Installation
@@ -157,10 +157,40 @@ Three autonomous bursts, three human gates, one frozen contract.
    has a test, IDs coherent across files), then the package: `KICKOFF.md` plus the
    exact copy-paste launch prompt for the build agent.
 
-Four rules are enforced, not suggested: **freeze the CONTRACT before parallel
+Five rules are enforced, not suggested: **freeze the CONTRACT before parallel
 work** · **batch human decisions into ONE gate** · **idle ≠ delivered — verify
-every agent's output on disk** · **ground on the live system before the freeze**.
+every agent's output on disk** · **ground on the live system before the freeze**
+· **run the machine, not the prose**.
 Full methodology in [docs/methodology.md](docs/methodology.md).
+
+## The deterministic core (v2)
+
+v1's control flow lived entirely in prose — the exact "prose control flow"
+failure mode David Khourshid names in *Beyond the Prompt: Goodbye Slop, Welcome
+Determinism*: step-by-step instructions in markdown that you *hope* the agent
+follows, and sometimes it won't. v2 applies his "deterministic core, agentic
+shell" pattern to the pipeline itself:
+
+| Piece | What it is |
+|---|---|
+| `machine.json` | The pipeline as an explicit XState v5-compatible statechart — 15 states, 3 human gates, guarded transitions, an amendment self-loop. Paste it into [stately.ai/viz](https://stately.ai/viz) to see it. |
+| `.plan-it/state.json` | Every run persists its position: current state, gate approvals (owner + date), contract version, verified-artifact registry. Crash, compaction, or a fresh session → resume from the machine, not the transcript. |
+| `scripts/gate-check.mjs` | The guards as exit codes (zero-dep Node): `verify` (idle ≠ delivered), `freeze` (no contract → no squads), `handoff` (consistency lint), `state` (gates recorded). A non-zero exit blocks the transition. |
+
+The fuzzy phases — discovery, synthesis, authoring, judgment — stay
+LLM-at-the-node. Non-determinism at the edges, determinism at the core. And the
+same discipline flows into what plan-it *plans*: every confusing workflow found
+in discovery must get an explicit model in the CONTRACT ("Core-logic models"),
+so the build agent inherits structure instead of prose. On agents that can't run
+Node, everything degrades to plain JSON files and manual checks — the script is
+an accelerator, not a dependency.
+
+**v2.1 goes one step further on Claude Code plugin installs:** a `PreToolUse`
+hook (`scripts/hooks/planit-guard.mjs`) *hard-blocks* writes to PRD/epic
+deliverables while the run's CONTRACT is unfrozen — the rule stops being an
+instruction the model follows and becomes something the harness refuses, with
+the deny reason (and the fix) returned to the model. Fail-open by design: it
+never interferes with non-plan-it work.
 
 ## The Test Contract
 
@@ -190,6 +220,10 @@ IMPLEMENTED-NOT-VERIFIED, never a fake green.
 | Component | Role |
 |-----------|------|
 | `plan-it` skill | The ~10-phase pipeline: intake, scope governor, pre-grounding, discovery fan-out, spec authoring, decision gate, contract freeze, squad fan-out, lint + handoff. |
+| `machine.json` | The pipeline's explicit statechart (XState v5-compatible) — the source of truth the skill prose explains. |
+| `scripts/gate-check.mjs` | Executable guards: `verify` · `freeze` · `handoff` · `state`. Exit code decides whether the pipeline advances. |
+| `hooks/` + `scripts/hooks/planit-guard.mjs` | v2.1 hard enforcement (plugin installs): a PreToolUse hook that *denies* PRD/epic writes while the run's CONTRACT is unfrozen. Fail-open — never touches non-plan-it work. |
+| `references/machine.md` | The deterministic core explained: state-file schema, resume protocol, degrade-gracefully rule. |
 | `references/templates.md` | Doc + delivery skeletons, and the 5+ packaging shapes with the use-case→shape map. |
 | `references/formats.md` | The composable atomic formats: decision log, governance blocks, the 4 test-case grammars, test-tier matrix, DoD ladder, honest run-report. |
 | `references/playbooks.md` | Advanced moves: discovery modes, brownfield/refactor templates, scale-out batch PRD generation, the executable GitHub-board split. |
@@ -222,10 +256,20 @@ human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
 ## Status
 
-First public release (`1.0.0`). The pipeline, gates, packaging shapes, and Test
-Contract discipline were reverse-engineered from real multi-squad planning runs
-— including the live-grounding rules, which trace one-for-one to failures where
-a repo-derived assumption contradicted the deployed system.
+`3.0.0` — the "field-hardened core" line: builds on the deterministic core
+(`2.0.0` explicit statechart with persisted run state + executable gate guards;
+`2.1.0` hard gate enforcement via a PreToolUse hook on Claude Code plugin
+installs — see [The deterministic core](#the-deterministic-core-v2)) with the
+enforcement mechanisms from the v3 field study: FD-1 test-convention discovery +
+registration and FD-2 pre-freeze case review, plus six write-time invariants —
+W1 contract hygiene, W2 environment preflight (ENV-FACTS probe manifest), W3
+model-tier enforcement (no hardcoded model IDs), W4 status vocabulary, W5
+computed-never-typed tallies, and W6 kickoff pinning + packaging parity — and
+mirror integrity across the root↔plugin tree. The underlying pipeline, gates,
+packaging shapes, and Test Contract discipline are unchanged from `1.0.0` and
+were reverse-engineered from real multi-squad planning runs — including the
+live-grounding rules, which trace one-for-one to failures where a repo-derived
+assumption contradicted the deployed system.
 
 Validate locally before relying on it:
 

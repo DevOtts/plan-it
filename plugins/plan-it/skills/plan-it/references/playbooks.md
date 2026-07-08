@@ -222,6 +222,16 @@ difference between "looks complete" and "builds unattended."
    contract.
 9. **Flags match invariants.** if a CB rule says "all mutating verbs honor
    `--dry-run`", every mutating verb's signature in the CONTRACT shows `[--dry-run]`.
+10. **Every confusing workflow has a model.** every workflow flagged in discovery
+   as multi-step / approval-gated / agentic / concurrent appears in the CONTRACT's
+   "Core-logic models" section, and every epic building one references its model.
+   A confusing workflow shipped model-less is prose control flow handed to the
+   builder — the exact failure v2's deterministic core exists to kill.
+
+> **Mechanizable half:** items 1 (counts), 4 (grammar), 7 (IDs), and 8 (tokens)
+> are enforced by `node scripts/gate-check.mjs handoff <delivery-dir>` — run it
+> first; the `LINT_CLEAN` machine transition is guarded by its exit code. Items
+> 2, 3, 5, 6, 9, 10 need judgment: they stay yours.
 
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._

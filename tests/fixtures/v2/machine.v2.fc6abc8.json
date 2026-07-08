@@ -1,0 +1,199 @@
+{
+  "$schema": "https://raw.githubusercontent.com/statelyai/xstate/main/packages/core/src/types.ts",
+  "id": "plan-it",
+  "version": "2.0.0",
+  "description": "plan-it pipeline statechart — the explicit model the SKILL.md prose explains. Deterministic core: states, gates, and guards live here; the fuzzy work (research, synthesis, authoring) is LLM-at-the-node inside each state. Paste this file into https://stately.ai/viz to see the pipeline.",
+  "initial": "intake",
+  "context": {
+    "size": null,
+    "shape": null,
+    "contractVersion": null,
+    "contractPath": null
+  },
+  "meta": {
+    "stateFile": ".plan-it/state.json",
+    "guardTool": "scripts/gate-check.mjs",
+    "guards": {
+      "artifactsOnDisk": {
+        "check": "verify",
+        "usage": "node scripts/gate-check.mjs verify <path...>",
+        "rule": "Rule 3 — idle ≠ delivered. Every fan-out output must exist on disk and be non-empty before the pipeline advances."
+      },
+      "contractFrozen": {
+        "check": "freeze",
+        "usage": "node scripts/gate-check.mjs freeze <CONTRACT.md>",
+        "rule": "Rule 1 — no frozen CONTRACT → no parallel squads. Structural check: version header, sections, changelog, no placeholders."
+      },
+      "handoffLintClean": {
+        "check": "handoff",
+        "usage": "node scripts/gate-check.mjs handoff <delivery-dir>",
+        "rule": "Pre-handoff consistency gate (playbooks §F, mechanizable half): counts, IDs, Test Contract presence, token lint."
+      },
+      "gateRecorded": {
+        "check": "state",
+        "usage": "node scripts/gate-check.mjs state .plan-it/state.json machine.json",
+        "rule": "Rule 2 — human gates are recorded with owner + date in the state file before the pipeline advances."
+      }
+    }
+  },
+  "states": {
+    "intake": {
+      "meta": {
+        "phase": 0,
+        "title": "Intake",
+        "does": "Capture the raw vision, pointers, and use-case. Initialize .plan-it/state.json."
+      },
+      "on": {
+        "INTAKE_CAPTURED": { "target": "dodLock" }
+      }
+    },
+    "dodLock": {
+      "meta": {
+        "phase": 1,
+        "title": "DoD lock",
+        "does": "Restructure the demand into a numbered, individually-verifiable Definition of Done + assumptions."
+      },
+      "on": {
+        "DOD_LOCKED": { "target": "scopeGate" }
+      }
+    },
+    "scopeGate": {
+      "meta": {
+        "phase": 2,
+        "gate": "G1",
+        "human": true,
+        "title": "Scope & shape governor",
+        "does": "Pick size (S/M/L) + packaging shape; present with the DoD; the human approves. Record owner + date."
+      },
+      "on": {
+        "G1_APPROVED": { "target": "preGround", "guard": "gateRecorded" }
+      }
+    },
+    "preGround": {
+      "meta": {
+        "phase": 3,
+        "title": "Pre-ground",
+        "does": "Locate exact targets (paths, sessions, live-system observations) so fan-outs never work blind. Live-grounding gate for running systems."
+      },
+      "on": {
+        "GROUNDED": { "target": "discovery" }
+      }
+    },
+    "discovery": {
+      "meta": {
+        "phase": 4,
+        "title": "Discovery",
+        "does": "Fuzzy work: research fan-out per the chosen discovery mode. Each agent stages findings to disk.",
+        "llmAtTheNode": true
+      },
+      "on": {
+        "FANOUT_COMPLETE": { "target": "synthesis", "guard": "artifactsOnDisk" }
+      }
+    },
+    "synthesis": {
+      "meta": {
+        "phase": 5,
+        "title": "Synthesis + memory",
+        "does": "Fuzzy work: merge team reports into the findings doc; adversarial reconciliation; capture project memory.",
+        "llmAtTheNode": true
+      },
+      "on": {
+        "SYNTHESIZED": { "target": "specAuthoring" }
+      }
+    },
+    "specAuthoring": {
+      "meta": {
+        "phase": 6,
+        "title": "Spec authoring",
+        "does": "Fuzzy work: author design docs in dependency order. Model the confusing parts: every multi-step / approval-gated / agentic / concurrent workflow gets an explicit model.",
+        "llmAtTheNode": true
+      },
+      "on": {
+        "SPECS_DRAFTED": { "target": "decisionGate" }
+      }
+    },
+    "decisionGate": {
+      "meta": {
+        "phase": 7,
+        "gate": "G2",
+        "human": true,
+        "title": "Decision round",
+        "does": "Batch every human-only decision into one numbered round, each with a recommendation. Lock answers with owner + date."
+      },
+      "on": {
+        "G2_ANSWERED": { "target": "coherencePass", "guard": "gateRecorded" }
+      }
+    },
+    "coherencePass": {
+      "meta": {
+        "phase": 7,
+        "title": "Coherence pass",
+        "does": "Thread new concepts from G2 through the docs; grep for now-stale terms the decisions invalidated; fix them."
+      },
+      "on": {
+        "COHERENT": { "target": "freezeGate" }
+      }
+    },
+    "freezeGate": {
+      "meta": {
+        "phase": 8,
+        "gate": "G3",
+        "human": true,
+        "title": "Delivery gate",
+        "does": "Ask: specs aligned — proceed to the delivery package? Record owner + date."
+      },
+      "on": {
+        "G3_APPROVED": { "target": "backboneFreeze", "guard": "gateRecorded" }
+      }
+    },
+    "backboneFreeze": {
+      "meta": {
+        "phase": 8,
+        "title": "Backbone freeze",
+        "does": "Write CONTRACT.md (frozen v1.0), program plan, STATUS board — squads build against these."
+      },
+      "on": {
+        "CONTRACT_FROZEN": { "target": "parallelPlanning", "guard": "contractFrozen" }
+      }
+    },
+    "parallelPlanning": {
+      "meta": {
+        "phase": 9,
+        "title": "Parallel planning",
+        "does": "Fuzzy work: squad fan-out writes PRDs + epics (each ending in its Test Contract) against the frozen CONTRACT. Cross-cutting findings fold back as amendments.",
+        "llmAtTheNode": true
+      },
+      "on": {
+        "AMENDMENT": { "target": "parallelPlanning", "reenter": false },
+        "SQUADS_COMPLETE": { "target": "verify", "guard": "artifactsOnDisk" }
+      }
+    },
+    "verify": {
+      "meta": {
+        "phase": 10,
+        "title": "Verify",
+        "does": "Enforce the Test Contract gate + run the pre-handoff consistency lint; fix and re-lint until clean."
+      },
+      "on": {
+        "LINT_CLEAN": { "target": "handoff", "guard": "handoffLintClean" }
+      }
+    },
+    "handoff": {
+      "meta": {
+        "phase": 10,
+        "title": "Handoff",
+        "does": "Assemble README/KICKOFF, fill the board, produce the launch prompt for the build agent (/fable-it)."
+      },
+      "on": {
+        "HANDED_OFF": { "target": "done" }
+      }
+    },
+    "done": {
+      "type": "final",
+      "meta": {
+        "title": "Package delivered",
+        "does": "The delivery package is complete; the build runs in a fresh session."
+      }
+    }
+  }
+}

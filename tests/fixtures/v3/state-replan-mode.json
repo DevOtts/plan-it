@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "machine": "machine-replan.json",
+  "run": { "goal": "fixture: explicit replan-mode machine selection", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "intake",
+  "size": "S",
+  "shape": 1,
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [],
+  "history": []
+}

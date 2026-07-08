@@ -1,0 +1,6 @@
+{
+  "name": "sample-marketplace",
+  "plugins": [
+    { "name": "sample-plugin", "source": "./plugins/sample-plugin", "version": "2.0.0", "license": "MIT" }
+  ]
+}

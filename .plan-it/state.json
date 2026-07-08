@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": {
+    "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
+    "startedAt": "2026-07-07T00:00:00Z"
+  },
+  "state": "done",
+  "size": "M",
+  "shape": 3,
+  "gates": {
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-07",
+      "decisions": {
+        "scope": "plan-it v3 first; builder-side ECs -> fable-it backlog doc",
+        "size_shape": "M, existing-repo shape (digest -> design -> CONTRACT+PRDs/epics)",
+        "tiering": "haiku fetch / sonnet analyze; Fable 5 main-thread synthesis+freeze only",
+        "build_today": "Plan only; build later on Opus/Sonnet with escalate-on-struggle"
+      }
+    },
+    "G2": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-08",
+      "answers": {
+        "Q1": "fold-into-G2-exhibit",
+        "Q2": "always-on-tiered-preflight",
+        "Q3": "scaffold-pointer-to-fable-it",
+        "Q4": "chore-epic-in-v3"
+      }
+    },
+    "G3": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-07",
+      "note": "FD-2 case review approved as-is (24 draft + 26 enforcement rows); freeze & fan out authorized"
+    }
+  },
+  "contract": {
+    "path": "delivery/v3/CONTRACT.md",
+    "version": "v1.0+AMD",
+    "frozenAt": "2026-07-07",
+    "sha256": "44b5507f930756c81758863de3aa70cc94b38da2bdbeafa775a06406e4b77fbf"
+  },
+  "artifacts": [
+    {
+      "path": "docs/research/v3/stream-A-pxpipe.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-B-damonade.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-C-webscan.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-D-ec-map.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "delivery/design/v3-architecture.md",
+      "phase": 5,
+      "verifiedAt": "2026-07-07T15:45:00Z"
+    },
+    {
+      "path": "delivery/fable-it-backlog.md",
+      "phase": 5,
+      "verifiedAt": "2026-07-07T15:45:00Z"
+    },
+    {
+      "path": "delivery/TEST-CONTRACT-REVIEW.md",
+      "phase": 6,
+      "verifiedAt": "2026-07-07T15:55:00Z"
+    }
+  ],
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-07-07T00:00:00Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-07-07T00:05:00Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_PRESENTED",
+      "at": "2026-07-07T00:10:00Z"
+    },
+    {
+      "state": "preGround",
+      "event": "G1_APPROVED",
+      "at": "2026-07-07T00:15:00Z"
+    },
+    {
+      "state": "discovery",
+      "event": "GROUNDED",
+      "at": "2026-07-07T00:30:00Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-07-07T15:28:30Z",
+      "note": "4/4 verified. Incidents: stream-C v1 + stream-D v1 stalled/misdelivered -> reaped, re-dispatched (Rule 3 recovery). Stream-D v1 flagged prompt-injection attempts in tool results; injected retasking ignored by all streams."
+    },
+    {
+      "at": "2026-07-07T18:31:10.294Z",
+      "from": "synthesis",
+      "to": "specAuthoring",
+      "note": "4/4 streams reconciled in main thread; synthesis authored"
+    },
+    {
+      "at": "2026-07-07T18:32:29.287Z",
+      "from": "specAuthoring",
+      "to": "gate:G2",
+      "note": "design authored; 4 batched decisions to user"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-07-07T15:45:00Z",
+      "note": "Design LOCKED (pending G2): all stream C/D markers resolved; builder-side ECs filed to delivery/fable-it-backlog.md per G1 scope decision."
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED",
+      "at": "2026-07-07T15:55:00Z",
+      "note": "FD-2 draft-case exhibit authored (32 cases, 7 areas) per Stream D F5 option (a); credential checklist dispositioned: gh CLI only, verified live; no unprocured rows."
+    },
+    {
+      "state": "decisionGate",
+      "event": "G2_PRESENTED",
+      "at": "2026-07-07T15:56:00Z"
+    },
+    {
+      "at": "2026-07-08T00:17:48.411Z",
+      "from": "gate:G2",
+      "to": "contract",
+      "note": "G2 passed 4/4 on recommendations; contract v0.9 drafted, pending FD-2 case review"
+    },
+    {
+      "at": "2026-07-08T00:18:12.236Z",
+      "from": "contract",
+      "to": "contract",
+      "note": "CHECKPOINT: user restarting machine; all agents reaped; resume = FD-2 case review of delivery/v3/CONTRACT.md, then freeze"
+    },
+    {
+      "at": "2026-07-08T01:51:04.257Z",
+      "from": "contract",
+      "to": "freezeGate",
+      "note": "STATE REPAIR on resume (2026-07-07 session): prior checkpoint wrote invalid state \"contract\"; canonical machine state is freezeGate (contract v0.9-draft on disk, casesReviewed=false, G3 pending). G2 recorded with owner+date from history (passed 4/4 on recommendations)."
+    },
+    {
+      "at": "2026-07-08T02:52:43.933Z",
+      "from": "freezeGate",
+      "to": "backboneFreeze",
+      "event": "G3_APPROVED",
+      "note": "FD-2 gate passed: cases approved without edits; Reviewed-by line filled; proceeding to backbone freeze"
+    },
+    {
+      "at": "2026-07-08T02:54:27.750Z",
+      "from": "backboneFreeze",
+      "to": "parallelPlanning",
+      "event": "CONTRACT_FROZEN",
+      "note": "CONTRACT v1.0 frozen (SHA pinned); backbone: 00-program-plan.md + STATUS.md written; fanning out squads A/B/C"
+    },
+    {
+      "at": "2026-07-08T13:39:28.756Z",
+      "from": "parallelPlanning",
+      "to": "parallelPlanning",
+      "event": "AMENDMENT_PASS",
+      "note": "AMD-1/2 user-approved, AMD-3 coordinator; squads A/B/C delivered, 50/50 ID audit clean; contract SHA re-pinned"
+    },
+    {
+      "at": "2026-07-08T13:40:14.373Z",
+      "from": "parallelPlanning",
+      "to": "verify",
+      "event": "SQUADS_COMPLETE",
+      "note": "guard artifactsOnDisk PASS (9 files); 50/50 ID audit + amendment pass complete"
+    },
+    {
+      "at": "2026-07-08T13:42:31.995Z",
+      "from": "verify",
+      "to": "handoff",
+      "event": "LINT_CLEAN",
+      "note": "handoffLintClean PASS (exit 0) after formatting-only reflow of prd-1-gatecheck-fd.md; decision logged"
+    },
+    {
+      "at": "2026-07-08T13:44:23.189Z",
+      "from": "handoff",
+      "to": "done",
+      "event": "HANDED_OFF",
+      "note": "KICKOFF.md written (C-W6-01 pins @ 42f5d78, C-W6-02 re-derive step, pinned-resume only); board filled; launch prompt included"
+    }
+  ],
+  "decisions": {
+    "G2": {
+      "Q1": "fold-into-G2-exhibit",
+      "Q2": "always-on-tiered-preflight",
+      "Q3": "scaffold-pointer-to-fable-it",
+      "Q4": "chore-epic-in-v3"
+    }
+  },
+  "casesReviewed": true
+}
