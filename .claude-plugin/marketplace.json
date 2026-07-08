@@ -10,7 +10,7 @@
     {
       "name": "plan-it",
       "source": "./plugins/plan-it",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "description": "Turn a fuzzy idea, brain-dump, or transcription into a complete spec set + agile delivery package — a ~10-phase discovery → spec → agile-split pipeline with one batched human-decision gate, a frozen shared CONTRACT, and a binding Test Contract per epic. The planning front-end to /fable-it.",
       "author": {
         "name": "DevOtts",

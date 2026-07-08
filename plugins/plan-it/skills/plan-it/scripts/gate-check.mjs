@@ -61,8 +61,18 @@ const PLACEHOLDER_RE = /\bTBD\b|\bTODO\b|<[a-z][a-z0-9 _-]*>/i;
 
 // Mention vs use: a token inside backticks (`TBD`) or a fenced block is being
 // *described*, not left as a placeholder. Strip code spans before scanning.
+//
+// W3.1-1: the inline span is newline-tolerant — an author who line-wraps an
+// inline code span (`vault rotate\n--resume <id>`) is still *describing* the
+// token, not leaving a placeholder, so it must strip. But an unterminated
+// backtick must not swallow the whole document: the lazy `[^`]*?` stops at the
+// very next backtick, and a span that straddles a blank line (a paragraph
+// break — never a real inline span) is kept, so a bare-prose `<id>` between two
+// distant backticks stays visible and the placeholder scan still fails closed.
 function stripCode(text) {
-  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "");
+  return text
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/`[^`]*?`/g, (m) => (/\n\s*\n/.test(m) ? m : ""));
 }
 
 function cmdFreeze(rawArgs) {
@@ -71,7 +81,16 @@ function cmdFreeze(rawArgs) {
     fail(`freeze: ${dirErr}`);
     return finish("contract frozen");
   }
-  const path = dir ? join(dir, "delivery", "v3", "CONTRACT.md") : rest[0];
+  let path;
+  if (dir) {
+    // Generalized --dir path (W3.1-2): a real project freezes delivery/CONTRACT.md;
+    // plan-it's own dogfood layout is delivery/v3/CONTRACT.md. Prefer the real
+    // path, fall back to the dogfood path (also the missing-file error path).
+    const cands = [join(dir, "delivery", "CONTRACT.md"), join(dir, "delivery", "v3", "CONTRACT.md")];
+    path = cands.find(existsSync) || cands[1];
+  } else {
+    path = rest[0];
+  }
   if (!path) {
     fail("freeze: usage: gate-check freeze <CONTRACT.md> | gate-check freeze --dir <repo-root>");
     return finish("contract frozen");
@@ -90,12 +109,19 @@ function cmdFreeze(rawArgs) {
   if (!/changelog/i.test(text)) fail(`no changelog line — amendments need somewhere to land (v1.0 → v1.1 …)`);
   const ph = stripCode(text).match(PLACEHOLDER_RE);
   if (ph) fail(`placeholder token "${ph[0]}" inside a frozen contract`);
-  // C-W1-03 (Epic A4) — --dir mode only, additive: no freeze before the FD-2
-  // case review has landed in the run state.
-  if (dir) {
-    const st = readState(dir);
+  // W3.1-2: the v3 freeze hardenings key off "is there a v3 run backing this
+  // contract", not the --dir flag. --dir is an explicit run root; a positional
+  // freeze resolves one only when the contract is at a run root's canonical
+  // delivery path with a sibling .plan-it/state.json (resolveRunRoot). Either
+  // way, a freestanding v2 contract stays byte-identical (runRoot === null).
+  const runRoot = dir || resolveRunRoot(path);
+  const isV3Run = runRoot !== null;
+  // C-W1-03 (Epic A4) — additive: no freeze before the FD-2 case review has
+  // landed in the run state.
+  if (runRoot) {
+    const st = readState(runRoot);
     if (st?.casesReviewed !== true) {
-      fail(`C-W1-03: casesReviewed !== true in ${join(dir, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
+      fail(`C-W1-03: casesReviewed !== true in ${join(runRoot, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
     }
   }
   // v3 D11 (W3/G1) [T-B2-04]: a frozen package must carry its RUN-POLICY —
@@ -109,7 +135,7 @@ function cmdFreeze(rawArgs) {
   // truncate the body to its first line.
   const rp = text.match(/^##\s+RUN-POLICY[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/m);
   if (!rp) {
-    if (dir || /RUN-POLICY/.test(stripCode(text))) {
+    if (isV3Run || /RUN-POLICY/.test(stripCode(text))) {
       fail(`no "## RUN-POLICY" section — the tiering policy must be frozen into the package (W3/G1)`);
     }
   } else {
@@ -122,7 +148,7 @@ function cmdFreeze(rawArgs) {
     // (tier-word-normalized) to this run's recorded gates.G1.decisions. Only
     // checkable when a run state is discoverable (--dir root, else cwd);
     // structural checks above still bind without one.
-    const statePath = join(dir || process.cwd(), ".plan-it", "state.json");
+    const statePath = join(runRoot || process.cwd(), ".plan-it", "state.json");
     if (existsSync(statePath)) {
       try {
         const st = JSON.parse(readFileSync(statePath, "utf8"));
@@ -808,6 +834,25 @@ function readState(root) {
   } catch {
     return null;
   }
+}
+
+// W3.1-2: a positional `freeze <CONTRACT.md>` is v3-backed when the contract
+// sits at a run root's canonical delivery path AND that root carries a
+// `.plan-it/state.json`. This is deliberately narrow — it matches only a
+// contract literally at `<root>/delivery/CONTRACT.md` or
+// `<root>/delivery/v3/CONTRACT.md` with a sibling run state — so a freestanding
+// v2 contract (e.g. a test fixture that happens to live inside some repo's tree)
+// never resolves a stray ancestor `.plan-it/` and stays byte-identical v2.
+// Returns the run root, or null (⇒ v2 mode).
+function resolveRunRoot(contractPath) {
+  const p = resolve(contractPath);
+  for (const suffix of ["/delivery/CONTRACT.md", "/delivery/v3/CONTRACT.md"]) {
+    if (p.endsWith(suffix)) {
+      const root = p.slice(0, -suffix.length);
+      return existsSync(join(root, ".plan-it", "state.json")) ? root : null;
+    }
+  }
+  return null;
 }
 
 const CONVENTIONS_OPEN = "<!-- plan-it:test-conventions -->";

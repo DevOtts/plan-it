@@ -279,9 +279,9 @@ t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => 
 });
 
 // ---------- E5: packaging ----------
-t("T-E5-01", "plugin.json version is 3.0.0 and hooks.json is valid", () => {
+t("T-E5-01", "plugin.json version is 3.1.0 and hooks.json is valid", () => {
   const pj = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/.claude-plugin/plugin.json"), "utf8"));
-  assert(pj.version === "3.0.0", `version is ${pj.version}`);
+  assert(pj.version === "3.1.0", `version is ${pj.version}`);
   const hooks = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/hooks/hooks.json"), "utf8"));
   const pre = hooks.hooks?.PreToolUse;
   assert(Array.isArray(pre) && pre.length > 0, "no PreToolUse hooks declared");
@@ -397,6 +397,43 @@ t("T-A4-B3", "reconcile flags a draft case bound nowhere and not dropped (B3), n
 t("T-A4-04", "reconcile passes on a repo with nothing to flag (positive path)", () => {
   const r = gc(["reconcile", "--dir", join(FIX3, "conventions-present")]);
   assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+// ---------- v3.1 enhancement wave (E1/E2 reach + strip fixes) ----------
+
+t("T-W31-1a", "freeze strips a line-wrapped inline code span (E2) — wrapped <id> no longer false-fails", () => {
+  const r = gc(["freeze", join(FIX3, "contract-wrapped-span.md")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-W31-1b", "freeze still catches a bare-prose placeholder (E2 fail-closed preserved)", () => {
+  const r = gc(["freeze", join(FIX3, "contract-bare-placeholder.md")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/placeholder token "<id>"/.test(r.out), `does not name the bare <id> placeholder: ${r.out}`);
+});
+
+t("T-W31-2a", "positional freeze of a real-project delivery/CONTRACT.md now reaches the RUN-POLICY check (E1)", () => {
+  const r = gc(["freeze", join(FIX3, "real-project-nopolicy", "delivery", "CONTRACT.md")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/RUN-POLICY/.test(r.out), `did not require RUN-POLICY on a v3-backed positional freeze: ${r.out}`);
+});
+
+t("T-W31-2b", "freeze --dir finds delivery/CONTRACT.md (not just the delivery/v3/ dogfood path)", () => {
+  const r = gc(["freeze", "--dir", join(FIX3, "real-project-nopolicy")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/RUN-POLICY/.test(r.out), `--dir did not resolve delivery/CONTRACT.md + apply the v3 check: ${r.out}`);
+});
+
+t("T-W31-2c", "positional freeze does NOT over-block a valid real-project contract (RUN-POLICY + casesReviewed)", () => {
+  const r = gc(["freeze", join(FIX3, "real-project-good", "delivery", "CONTRACT.md")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-W31-2d", "v2 byte-identical: a freestanding contract with no run-state is never held to v3 RUN-POLICY", () => {
+  // contract-good.md lives outside any delivery/ run root → resolveRunRoot === null → v2 mode.
+  const r = gc(["freeze", join(FIX, "contract-good.md")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+  assert(!/RUN-POLICY/.test(r.out) || /no placeholders/.test(r.out), `v2 contract wrongly held to RUN-POLICY: ${r.out}`);
 });
 
 // ---------- v3 (Wave 0+) ----------
