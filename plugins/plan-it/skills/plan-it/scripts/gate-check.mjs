@@ -210,6 +210,49 @@ function cmdHandoff(rawArgs) {
       const ph = prose.match(PLACEHOLDER_RE);
       if (ph) fail(`${f}: placeholder "${ph[0]}" inside a FROZEN artifact`);
     }
+
+    // 5b. (C-W4-02) Every VERIFIED claim needs a run-output reference — a
+    //    fenced output block or a `run:`/`output:` citation — within ±5 lines.
+    //    Vocabulary enumerations and IMPLEMENTED-NOT-VERIFIED are mentions,
+    //    not claims.
+    const lines = text.split("\n");
+    const hasRunRef = (i) => {
+      const from = Math.max(0, i - 5);
+      const to = Math.min(lines.length - 1, i + 5);
+      for (let j = from; j <= to; j++) {
+        if (/```/.test(lines[j]) || /\b(run|output):/i.test(lines[j])) return true;
+      }
+      return false;
+    };
+    lines.forEach((line, i) => {
+      const scannable = line.replace(/`[^`\n]*`/g, ""); // backticked = mention
+      if (!/(?<!NOT-)\bVERIFIED\b/.test(scannable)) return;
+      if (/NOT-STARTED/.test(scannable) && /IN-PROGRESS/.test(scannable)) return; // vocab enumeration
+      if (!hasRunRef(i)) {
+        fail(`${f}:${i + 1}: "VERIFIED" without a run-output reference (fenced output or run:/output: citation) within 5 lines — verified means ran, not read`);
+      }
+    });
+
+    // 5c. (C-W4-03) STATUS-board vocabulary: any table with a `Status` column
+    //    (or a "## … STATUS …" heading shape) may only use the 4-term set.
+    const VOCAB = new Set(["NOT-STARTED", "IN-PROGRESS", "IMPLEMENTED-NOT-VERIFIED", "VERIFIED"]);
+    const boardShape = /^#{1,3}[^\n]*\bSTATUS\b/m.test(text) || /^\s*\|[^\n]*\|\s*status\s*\|/im.test(text);
+    if (boardShape) {
+      lines.forEach((line, i) => {
+        if (!/^\s*\|/.test(line)) return;
+        const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+        const col = cells.findIndex((c) => /^status$/i.test(c));
+        if (col === -1) return; // not a header row with a Status column
+        for (let j = i + 2; j < lines.length && /^\s*\|/.test(lines[j]); j++) {
+          const row = lines[j].split("|").slice(1, -1).map((c) => c.trim());
+          const val = row[col] ?? "";
+          if (val === "" || /^:?-+:?$/.test(val)) continue; // separator/empty
+          if (!VOCAB.has(val)) {
+            fail(`${f}:${j + 1}: status "${val}" outside the 4-term vocabulary (NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED)`);
+          }
+        }
+      });
+    }
   }
   if (files.length > 0 && allCaseIds.size === 0) {
     fail(`no T-<EID>-NN test cases found anywhere under ${dir} — a delivery package without a Test Contract cannot hand off`);
