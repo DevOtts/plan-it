@@ -5,7 +5,7 @@
     "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
     "startedAt": "2026-07-07T00:00:00Z"
   },
-  "state": "handoff",
+  "state": "done",
   "size": "M",
   "shape": 3,
   "gates": {
@@ -194,6 +194,13 @@
       "to": "handoff",
       "event": "LINT_CLEAN",
       "note": "handoffLintClean PASS (exit 0) after formatting-only reflow of prd-1-gatecheck-fd.md; decision logged"
+    },
+    {
+      "at": "2026-07-08T13:44:23.189Z",
+      "from": "handoff",
+      "to": "done",
+      "event": "HANDED_OFF",
+      "note": "KICKOFF.md written (C-W6-01 pins @ 42f5d78, C-W6-02 re-derive step, pinned-resume only); board filled; launch prompt included"
     }
   ],
   "decisions": {
