@@ -12,7 +12,7 @@
  * Authored by DevOtts (https://github.com/DevOtts).
  */
 import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { join, dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const failures = [];
@@ -62,9 +62,15 @@ function stripCode(text) {
   return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`\n]*`/g, "");
 }
 
-function cmdFreeze([path]) {
+function cmdFreeze(rawArgs) {
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`freeze: ${dirErr}`);
+    return finish("contract frozen");
+  }
+  const path = dir ? join(dir, "delivery", "v3", "CONTRACT.md") : rest[0];
   if (!path) {
-    fail("freeze: usage: gate-check freeze <CONTRACT.md>");
+    fail("freeze: usage: gate-check freeze <CONTRACT.md> | gate-check freeze --dir <repo-root>");
     return finish("contract frozen");
   }
   let text;
@@ -81,6 +87,14 @@ function cmdFreeze([path]) {
   if (!/changelog/i.test(text)) fail(`no changelog line — amendments need somewhere to land (v1.0 → v1.1 …)`);
   const ph = stripCode(text).match(PLACEHOLDER_RE);
   if (ph) fail(`placeholder token "${ph[0]}" inside a frozen contract`);
+  // C-W1-03 (Epic A4) — --dir mode only, additive: no freeze before the FD-2
+  // case review has landed in the run state.
+  if (dir) {
+    const st = readState(dir);
+    if (st?.casesReviewed !== true) {
+      fail(`C-W1-03: casesReviewed !== true in ${join(dir, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
+    }
+  }
   if (failures.length === 0) ok(`${path}: version header, ${sections} sections, changelog, no placeholders`);
   finish("contract frozen");
 }
@@ -96,7 +110,15 @@ function collectMdFiles(dir, out = []) {
   return out;
 }
 
-function cmdHandoff([dir]) {
+function cmdHandoff(rawArgs) {
+  const { dir: rootFlag, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`handoff: ${dirErr}`);
+    return finish("pre-handoff lint");
+  }
+  // --dir <repo-root> (Epic A4): lint <root>/delivery and run the embedded
+  // reconcile scan against the root. Positional callers keep v2 behavior.
+  const dir = rootFlag ? (existsSync(join(rootFlag, "delivery")) ? join(rootFlag, "delivery") : rootFlag) : rest[0];
   if (!dir || !existsSync(dir)) {
     fail(`handoff: delivery dir not found: ${dir ?? "(none given)"}`);
     return finish("pre-handoff lint");
@@ -112,13 +134,15 @@ function cmdHandoff([dir]) {
   for (const f of files) {
     const text = readFileSync(f, "utf8");
     texts.set(f, text);
-    for (const m of text.matchAll(/\bT-E\d+[A-Za-z0-9.]*-\d{2}\b/g)) {
+    // [A-Z] (not literal E): coordinator ruling on PROPOSED-AMENDMENT-2,
+    // epics-1-gatecheck-fd.md addendum 2026-07-08 — v3 A*/B*/C* IDs recognized.
+    for (const m of text.matchAll(/\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b/g)) {
       if (allCaseIds.has(m[0]) && allCaseIds.get(m[0]) !== f) continue; // same id across files is allowed (cross-refs)
       allCaseIds.set(m[0], f);
     }
   }
   const epicsWithCases = new Set(
-    [...allCaseIds.keys()].map((id) => id.match(/^T-(E\d+)/)[1])
+    [...allCaseIds.keys()].map((id) => id.match(/^T-([A-Z]\d+)/)[1])
   );
 
   // Pass 2 — the checks.
@@ -138,7 +162,7 @@ function cmdHandoff([dir]) {
       const rest = text.slice(hm.index);
       const blockEnd = rest.search(/\n#{1,2}\s(?!#)/); // next h1/h2
       const block = blockEnd === -1 ? rest : rest.slice(0, blockEnd);
-      const counted = (block.match(/\|\s*T-E\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
+      const counted = (block.match(/\|\s*T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
       if (counted > 0 && counted !== declared) {
         fail(`${f}: contract header declares Count: ${declared} but ${counted} case rows counted — count tags, don't hand-type`);
       } else if (counted > 0) {
@@ -158,14 +182,14 @@ function cmdHandoff([dir]) {
 
     // 4. Every epic has a Test Contract — either a block in its own section, or
     //    (small shapes) its T-E<N>-NN cases in the package's central contract.
-    const epicHeads = [...text.matchAll(/^#{2,3}\s+(E\d+[^\n]*epic[^\n]*|epic\s+E\d+[^\n]*|E\d+\s+—[^\n]*)/gim)];
+    const epicHeads = [...text.matchAll(/^#{2,3}\s+([A-Z]\d+[^\n]*epic[^\n]*|epic\s+[A-Z]\d+[^\n]*|[A-Z]\d+\s+—[^\n]*)/gim)];
     for (const eh of epicHeads) {
-      const eid = eh[1].match(/E\d+/)[0];
+      const eid = eh[1].match(/[A-Z]\d+/)[0];
       const from = eh.index;
       const rest2 = text.slice(from + eh[0].length);
       const nextHead = rest2.search(new RegExp(`^#{1,${eh[0].match(/^#+/)[0].length}}\\s`, "m"));
       const section = nextHead === -1 ? rest2 : rest2.slice(0, nextHead);
-      const coveredInSection = /test contract/i.test(section) || /\|\s*T-E\d+/i.test(section);
+      const coveredInSection = /test contract/i.test(section) || /\|\s*T-[A-Z]\d+/.test(section);
       const coveredCentrally = epicsWithCases.has(eid);
       if (!coveredInSection && !coveredCentrally) {
         fail(`${f}: epic "${eh[1].trim().slice(0, 60)}" has no Test Contract — no block in its section and no T-${eid}-NN cases anywhere in the package. The contract is the heart of the epic, not a footnote`);
@@ -192,6 +216,13 @@ function cmdHandoff([dir]) {
   } else if (allCaseIds.size > 0) {
     ok(`${allCaseIds.size} distinct test-case IDs found across ${files.length} files`);
   }
+
+  // 6. Embedded reconcile (C-W5-04, Epic A4): same internal function, same
+  // shared failures array, one finish() — never a subprocess, never
+  // double-reported (PRD §5 R4). Runs when a repo root is derivable.
+  const root = rootFlag ?? (basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : null);
+  if (root) reconcileScan(root);
+
   finish("pre-handoff lint (mechanizable half — the judgment half stays with the model)");
 }
 
@@ -241,6 +272,16 @@ function cmdState(rawArgs) {
     const claude = existsSync(claudePath) ? stripCode(readFileSync(claudePath, "utf8")) : "";
     if (!claude.includes(CONVENTIONS_OPEN)) {
       fail(`A3 (FD-1): stale test-conventions receipt — state.json records registered:true but ${claudePath} no longer contains the ${CONVENTIONS_OPEN} block (re-verify, not silent pass)`);
+    }
+  }
+  if (root && state.gates?.G2?.approved === true) {
+    // Cases B1/B2 (FD-2) — G2_ANSWERED requires the review artifact on disk,
+    // carrying the user-ack grammar frozen at delivery/TEST-CONTRACT-REVIEW.md:49.
+    const reviewPath = join(root, "delivery", "TEST-CONTRACT-REVIEW.md");
+    if (!existsSync(reviewPath)) {
+      fail(`B1 (FD-2): gates.G2.approved is true but ${reviewPath} is not on disk — G2_ANSWERED without the review artifact is rejected`);
+    } else if (!/^Reviewed-by:\s+\S.*\b\d{4}-\d{2}-\d{2}\b/m.test(readFileSync(reviewPath, "utf8"))) {
+      fail(`B2 (FD-2): ${reviewPath} lacks the "Reviewed-by: <name> <date>" acknowledgment line — review file without user ack is rejected`);
     }
   }
   const mp = findMachine(machinePath);
@@ -464,17 +505,86 @@ function cmdTestconv(rawArgs) {
   process.exit(2);
 }
 
+// ---------------------------------------------------------------- reconcile
+// Epic A4 — W5 orphan detection (C-W5-02/03) + FD-2 draft→binding case map
+// (case B3). reconcileScan pushes into the shared failures array so cmdHandoff
+// can embed it (C-W5-04) with one finish() and no double-reporting (PRD §5 R4).
+function reconcileScan(root) {
+  const mdUnder = (d) => (existsSync(d) ? collectMdFiles(d) : []);
+  const epicTexts = mdUnder(join(root, "delivery", "v3", "epics")).map((f) => [f, readFileSync(f, "utf8")]);
+
+  // C-W5-02 — PRD requirement with no covering epic (orphan).
+  for (const f of mdUnder(join(root, "delivery", "v3", "prds"))) {
+    const reqs = new Set([...stripCode(readFileSync(f, "utf8")).matchAll(/\bR-?\d+\b/g)].map((m) => m[0]));
+    for (const r of reqs) {
+      if (!epicTexts.some(([, t]) => new RegExp(`\\b${r}\\b`).test(t))) {
+        fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under delivery/v3/epics (orphan)`);
+      }
+    }
+  }
+
+  // C-W5-03 — epic heading with zero Binding Test Contract case rows
+  // (generalizes cmdHandoff's presence-check to a row-count check).
+  for (const [f, text] of epicTexts) {
+    for (const eh of text.matchAll(/^(#{2,3})\s+(?:[Ee]pic\s+)?([A-Z]\d+)\b[^\n]*/gm)) {
+      const rest = text.slice(eh.index + eh[0].length);
+      const nextHead = rest.search(new RegExp(`^#{1,${eh[1].length}}\\s`, "m"));
+      const section = nextHead === -1 ? rest : rest.slice(0, nextHead);
+      const rows = (section.match(/\|\s*T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
+      if (rows === 0) fail(`C-W5-03: epic ${eh[2]} in ${f} has zero Binding Test Contract case rows`);
+    }
+  }
+
+  // Case B3 (FD-2) — every draft case ID in TEST-CONTRACT-REVIEW.md maps to
+  // ≥1 epic binding row OR a dated delivery/decisions.md drop entry.
+  const reviewPath = join(root, "delivery", "TEST-CONTRACT-REVIEW.md");
+  if (existsSync(reviewPath)) {
+    // Draft cases are DECLARED as list items ("- A1, A2 — ..." / "- F1 [REAL] ...");
+    // prose citations elsewhere ("per case B3") are not declarations.
+    const drafts = new Set();
+    for (const line of stripCode(readFileSync(reviewPath, "utf8")).split("\n")) {
+      if (!/^\s*-\s/.test(line)) continue;
+      for (const m of line.matchAll(/(?<![-\w])([A-Z]\d+)(?![-\w])/g)) drafts.add(m[1]);
+    }
+    const decisionsPath = join(root, "delivery", "decisions.md");
+    const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, "utf8") : "";
+    for (const id of drafts) {
+      // Bound = the ID appears in a |-table row of some epic file (a Binding
+      // Test Contract row, e.g. its Covers cell) — prose mentions don't bind.
+      const bound = epicTexts.some(([, t]) =>
+        t.split("\n").some((line) => line.trimStart().startsWith("|") && new RegExp(`\\b${id}\\b`).test(line))
+      );
+      if (!bound && !new RegExp(`\\b${id}\\b`).test(decisions)) {
+        fail(`B3 (FD-2): draft case ${id} in ${reviewPath} is bound in no epic Binding Test Contract table row and has no delivery/decisions.md drop entry — split/rename allowed, silent drops are not`);
+      }
+    }
+  }
+}
+
+function cmdReconcile(rawArgs) {
+  const label = "reconcile (W5 orphan scan + FD-2 draft→binding map)";
+  const { dir, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr || !dir) {
+    fail(`reconcile: ${dirErr ?? "usage: gate-check reconcile --dir <repo-root>"}`);
+    return finish(label);
+  }
+  reconcileScan(dir);
+  if (failures.length === 0) ok(`no orphan requirements, no zero-case epics, draft→binding map closed under ${dir}`);
+  finish(label);
+}
+
 // ---------------------------------------------------------------- main
 const [, , cmd, ...args] = process.argv;
-const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, contract: cmdContract, testconv: cmdTestconv };
+const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, contract: cmdContract, testconv: cmdTestconv, reconcile: cmdReconcile };
 if (!cmd || !(cmd in commands)) {
-  console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv> [args...]");
+  console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile> [args...]");
   console.error("  verify  <path...>                    files/dirs exist and are non-empty");
-  console.error("  freeze  <CONTRACT.md>                frozen-contract structural check");
-  console.error("  handoff <delivery-dir>               pre-handoff consistency lint");
+  console.error("  freeze  <CONTRACT.md|--dir repo-root>  frozen-contract structural check (+ casesReviewed in --dir mode)");
+  console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
   console.error("  state   <state.json> [machine.json]  validate run state, print next events");
   console.error("  contract <--dir repo-root|CONTRACT.md>  W1 hygiene lint + computed tally (W5)");
   console.error("  testconv --dir <repo-root> [--register [text] | --decline]  FD-1 conventions discovery (exit 2 = needs registration)");
+  console.error("  reconcile --dir <repo-root>          W5 orphan scan + FD-2 draft→binding case map");
   process.exit(1);
 }
 commands[cmd](args);
