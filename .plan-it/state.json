@@ -135,6 +135,12 @@
       "from": "gate:G2",
       "to": "contract",
       "note": "G2 passed 4/4 on recommendations; contract v0.9 drafted, pending FD-2 case review"
+    },
+    {
+      "at": "2026-07-08T00:18:12.236Z",
+      "from": "contract",
+      "to": "contract",
+      "note": "CHECKPOINT: user restarting machine; all agents reaped; resume = FD-2 case review of delivery/v3/CONTRACT.md, then freeze"
     }
   ],
   "decisions": {
