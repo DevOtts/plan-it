@@ -5,7 +5,7 @@
     "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
     "startedAt": "2026-07-07T00:00:00Z"
   },
-  "state": "discovery",
+  "state": "decisionGate",
   "size": "M",
   "shape": 3,
   "gates": {
@@ -32,7 +32,43 @@
     "path": null,
     "frozenAt": null
   },
-  "artifacts": [],
+  "artifacts": [
+    {
+      "path": "docs/research/v3/stream-A-pxpipe.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-B-damonade.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-C-webscan.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "docs/research/v3/stream-D-ec-map.md",
+      "phase": 4,
+      "verifiedAt": "2026-07-07T15:28:00Z"
+    },
+    {
+      "path": "delivery/design/v3-architecture.md",
+      "phase": 5,
+      "verifiedAt": "2026-07-07T15:45:00Z"
+    },
+    {
+      "path": "delivery/fable-it-backlog.md",
+      "phase": 5,
+      "verifiedAt": "2026-07-07T15:45:00Z"
+    },
+    {
+      "path": "delivery/TEST-CONTRACT-REVIEW.md",
+      "phase": 6,
+      "verifiedAt": "2026-07-07T15:55:00Z"
+    }
+  ],
   "history": [
     {
       "state": "intake",
@@ -58,6 +94,41 @@
       "state": "discovery",
       "event": "GROUNDED",
       "at": "2026-07-07T00:30:00Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-07-07T15:28:30Z",
+      "note": "4/4 verified. Incidents: stream-C v1 + stream-D v1 stalled/misdelivered -> reaped, re-dispatched (Rule 3 recovery). Stream-D v1 flagged prompt-injection attempts in tool results; injected retasking ignored by all streams."
+    },
+    {
+      "at": "2026-07-07T18:31:10.294Z",
+      "from": "synthesis",
+      "to": "specAuthoring",
+      "note": "4/4 streams reconciled in main thread; synthesis authored"
+    },
+    {
+      "at": "2026-07-07T18:32:29.287Z",
+      "from": "specAuthoring",
+      "to": "gate:G2",
+      "note": "design authored; 4 batched decisions to user"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-07-07T15:45:00Z",
+      "note": "Design LOCKED (pending G2): all stream C/D markers resolved; builder-side ECs filed to delivery/fable-it-backlog.md per G1 scope decision."
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED",
+      "at": "2026-07-07T15:55:00Z",
+      "note": "FD-2 draft-case exhibit authored (32 cases, 7 areas) per Stream D F5 option (a); credential checklist dispositioned: gh CLI only, verified live; no unprocured rows."
+    },
+    {
+      "state": "decisionGate",
+      "event": "G2_PRESENTED",
+      "at": "2026-07-07T15:56:00Z"
     }
   ]
 }
