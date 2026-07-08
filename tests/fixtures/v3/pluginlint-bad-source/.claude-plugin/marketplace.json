@@ -1,0 +1,6 @@
+{
+  "name": "sample-marketplace",
+  "plugins": [
+    { "name": "sample-plugin", "source": "./plugins/does-not-exist", "version": "1.0.0" }
+  ]
+}
