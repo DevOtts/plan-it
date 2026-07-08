@@ -463,7 +463,10 @@ function cmdHandoff(rawArgs) {
 
     // 4. Every epic has a Test Contract — either a block in its own section, or
     //    (small shapes) its T-E<N>-NN cases in the package's central contract.
-    const epicHeads = [...text.matchAll(/^#{2,3}\s+([A-Z]\d+[^\n]*epic[^\n]*|epic\s+[A-Z]\d+[^\n]*|[A-Z]\d+\s+—[^\n]*)/gim)];
+    //    PRDs are excluded: they carry design-area headings (`D1 — …`) that the
+    //    `[A-Z]\d+ —` shorthand would misread as epics. Epics live under epics/.
+    const isPrd = /\/prds?\//.test(f.replace(/\\/g, "/"));
+    const epicHeads = isPrd ? [] : [...text.matchAll(/^#{2,3}\s+([A-Z]\d+[^\n]*epic[^\n]*|epic\s+[A-Z]\d+[^\n]*|[A-Z]\d+\s+—[^\n]*)/gim)];
     for (const eh of epicHeads) {
       const eid = eh[1].match(/[A-Z]\d+/)[0];
       const from = eh.index;
@@ -497,20 +500,60 @@ function cmdHandoff(rawArgs) {
     //    Vocabulary enumerations and IMPLEMENTED-NOT-VERIFIED are mentions,
     //    not claims.
     const lines = text.split("\n");
+    // A run-output reference near line i: a fenced block, a `run:`/`output:`
+    // citation, or an inline receipt that a command actually RAN — an exit code
+    // or a `decisions.md` evidence citation. A bare case ID is NOT a receipt (it
+    // references a case, it does not prove the case ran) — so the C-W4-02
+    // fixture, whose only near-token is a `T-E9-01` Test-Contract row, still
+    // fails closed. "verified means ran, not read."
+    const REF_RE = /```|\b(run|output):|\bexit\s+\d|decisions\.md/i;
     const hasRunRef = (i) => {
       const from = Math.max(0, i - 5);
       const to = Math.min(lines.length - 1, i + 5);
-      for (let j = from; j <= to; j++) {
-        if (/```/.test(lines[j]) || /\b(run|output):/i.test(lines[j])) return true;
-      }
+      for (let j = from; j <= to; j++) if (REF_RE.test(lines[j])) return true;
       return false;
     };
+    // A multi-line vocabulary enumeration (all four status terms within a few
+    // lines) is a definition of the vocabulary, not a status claim.
+    const vocabEnumNear = (i) => {
+      const from = Math.max(0, i - 2), to = Math.min(lines.length - 1, i + 2);
+      const win = lines.slice(from, to + 1).join(" ");
+      return /NOT-STARTED/.test(win) && /IN-PROGRESS/.test(win) && /IMPLEMENTED-NOT-VERIFIED/.test(win);
+    };
+    // The Status column of a board table, if the file has one (board-row claims
+    // carry their evidence in the same row, not necessarily a fenced block).
+    const boardStatusCol = (() => {
+      for (const l of lines) {
+        if (!/^\s*\|/.test(l)) continue;
+        const cells = l.split("|").slice(1, -1).map((c) => c.trim().toLowerCase());
+        const c = cells.findIndex((x) => x === "status");
+        if (c !== -1) return c;
+      }
+      return -1;
+    })();
     lines.forEach((line, i) => {
       const scannable = line.replace(/`[^`\n]*`/g, ""); // backticked = mention
       if (!/(?<!NOT-)\bVERIFIED\b/.test(scannable)) return;
-      if (/NOT-STARTED/.test(scannable) && /IN-PROGRESS/.test(scannable)) return; // vocab enumeration
+      if (vocabEnumNear(i)) return; // vocabulary definition, not a claim
+      // C-W4-02 governs the VERIFIED *tag* — an assigned status — not every
+      // prose occurrence of the word. Recognize a status assignment via: a
+      // board Status-column cell == VERIFIED; a `Status: VERIFIED` line; or a
+      // predicate "… is/are/was/were VERIFIED", minus negation ("never/not/
+      // rather"), compound labels ("VERIFIED-…"), and the verb sense
+      // ("…VERIFIED all four…", where a noun follows).
+      let isTag = false;
+      if (boardStatusCol !== -1 && /^\s*\|/.test(line)) {
+        const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+        if ((cells[boardStatusCol] ?? "").toUpperCase() === "VERIFIED") isTag = true;
+      }
+      if (!isTag && /\bstatus\b[^\n|]*[:=]\s*\**\s*VERIFIED\b/i.test(scannable)) isTag = true;
+      if (!isTag
+          && /\b(is|are|was|were)\s+\**VERIFIED\b(?!\s+(?:all|the|every|each|both|these|those|[a-z]+\s+(?:verbs|cases|rows|items)))/.test(scannable)
+          && !/\b(never|not|rather|n't)\b/i.test(scannable)
+          && !/VERIFIED-/.test(scannable)) isTag = true;
+      if (!isTag) return; // prose mention of the word — not an assigned tag
       if (!hasRunRef(i)) {
-        fail(`${f}:${i + 1}: "VERIFIED" without a run-output reference (fenced output or run:/output: citation) within 5 lines — verified means ran, not read`);
+        fail(`${f}:${i + 1}: VERIFIED status tag without a run-output reference (fenced output, run:/output:, exit code, or decisions.md citation) within 5 lines — verified means ran, not read`);
       }
     });
 
@@ -978,9 +1021,18 @@ function reconcileScan(root) {
   const mdUnder = (d) => (existsSync(d) ? collectMdFiles(d) : []);
   const epicTexts = mdUnder(join(root, "delivery", "v3", "epics")).map((f) => [f, readFileSync(f, "utf8")]);
 
-  // C-W5-02 — PRD requirement with no covering epic (orphan).
+  // C-W5-02 — PRD requirement with no covering epic (orphan). Requirement IDs
+  // are collected per section, skipping risk-register / assumption / out-of-
+  // scope sections: an `R3` under `## Risks` is a risk register entry, not a
+  // requirement that an epic must cover.
   for (const f of mdUnder(join(root, "delivery", "v3", "prds"))) {
-    const reqs = new Set([...stripCode(readFileSync(f, "utf8")).matchAll(/\bR-?\d+\b/g)].map((m) => m[0]));
+    const raw = stripCode(readFileSync(f, "utf8"));
+    const reqs = new Set();
+    for (const sec of raw.split(/^(?=#{2,3}\s)/m)) {
+      const head = (sec.match(/^#{2,3}\s+([^\n]*)/) || [, ""])[1];
+      if (/\b(risk|assumption|out[- ]of[- ]scope|non[- ]goal)/i.test(head)) continue;
+      for (const m of sec.matchAll(/\bR-?\d+\b/g)) reqs.add(m[0]);
+    }
     for (const r of reqs) {
       if (!epicTexts.some(([, t]) => new RegExp(`\\b${r}\\b`).test(t))) {
         fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under delivery/v3/epics (orphan)`);
@@ -988,13 +1040,25 @@ function reconcileScan(root) {
     }
   }
 
-  // C-W3-01 (D9/D12b, Epic E2) — every epic section must bind a complete Tier
-  // Table (tier | effort | escalation | scaffold-pointer) with a real pointer.
-  // Registered additively inside the canon verb; files with no epic sections
-  // are C-W5-03's concern, not a tier failure.
+  // C-W3-01 (D9/D12b, Epic E2) — tiering must be bound to a Tier Table. v3
+  // centralizes RUN-POLICY in the frozen CONTRACT (`## RUN-POLICY`, governed at
+  // program level per 00-program-plan.md), so when the package carries a
+  // central tier policy, a per-epic table is not additionally required — the
+  // "no Tier Table" finding is suppressed. A malformed per-epic table is still
+  // reported. A package with NO central policy (e.g. the no-tier fixture, which
+  // has no CONTRACT.md) still fails closed.
+  const centralTierPolicy = (() => {
+    const cpath = join(root, "delivery", "v3", "CONTRACT.md");
+    if (!existsSync(cpath)) return false;
+    // end-of-string spelled (?![\s\S]): a bare $ under /m matches every line end
+    // and would truncate the section to its heading line (table unseen).
+    const m = readFileSync(cpath, "utf8").match(/^##\s+RUN-POLICY\b[\s\S]*?(?=\n##\s|(?![\s\S]))/m);
+    return !!m && m[0].split("\n").some((l) => /^\s*\|/.test(l) && /\btier\b/i.test(l));
+  })();
   for (const [f, epicText] of epicTexts) {
     for (const finding of checkEpicTierTable(epicText)) {
       if (finding.startsWith("no epic sections")) continue;
+      if (centralTierPolicy && /no Tier Table/.test(finding)) continue; // tiering frozen centrally (RUN-POLICY)
       fail(`${finding} [${f}]`);
     }
   }
@@ -1006,7 +1070,12 @@ function reconcileScan(root) {
       const rest = text.slice(eh.index + eh[0].length);
       const nextHead = rest.search(new RegExp(`^#{1,${eh[1].length}}\\s`, "m"));
       const section = nextHead === -1 ? rest : rest.slice(0, nextHead);
-      const rows = (section.match(/\|\s*T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
+      // A binding row is any of the package's sanctioned case grammars: the
+      // synthetic `T-A4-01` form, the FD-2 B-series `T-A4-B1` form that keeps
+      // the draft-ID letter, OR a direct CONTRACT enforcement ID (`C-W1-04` /
+      // `C-META-01`) — epics that bind straight to contract rows (e.g. A2) use
+      // the latter (decisions.md 2026-07-07/-08).
+      const rows = (section.match(/\|\s*(?:T-[A-Z]\d+[A-Za-z0-9.]*-(?:[A-Z]\d+|\d{2})|C-(?:W\d+|META)-\d{2})\s*\|/g) || []).length;
       if (rows === 0) fail(`C-W5-03: epic ${eh[2]} in ${f} has zero Binding Test Contract case rows`);
     }
   }
@@ -1019,8 +1088,21 @@ function reconcileScan(root) {
     // prose citations elsewhere ("per case B3") are not declarations.
     const drafts = new Set();
     for (const line of stripCode(readFileSync(reviewPath, "utf8")).split("\n")) {
-      if (!/^\s*-\s/.test(line)) continue;
-      for (const m of line.matchAll(/(?<![-\w])([A-Z]\d+)(?![-\w])/g)) drafts.add(m[1]);
+      const bullet = line.match(/^\s*-\s+(.*)$/);
+      if (!bullet) continue;
+      // Draft IDs are DECLARED only in the LEADING run of the bullet — the
+      // ID(s) before the first descriptor ("[REAL]", " — ", ": ", "("). An ID
+      // appearing later in the sentence is a prose citation (e.g. "Stream D F6"
+      // inside F1's description) and neither declares nor binds a draft case
+      // (decisions.md 2026-07-08 ruling; the pre-existing comment intended this
+      // but the old per-line matchAll leaked mid-sentence IDs).
+      // Emphasis markers (`**Z9**`, `_A1_`) are transparent in the leading run,
+      // so a bolded draft ID is still a declaration; the run still stops at the
+      // first real descriptor char (—, [, :, (, lowercase word), so mid-sentence
+      // IDs stay excluded.
+      const head = bullet[1].match(/^((?:[A-Z]\d+|[*_]|,|&|\band\b|\s)+)/);
+      if (!head) continue;
+      for (const m of head[1].matchAll(/[A-Z]\d+/g)) drafts.add(m[0]);
     }
     const decisionsPath = join(root, "delivery", "decisions.md");
     const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, "utf8") : "";
@@ -1053,6 +1135,13 @@ function cmdReconcile(rawArgs) {
 function collectSkillMds(dir, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     if (e.name.startsWith(".") && e.name !== ".claude-plugin") continue;
+    // Test-fixture trees deliberately carry broken SKILL.md files (the
+    // pluginlint violating fixtures), and node_modules is third-party; neither
+    // is a shipped plugin unit, so a whole-repo `pluginlint .` must not walk
+    // into them. Fixture-scoped runs pass the fixture dir AS root, so their
+    // skills sit directly below root (not under a nested `tests/`) and are
+    // still linted.
+    if (e.isDirectory() && (e.name === "tests" || e.name === "node_modules")) continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) collectSkillMds(p, out);
     else if (e.name === "SKILL.md") out.push(p);
@@ -1098,8 +1187,13 @@ function cmdPluginlint(rawArgs) {
         fail(`${f}:${i + 2}: frontmatter "${key}:" is a plain scalar containing a colon — the plugin loader's YAML parse breaks on this. Quote it or use a ">-" block scalar. Offending line: "${line.trim()}"`);
       }
     });
+    // The loader resolves skills by directory ONLY for the canonical
+    // skills/<name>/SKILL.md layout. A top-level SKILL.md (repo/plugin root, or
+    // a mirror copy) is not a loader path, so its name need not match the root
+    // dir basename — scope the check to files whose parent sits under skills/.
     const dirName = basename(dirname(f));
-    if (name !== null && name !== dirName) {
+    const skillsNested = basename(dirname(dirname(f))) === "skills";
+    if (skillsNested && name !== null && name !== dirName) {
       fail(`${f}: frontmatter name "${name}" ≠ directory name "${dirName}" — the loader resolves skills by directory`);
     }
   }

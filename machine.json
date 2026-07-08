@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/statelyai/xstate/main/packages/core/src/types.ts",
   "id": "plan-it",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "plan-it pipeline statechart — the explicit model the SKILL.md prose explains. Deterministic core: states, gates, and guards live here; the fuzzy work (research, synthesis, authoring) is LLM-at-the-node inside each state. Paste this file into https://stately.ai/viz to see the pipeline.",
   "initial": "intake",
   "context": {

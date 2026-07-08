@@ -256,12 +256,18 @@ human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
 ## Status
 
-`2.1.0` — the "deterministic core" line: the pipeline is an explicit statechart
-with persisted run state and executable gate guards (`2.0.0`), plus hard gate
-enforcement via a PreToolUse hook on Claude Code plugin installs (`2.1.0`) — see
-[The deterministic core](#the-deterministic-core-v2). The underlying pipeline,
-gates, packaging shapes, and Test Contract discipline are unchanged from `1.0.0`
-and were reverse-engineered from real multi-squad planning runs — including the
+`3.0.0` — the "field-hardened core" line: builds on the deterministic core
+(`2.0.0` explicit statechart with persisted run state + executable gate guards;
+`2.1.0` hard gate enforcement via a PreToolUse hook on Claude Code plugin
+installs — see [The deterministic core](#the-deterministic-core-v2)) with the
+enforcement mechanisms from the v3 field study: FD-1 test-convention discovery +
+registration and FD-2 pre-freeze case review, plus six write-time invariants —
+W1 contract hygiene, W2 environment preflight (ENV-FACTS probe manifest), W3
+model-tier enforcement (no hardcoded model IDs), W4 status vocabulary, W5
+computed-never-typed tallies, and W6 kickoff pinning + packaging parity — and
+mirror integrity across the root↔plugin tree. The underlying pipeline, gates,
+packaging shapes, and Test Contract discipline are unchanged from `1.0.0` and
+were reverse-engineered from real multi-squad planning runs — including the
 live-grounding rules, which trace one-for-one to failures where a repo-derived
 assumption contradicted the deployed system.
 

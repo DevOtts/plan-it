@@ -26,7 +26,7 @@ description: >-
   exit code — not prose discipline — decides whether the pipeline advances.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 2.1.0
+version: 3.0.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
