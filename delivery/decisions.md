@@ -17,6 +17,11 @@
 - 2026-07-08: both streams re-dispatched on **sonnet** (per G1 tiering: haiku fetch / sonnet analyze / Fable 5 synthesis+freeze), with explicit Rule-3 output contracts (write-to-disk + content-bearing final message). Streams A (pxpipe) and B (damonade) verified real (~15 KB, committed in `fc6abc8`) — not re-run.
 - This incident is itself corroborating evidence for backlog item 12 (Agent I/O protocol, EC-H4).
 
+### D-0b: Baseline re-check on resume (2026-07-07 session)
+- Session brief asserted: **main @ `e6126c6`** ("LinkedIn post v3: dogfood angle"). Verified reality: `e6126c6` also lives on **`v2/deterministic-core`** (7 commits behind HEAD), main STILL stale at `1f09119` — consistent with D-0; the branch→main merge remains queued in the release & comms epic.
+- HEAD moved to `1e5fa46` — 3 checkpoint commits (`2c5432a`, `74c46a5`, `1e5fa46`) from this very planning run, ahead of `origin/v2/deterministic-core @ fc6abc8` (unpushed). Tree clean.
+- State-file repair on resume: prior checkpoint persisted invalid state `"contract"` and left G2 unrecorded; repaired to `freezeGate` + G2 {approved, Fernando Ott, 2026-07-08} — gate-check `state` now passes. No phase re-run.
+
 ## Non-negotiables as enforced in this run
 - Protected core untouched (additive-only designs): freeze mechanism, [REAL] Test Contracts, gate-check.mjs existing checks, KICKOFF read-order, evidence ledgers, batched decision gate, statechart deterministic core.
 - FD-1 and FD-2 ship in v3, period (founder-mandated; ranked M1/M2).
@@ -27,3 +32,20 @@
 ## Verification ceiling (this environment)
 - CAN be VERIFIED here: gate-check.mjs behavior, machine.json state validity, file/layout lints, loader metadata parse (local `claude` plugin tooling), doc consistency.
 - IMPLEMENTED-NOT-VERIFIED ceiling: cross-subscription handoff behavior and marketplace install UX (needs a second subscription/machine — same class as EC-D1/EC-G1 incidents).
+
+## 2026-07-07 — G3 + FREEZE
+- FD-2 gate: Test Contract cases surfaced in chat + `delivery/TEST-CONTRACT-REVIEW.md`; **approved as-is by Fernando Ott** (24 draft cases A1–G2, 26 enforcement rows C-W1-01…C-META-01; zero edits). Reviewed-by line filled.
+- CONTRACT.md frozen **v0.9-draft → v1.0** (SHA-256 `fda30961fbd3…`), with PROGRAM CONTRACT + RUN-POLICY (backlog #8) + contract CHANGELOG sections added pre-freeze per case G-G1.
+- Backbone (M-shape folded): `delivery/v3/00-program-plan.md` + `delivery/v3/STATUS.md`.
+- Fan-out: squads A (gate-check verbs & FD enforcement), B (statechart/preflight/tiering), C (vocab/packaging/release) — mid-tier builders per RUN-POLICY, coordinator on top tier, escalate-on-struggle.
+
+## 2026-07-08 — PARALLEL PLANNING AUDIT + AMENDMENT PASS
+- Squads A/B/C delivered (6 files under delivery/v3/prds + epics). Coordinator audit: **50/50 approved IDs bound**, zero silent drops; model-ID guard clean; manual share 1 case (~4.8%, C4 marketplace proxy).
+- **AMD-1** (approved Fernando Ott): E1 reworded — live machine.json = additive-only structural superset of byte-pinned tests/fixtures/v2/machine.v2.fc6abc8.json, verified by new `gate-check machine-diff`. Resolves E1↔C-W2-01 tension via Squad B option 2.
+- **AMD-2** (approved Fernando Ott): mirror set six→eight pairs (4 files + 4 references/*.md); source-doc miscount corrected.
+- **AMD-3** (coordinator): exit-code convention documented (exit 2 = action-required, first use testconv/FD-1); manual-share invariant now computed, never typed.
+- Regex widening `E`→`[A-Z]` at gate-check.mjs:115,121,161 → folded into Epic A4 (Squad A lane); verification task stays in B2. Confirmed against source.
+- Case-ID grammar normalized to T-<EID>-NN (references/templates.md); Squad A epics renamed BC-*→T-* (mechanical).
+- Squad C F2 resolution CONFIRMED: claim-softened (G2-Q4 + v3-architecture.md non-goal). Squad B W2-01 reading CONFIRMED: "contract" = reachability toward backboneFreeze.
+- Contract re-pinned: v1.0+AMD @ sha256 44b5507f930756c81758863de3aa70cc94b38da2bdbeafa775a06406e4b77fbf
+- Handoff-lint false positive (coordinator): `stripCode` inline-span regex `` `[^`\n]*` `` at gate-check.mjs:61 is newline-scoped, so code spans hard-wrapped across a line break leak into the FROZEN placeholder scan (`<iso>` at prd-1-gatecheck-fd.md:121,130 — spec-shape mentions inside backticks, not unfilled tokens). Resolution: formatting-only reflow of the two spans onto single lines (zero semantic delta; PRD hash not pinned in CONTRACT.md, contract pin 44b5507f9307 unaffected). Field finding logged for Epic A backlog: make span-stripping newline-tolerant in v3 gate-check work (Squad A lane, alongside the E→[A-Z] widening).

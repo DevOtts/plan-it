@@ -5,7 +5,7 @@
     "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
     "startedAt": "2026-07-07T00:00:00Z"
   },
-  "state": "contract",
+  "state": "handoff",
   "size": "M",
   "shape": 3,
   "gates": {
@@ -21,16 +21,28 @@
       }
     },
     "G2": {
-      "approved": false
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-08",
+      "answers": {
+        "Q1": "fold-into-G2-exhibit",
+        "Q2": "always-on-tiered-preflight",
+        "Q3": "scaffold-pointer-to-fable-it",
+        "Q4": "chore-epic-in-v3"
+      }
     },
     "G3": {
-      "approved": false
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-07",
+      "note": "FD-2 case review approved as-is (24 draft + 26 enforcement rows); freeze & fan out authorized"
     }
   },
   "contract": {
-    "version": null,
-    "path": null,
-    "frozenAt": null
+    "path": "delivery/v3/CONTRACT.md",
+    "version": "v1.0+AMD",
+    "frozenAt": "2026-07-07",
+    "sha256": "44b5507f930756c81758863de3aa70cc94b38da2bdbeafa775a06406e4b77fbf"
   },
   "artifacts": [
     {
@@ -141,6 +153,47 @@
       "from": "contract",
       "to": "contract",
       "note": "CHECKPOINT: user restarting machine; all agents reaped; resume = FD-2 case review of delivery/v3/CONTRACT.md, then freeze"
+    },
+    {
+      "at": "2026-07-08T01:51:04.257Z",
+      "from": "contract",
+      "to": "freezeGate",
+      "note": "STATE REPAIR on resume (2026-07-07 session): prior checkpoint wrote invalid state \"contract\"; canonical machine state is freezeGate (contract v0.9-draft on disk, casesReviewed=false, G3 pending). G2 recorded with owner+date from history (passed 4/4 on recommendations)."
+    },
+    {
+      "at": "2026-07-08T02:52:43.933Z",
+      "from": "freezeGate",
+      "to": "backboneFreeze",
+      "event": "G3_APPROVED",
+      "note": "FD-2 gate passed: cases approved without edits; Reviewed-by line filled; proceeding to backbone freeze"
+    },
+    {
+      "at": "2026-07-08T02:54:27.750Z",
+      "from": "backboneFreeze",
+      "to": "parallelPlanning",
+      "event": "CONTRACT_FROZEN",
+      "note": "CONTRACT v1.0 frozen (SHA pinned); backbone: 00-program-plan.md + STATUS.md written; fanning out squads A/B/C"
+    },
+    {
+      "at": "2026-07-08T13:39:28.756Z",
+      "from": "parallelPlanning",
+      "to": "parallelPlanning",
+      "event": "AMENDMENT_PASS",
+      "note": "AMD-1/2 user-approved, AMD-3 coordinator; squads A/B/C delivered, 50/50 ID audit clean; contract SHA re-pinned"
+    },
+    {
+      "at": "2026-07-08T13:40:14.373Z",
+      "from": "parallelPlanning",
+      "to": "verify",
+      "event": "SQUADS_COMPLETE",
+      "note": "guard artifactsOnDisk PASS (9 files); 50/50 ID audit + amendment pass complete"
+    },
+    {
+      "at": "2026-07-08T13:42:31.995Z",
+      "from": "verify",
+      "to": "handoff",
+      "event": "LINT_CLEAN",
+      "note": "handoffLintClean PASS (exit 0) after formatting-only reflow of prd-1-gatecheck-fd.md; decision logged"
     }
   ],
   "decisions": {
@@ -151,5 +204,5 @@
       "Q4": "chore-epic-in-v3"
     }
   },
-  "casesReviewed": false
+  "casesReviewed": true
 }

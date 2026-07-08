@@ -25,12 +25,12 @@ Harness: every gate-check case runs in `tests/run-contract.mjs` + a fixture unde
 - C4 [REAL] Frontmatter YAML parses but skill name ≠ directory name → fail (loader mismatch class).
 
 ## D. Mirror integrity (Stream D F1) (`gate-check mirror-check`)
-- D1 [REAL] All six shared root↔plugins/plan-it file pairs byte-identical → exit 0.
+- D1 [REAL] All eight shared root↔plugins/plan-it file pairs (4 files + 4 references/*.md) byte-identical → exit 0. [AMD-2 2026-07-08, approved Fernando Ott — source docs miscounted the enumerated set]
 - D2 [REAL] Any pair drifts (1-byte change in plugin copy of machine.json) → exit 2 listing each drifted pair.
 - D3 [REAL] mirror-check wired into the release epic checklist; CHANGELOG entry for v3.0.0 cannot be finalized with drift present.
 
 ## E. Statechart additions
-- E1 [REAL] machine.json byte-identical to v2 fc6abc8 copy (core untouched) — regression pin.
+- E1 [REAL] machine.json is an additive-only structural superset of the byte-pinned v2 regression copy tests/fixtures/v2/machine.v2.fc6abc8.json, verified by `gate-check machine-diff` (no v2 state/edge/guard renamed or removed) — regression pin. [AMD-1 2026-07-08, approved Fernando Ott — required by C-W2-01 preflight-in-machine.json]
 - E2 [REAL] machine-replan.json validates against the same schema as machine.json; entry state ≠ `intake` collision; final state `done`.
 - E3 [REAL] Phase-0 selector: `.plan-it/state.json` `machine` field absent → defaults to machine.json (v2 runs unaffected).
 - E4 [REAL] freezeGate: known-gaps ledger with 1 undispositioned row → G3_APPROVED rejected (EC-B7); all rows fix/waive/case-ify → accepted.
@@ -46,4 +46,4 @@ Harness: every gate-check case runs in `tests/run-contract.mjs` + a fixture unde
 - G2 [REAL] Block content seeded from this run's G1 decisions (verbatim keys: coordinator/mechanical/judgment/escalate-on-struggle).
 
 ---
-Reviewed-by: ____________  (fill to satisfy B2 — required before G2_ANSWERED)
+Reviewed-by: Fernando Ott 2026-07-07 — approved as-is at FD-2 gate (chat + file surfacing; 24 draft cases + 26 enforcement rows, zero strikes/edits). Binding refinement in Phase 9 may split/rename but not silently drop.
