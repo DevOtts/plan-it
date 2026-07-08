@@ -55,3 +55,9 @@
 - NOTE (no action): handoff lint's test-ID regex only matches the v2 `T-E*` grammar (harness cases in tests/run-contract.mjs, 26/26 green at baseline); v3 epics bind via `T-A*/T-B*/T-C*` + direct `C-W*` rows. Lint conditions still hold. Any lint-grammar widening would be a gate-check core change → deferred, not needed for DoD.
 - Wave 0 started on v2/deterministic-core (fixture corpus, run-contract.mjs additive extension, C-META-01 fail-closed sweep).
 - Ops: token-tiering — coordinator on Fable; wave/epic builders delegated to Sonnet-class subagents with pinned specs; coordinator verifies every claim by re-running suites and escalates a builder to Fable if it fails verification twice.
+
+## 2026-07-08 — Wave 0 VERIFIED; Wave 1 launched
+- Wave 0 verified by coordinator re-run (never trusted the builder's word): 26/26 v2 T-E* pass; v3 registration reports 25 PEND each naming its gap; `tests/v3/fail-closed-sweep.mjs` exit 1, 25 gaps named. C-META-01 excludes itself from its own sweep (fail-closed-sweep.mjs:34, documented) — 25 examined + 1 umbrella = 26 enforcement rows, computed `grep -cE '^\| [CT]-[A-Z0-9-]+\s*\|\s*@' delivery/v3/CONTRACT.md` = 26.
+- Scope ruling (Wave-0 builder flagged): the shared `--dir` parser and new verbs (`contract`, `testconv`, `reconcile`) in scripts/gate-check.mjs belong to Epic 1/Squad A, not Wave 0. Squads B/C must NOT implement `--dir` or Squad A verbs; cases whose `run:` depends on them stay PEND and are listed INTEGRATION-PENDING in squad reports; coordinator wires them at merge time. Merge order: E1 → E2 → E3, full suite + sweep re-run after each merge.
+- Squad B additionally owns: ENV-FACTS.md schema + finishing the 4 Wave-0 stub fixtures (preflight-s, preflight-ml, absent-tool, slow-probe) and the byte-pinned tests/fixtures/v2/machine.v2.fc6abc8.json via `git show fc6abc8:machine.json`.
+- Version bump to 3.0.0, CHANGELOG, tag: Wave 2 only (coordinator). No squad bumps versions.
