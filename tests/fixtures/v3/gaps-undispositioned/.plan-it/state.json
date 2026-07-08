@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture: freezeGate known-gaps ledger with an undispositioned row", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "freezeGate",
+  "size": "M",
+  "shape": 2,
+  "gates": {
+    "G3": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-08",
+      "knownGaps": [
+        { "id": "GAP-1", "desc": "no owner assigned yet for the OAuth connection" }
+      ]
+    }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [],
+  "history": [ { "state": "freezeGate", "event": "G3_APPROVED", "at": "2026-07-08T00:00:00Z" } ]
+}

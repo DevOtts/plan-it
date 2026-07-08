@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture: unprocured credential with no owner", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "decisionGate",
+  "size": "M",
+  "shape": 2,
+  "gates": {
+    "G2": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-07-08",
+      "credentials": [
+        { "name": "third-party-api-key", "status": "unprocured" }
+      ]
+    }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [],
+  "history": [ { "state": "decisionGate", "event": "G2_APPROVED", "at": "2026-07-08T00:00:00Z" } ]
+}
