@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "3.0.0",
+  "casesReviewed": true,
+  "run": { "goal": "fixture: real-project positional freeze, contract carries a valid RUN-POLICY", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "backboneFreeze"
+}

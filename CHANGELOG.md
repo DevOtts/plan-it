@@ -3,6 +3,44 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 3.1.0 — 2026-07-08
+
+The **enforcement-reach** release. A head-to-head field trial (v2.1.0 vs 3.0.0
+planning the same brief on an *external* project, not plan-it's own dogfood)
+surfaced two ways the v3 freeze guard could be silently bypassed on a real
+project layout, plus one enhancement that stays deferred. All changes are
+additive checker-reach fixes in `gate-check.mjs` (+ its mirror); no statechart
+state, verb, or frozen CONTRACT semantics changed — the protected v2 core stays
+byte-identical, and `machine-diff` still reports an additive-only superset.
+
+- **E1 — freeze hardening no longer depends on invocation form or plan-it's own
+  path.** The `casesReviewed` (C-W1-03) and RUN-POLICY-in-package checks
+  previously fired only in `freeze --dir` mode, and `--dir` hardcoded
+  `delivery/v3/CONTRACT.md` (the dogfood layout). A real project freezes
+  `delivery/CONTRACT.md` positionally, so the checks never ran and a package
+  with no RUN-POLICY froze at exit 0. Fix (W3.1-2): the v3 checks now key off a
+  discoverable run root (`.plan-it/state.json` resolved from the contract's
+  canonical delivery path), not the flag; `--dir` also finds
+  `delivery/CONTRACT.md`. A freestanding v2 contract with no run state stays
+  byte-identical (no RUN-POLICY demanded).
+- **E2 — `stripCode` no longer false-positives on a line-wrapped inline code
+  span.** A `` `…<id>…` `` span that wrapped across a newline was not stripped,
+  so the token tripped the frozen-contract placeholder scan. Fix (W3.1-1): the
+  inline-span strip is newline-tolerant but bails on a paragraph break, so a
+  bare-prose `<id>` still fails closed. (Same bug class as the earlier `/m` `$`
+  truncation trap.)
+- **E3 — Test-Contract-review content teeth: assessed, deferred (W3.1-3).**
+  Giving the FD-2 review mechanical coverage teeth (every decision-ID/governance
+  rule → ≥1 case) requires a standardized review-file schema that does not yet
+  exist and cannot be added without a CONTRACT amendment; a heuristic parser
+  would over-reach and block valid freezes. Deferred with a dated
+  `delivery/decisions.md` entry (no silent drop). The belt-and-suspenders holds:
+  review *existence* is still enforced at the decision `state` gate.
+
+New binding cases: `T-W31-1a/1b` (E2 strip + fail-closed) and
+`T-W31-2a/2b/2c/2d` (E1 reach + v2 byte-identical). Full suite green: v2 47/47 +
+v3 25/25, mirror-check 8/8, machine-diff additive.
+
 ## 3.0.0 — 2026-07-08
 
 The **field-hardened core** release. v3 folds the findings of the multi-squad
