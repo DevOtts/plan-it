@@ -5,7 +5,7 @@
     "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
     "startedAt": "2026-07-07T00:00:00Z"
   },
-  "state": "decisionGate",
+  "state": "contract",
   "size": "M",
   "shape": 3,
   "gates": {
@@ -129,6 +129,21 @@
       "state": "decisionGate",
       "event": "G2_PRESENTED",
       "at": "2026-07-07T15:56:00Z"
+    },
+    {
+      "at": "2026-07-08T00:17:48.411Z",
+      "from": "gate:G2",
+      "to": "contract",
+      "note": "G2 passed 4/4 on recommendations; contract v0.9 drafted, pending FD-2 case review"
     }
-  ]
+  ],
+  "decisions": {
+    "G2": {
+      "Q1": "fold-into-G2-exhibit",
+      "Q2": "always-on-tiered-preflight",
+      "Q3": "scaffold-pointer-to-fable-it",
+      "Q4": "chore-epic-in-v3"
+    }
+  },
+  "casesReviewed": false
 }
