@@ -9,6 +9,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
+import { parseContractCases, mechanismGap } from "./v3/lib/contract-cases.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const GC = join(ROOT, "scripts", "gate-check.mjs");
@@ -293,6 +294,35 @@ t("T-E5-02", "root and plugin copies are byte-identical", () => {
   }
 });
 
+// ---------- v3 (Wave 0+) ----------
+// Binding cases are discovered from delivery/v3/CONTRACT.md's own "## Cases"
+// table (COMPUTED, W5 — never a hand-copied list of the 26 enforcement rows)
+// via the shared parser in tests/v3/lib/contract-cases.mjs — the same module
+// tests/v3/fail-closed-sweep.mjs (C-META-01) uses, so there is exactly one
+// parsing mechanism, not two. A row whose Wave-1 mechanism (fixture/script/
+// verb/--dir support) doesn't exist yet is reported PENDING — never silently
+// passed, and never counted as a v2-regression FAIL either. Once a squad's
+// epic lands the missing piece, the very same row starts executing for real
+// here with zero further edits to this file.
+const v3Pending = [];
+const v3Results = [];
+for (const row of parseContractCases()) {
+  if (row.id === "C-META-01") continue; // self — verified directly via `node tests/v3/fail-closed-sweep.mjs`
+  const gap = mechanismGap(row);
+  if (gap) {
+    v3Pending.push({ id: row.id, reason: gap });
+    continue;
+  }
+  try {
+    const [bin, ...cmdArgs] = row.run.split(/\s+/);
+    execFileSync(bin, cmdArgs, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    // Mechanism exists but exited 0 against what should be a VIOLATING fixture.
+    v3Results.push({ id: row.id, pass: false, err: `exited 0 against its violating fixture — fail-closed broken (run: ${row.run})` });
+  } catch {
+    v3Results.push({ id: row.id, pass: true });
+  }
+}
+
 // ---------- report ----------
 let passCount = 0;
 for (const r of results) {
@@ -304,4 +334,25 @@ for (const r of results) {
   }
 }
 console.log(`\n${passCount}/${results.length} passed`);
-process.exit(passCount === results.length ? 0 : 1);
+
+let v3FailCount = 0;
+if (v3Pending.length > 0 || v3Results.length > 0) {
+  console.log(`\n-- v3 (Wave 0+, from delivery/v3/CONTRACT.md's Cases table) --`);
+  for (const p of v3Pending) console.log(`PEND  ${p.id}  ${p.reason}`);
+  for (const r of v3Results) {
+    if (r.pass) {
+      console.log(`PASS  ${r.id}  fail-closed against its violating fixture`);
+    } else {
+      v3FailCount++;
+      console.log(`FAIL  ${r.id}  ${r.err}`);
+    }
+  }
+  const v3PassCount = v3Results.filter((r) => r.pass).length;
+  console.log(`${v3PassCount}/${v3Results.length} v3 mechanism-ready cases fail-closed; ${v3Pending.length} pending Wave 1 mechanism(s) (not silently passed)`);
+}
+
+// v3 pending rows never block this harness's exit code (that is
+// tests/v3/fail-closed-sweep.mjs's job, C-META-01) — only an actual
+// regression (a landed mechanism that stops being fail-closed) does, same as
+// any v2 T-E* failure.
+process.exit(passCount === results.length && v3FailCount === 0 ? 0 : 1);
