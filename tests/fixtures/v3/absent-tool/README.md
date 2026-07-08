@@ -1,12 +1,13 @@
-# Fixture (STUB): absent-tool
+# Fixture: absent-tool (C-W2-03)
 
-Status: NOT-STARTED — naming-convention placeholder only (Epic A1's
-cross-squad stub strategy). Real content belongs to Squad B's epic, once
-`references/formats.md §9` (the ENV-FACTS.md probe schema) exists — building
-speculative content here risked locking in the wrong shape.
+Real fixture (was a stub). Exercises the cross-squad seam: Squad B's preflight
+writes `ENV-FACTS.md` marking a tool ABSENT; Squad A's `contract` verb must fail
+any Test Contract case whose `run:` cell *invokes* that tool.
 
-Consumed by: **C-W2-03 / T-B1-05**.
-Frozen run: command (verbatim from delivery/v3/CONTRACT.md / the binding
-epic table): `node scripts/gate-check.mjs contract --dir tests/fixtures/v3/absent-tool`
+- `ENV-FACTS.md` marks `frobnicate` ABSENT (and `node` PRESENT, a control).
+- `delivery/v3/CONTRACT.md` has C-AT-01 (control: names frobnicate only as an
+  argument to `node`, still runnable) and C-AT-02 (invokes `frobnicate` directly,
+  NOT runnable).
 
-An ENV-FACTS.md probe marked ABSENT for a tool a Test Contract case's run: cell invokes must fail the contract verb (cross-squad: Squad B's preflight + Squad A's contract).
+Frozen run: `node scripts/gate-check.mjs contract --dir tests/fixtures/v3/absent-tool`
+Expected: FAIL, citing C-W2-03 on C-AT-02 only.

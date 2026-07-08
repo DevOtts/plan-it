@@ -81,6 +81,27 @@ try {
     }
   }
 
+  // v3 W3 (C-W3-02) — no hardcoded model IDs in plan artifacts. Tiers resolve
+  // to concrete models at execution time; a literal `claude-<...>` model ID
+  // baked into a deliverable is a guard violation. Mentions inside fenced
+  // blocks / inline code are being described, not baked in — same mention-vs-use
+  // treatment as W4 above (regex verbatim from CONTRACT.md C-W3-02).
+  const MODEL_ID_RE = /claude-[a-z0-9-]+/;
+  for (const raw of contents) {
+    const noFences = raw.replace(/```[\s\S]*?```/g, (m) => m.replace(/[^\n]/g, " "));
+    const scanLines = noFences.split("\n").map((l) => l.replace(/`[^`\n]*`/g, " "));
+    for (let i = 0; i < scanLines.length; i++) {
+      const hit = scanLines[i].match(MODEL_ID_RE);
+      if (!hit) continue;
+      deny(
+        `plan-it W3 (hard-enforced): "${filePath}" is a delivery artifact and this write ` +
+          `hardcodes model ID "${hit[0]}" (content line ${i + 1}). Tiers resolve to concrete ` +
+          `models at execution time — reference a tier (top/mid/low) or a fable-it scaffold ` +
+          `pointer, never a literal claude-* model ID.`
+      );
+    }
+  }
+
   const cwd = input.cwd ?? process.cwd();
   const statePath = join(cwd, ".plan-it", "state.json");
   if (!existsSync(statePath)) allow();

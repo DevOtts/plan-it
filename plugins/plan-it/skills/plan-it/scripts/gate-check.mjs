@@ -786,6 +786,30 @@ function looseCaseRows(text) {
   return rows;
 }
 
+// C-W2-03 — cross-squad seam (Squad B preflight ⇄ Squad A contract). Parse an
+// ENV-FACTS.md (written by `gate-check preflight`) and return the set of tool
+// command tokens the environment cannot supply — every non-flag token in the
+// `check` argv of any row whose status is ABSENT or TIMEOUT (both "fail the
+// preflight gate", per the ENV-FACTS header). Absent file → empty set, so the
+// cross-check is a no-op until a preflight has actually run.
+function unavailableToolsFromEnvFacts(dir) {
+  const factsPath = join(dir, "ENV-FACTS.md");
+  const unavailable = new Set();
+  if (!existsSync(factsPath)) return unavailable;
+  for (const line of readFileSync(factsPath, "utf8").split("\n")) {
+    if (!line.trimStart().startsWith("|")) continue;
+    const cells = line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+    if (cells.length < 3) continue;
+    const [id, check, status] = cells;
+    if (id === "id" || /^-+$/.test(id)) continue; // header / separator
+    if (status !== "ABSENT" && status !== "TIMEOUT") continue;
+    for (const tok of check.replace(/`/g, "").split(/\s+/)) {
+      if (tok && !tok.startsWith("-")) unavailable.add(tok);
+    }
+  }
+  return unavailable;
+}
+
 // ---------------------------------------------------------------- contract
 // Epic A2 — W1 structural hygiene + W5 computed tally (cases C-W1-01/04/05/06,
 // C-W5-01). Repo-level checks (CLAUDE.md conventions block, DIFF-MANIFEST
@@ -836,6 +860,20 @@ function cmdContract(rawArgs) {
       const touches = manifest.match(/\b(plugin\.json|SKILL\.md|marketplace\.json)\b/g);
       if (touches && !rows.some((r) => r.tag === "@case-packaging")) {
         fail(`C-W1-04: diff manifest names packaging file(s) ${[...new Set(touches)].join(", ")} but the case table has zero @case-packaging rows`);
+      }
+    }
+    // C-W2-03 — a case whose run: invokes a tool the environment probe marked
+    // ABSENT/TIMEOUT must not be treated as runnable. The invoked tool is the
+    // command name (first token) of the run: cell; matching an ENV-FACTS
+    // ABSENT tool fails the contract (the case cannot actually be executed here).
+    const unavailable = unavailableToolsFromEnvFacts(dir);
+    if (unavailable.size > 0) {
+      for (const r of rows) {
+        if (!r.run || r.run.startsWith("manual:")) continue;
+        const cmd = r.run.split(/\s+/)[0];
+        if (unavailable.has(cmd)) {
+          fail(`C-W2-03: case ${r.id} run: invokes "${cmd}", which ENV-FACTS.md marks ABSENT/TIMEOUT — the case is not runnable in this environment (probe the tool or gate the case)`);
+        }
       }
     }
   }

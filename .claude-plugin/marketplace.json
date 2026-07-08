@@ -5,7 +5,7 @@
     "name": "DevOtts",
     "url": "https://github.com/DevOtts"
   },
-  "description": "Direct-discovery marketplace for the plan-it plugin. Add this repo to install the plugin by itself; it is also published in the wider DevOtts marketplace.",
+  "description": "Direct-discovery marketplace for the plan-it plugin. Add this repo to install the plugin by itself.",
   "plugins": [
     {
       "name": "plan-it",
