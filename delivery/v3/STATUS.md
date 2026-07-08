@@ -8,6 +8,6 @@ Tallies are computed by `gate-check reconcile` — never hand-edit counts here (
 | Squad A | prd-1 / epics-1 (gate-check verbs & FD enforcement) | VERIFIED | B3-map audit: 18/18 IDs bound, grep sweep 2026-07-08 (decisions.md) |
 | Squad B | prd-2 / epics-2 (statechart, preflight & tiering) | VERIFIED | B3-map audit: 14/14 IDs bound, grep sweep 2026-07-08 (decisions.md) |
 | Squad C | prd-3 / epics-3 (vocab, packaging & release) | VERIFIED | B3-map audit: 18/18 IDs bound, grep sweep 2026-07-08 (decisions.md) |
-| Wave 0 | fixture corpus + harness extension | NOT-STARTED | — |
+| Wave 0 | fixture corpus + harness extension | IN-PROGRESS | started 2026-07-08 |
 | Wave 1 | build epics | NOT-STARTED | — |
 | Wave 2 | release & comms (v3.0.0 tag) | NOT-STARTED | — |
