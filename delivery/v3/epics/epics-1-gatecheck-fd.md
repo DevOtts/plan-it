@@ -10,8 +10,10 @@ FD-2 draft *case* IDs B1-B3 (§B). Every reference below says "case A1" /
 "case B2" / etc. for case IDs, and "Epic A1" / "Epic A3" for epic IDs, to keep
 the two namespaces apart.
 
-Status vocabulary used below: NOT-STARTED only (this is the planning
-artifact; no code has been written by this lane yet).
+Status vocabulary used below (binding, W4): NOT-STARTED · IN-PROGRESS ·
+IMPLEMENTED-NOT-VERIFIED · VERIFIED (case ID + run-output ref required).
+Statuses updated per epic as Wave 1 lands — see the dated Squad A completion
+report at the bottom of this file.
 
 ---
 
@@ -21,7 +23,9 @@ Branch: `epic/a1-fixture-harness` off `v2/deterministic-core`
 Dependencies: none (Wave 0 — must land before Epics A2-A4 can run their
 binding cases, and before Squad B/C's own enforcement rows can be
 fail-closed-swept)
-Status: NOT-STARTED
+Status: VERIFIED — T-A1-01, coordinator re-verification 2026-07-08
+(`delivery/v3/STATUS.md` Wave 0 row: sweep exit 1, 25/25 gaps named; v2
+baseline 26/26; commits 557ed64..211b135)
 
 ### Task checklist
 
@@ -111,7 +115,10 @@ Status: NOT-STARTED
 Branch: `epic/a2-contract-verb` off `v2/deterministic-core`
 Dependencies: Epic A1 (fixtures `no-conventions/`, `pkg-no-case/`,
 `no-run-col/`, `manual-heavy/`, `tally-drift/`; the shared `--dir` parser)
-Status: NOT-STARTED
+Status: IMPLEMENTED-NOT-VERIFIED — commit 773827d on `epic/e1-gatecheck-fd`;
+T-V3-A2-01..04 pass + C-W1-01/04/05/06, C-W5-01 fail-closed
+(`node tests/run-contract.mjs` 2026-07-08, 41/41); awaiting coordinator
+re-verification
 
 ### Task checklist
 
@@ -158,7 +165,9 @@ Status: NOT-STARTED
 Branch: `epic/a3-testconv-fd1` off `v2/deterministic-core`
 Dependencies: Epic A1 (fixtures `conventions-present/`, `no-conventions/`,
 `conventions-stale/`, `conventions-declined/`; idempotency script)
-Status: NOT-STARTED
+Status: IMPLEMENTED-NOT-VERIFIED — commit 8998256 on `epic/e1-gatecheck-fd`;
+T-A3-A1..A4 pass + C-W1-02 fail-closed (`node tests/run-contract.mjs`
+2026-07-08, 41/41); awaiting coordinator re-verification
 
 ### Task checklist
 
@@ -205,7 +214,10 @@ Branch: `epic/a4-reconcile-fd2` off `v2/deterministic-core`
 Dependencies: Epic A1 (fixtures `unreviewed/`, `orphan-req/`,
 `epic-no-cases/`, `reconcile-embed-check/`, `no-review-file/`,
 `review-no-ack/`, `draft-case-orphan/`)
-Status: NOT-STARTED
+Status: IMPLEMENTED-NOT-VERIFIED — commit fd0dd9d on `epic/e1-gatecheck-fd`;
+T-A4-01/02/03/04 + T-A4-B1/B2/B3 pass + C-W1-03, C-W5-02/03/04 fail-closed
+(`node tests/run-contract.mjs` 2026-07-08, 41/41); awaiting coordinator
+re-verification
 
 ### Task checklist
 
@@ -314,3 +326,39 @@ _Squad A — mid tier, escalate-on-struggle per RUN-POLICY (`delivery/v3/CONTRAC
 ## Coordinator addendum — 2026-07-08 (dated per amendment loop)
 - Case IDs normalized `T-*` → `T-*` to match the `references/templates.md` grammar used by Squads B/C (mechanical, no case content changed).
 - **Epic A4 scope addition (ruling on Squad B's PROPOSED-AMENDMENT-2):** additively widen the legacy `handoff` ID/heading regexes at `scripts/gate-check.mjs:115,121,161` from literal `E` to `[A-Z]` so v3 `A*/B*/C*` epic IDs and `T-A*/T-B*/T-C*` case IDs are recognized. Verification (not re-implementation) task remains in Epic B2.
+
+---
+
+## Squad A completion report — 2026-07-08 (disk half of the disk-AND-message rule; the message half was attempted but no coordinator agent was reachable from this worktree)
+
+Branch: `epic/e1-gatecheck-fd` (single lane branch per kickoff instruction,
+superseding the per-epic branch names above; cut from `v2/deterministic-core`
+tip 25bb5b9 "wave0: VERIFIED" after the worktree-spawn artifact fix).
+
+Commits, one green round each (harness 41/41 + fixtures clean + plugin mirror
+byte-identical before every commit):
+
+- 773827d — Epic A2: `contract` verb (C-W1-01/04/05/06, C-W5-01) + shared `--dir` parser.
+- 8998256 — Epic A3: `testconv` verb (cases A1/A2/A4; exit 2 = needs-human-input per AMD-3), stale-receipt branch in `state` (case A3), `tests/v3/conventions-idempotent.mjs` (C-W1-02).
+- fd0dd9d — Epic A4: `reconcile` verb (C-W5-02/03 + case B3), embedded in `handoff` via the shared failures array (C-W5-04, `tests/v3/reconcile-embedded.mjs`), `freeze --dir` casesReviewed check (C-W1-03), `state` B1/B2 review-artifact checks, and the PROPOSED-AMENDMENT-2 ruling applied.
+
+Evidence: `node tests/run-contract.mjs` → 41/41; v3 sweep 10/10
+mechanism-ready cases fail-closed (all 11 enforcement rows incl. C-META-01,
+all 7 draft cases bound); the 15 remaining PENDs are Squad B/C mechanisms,
+named not silently passed.
+
+Two flags for the coordinator:
+
+1. **Regex-widening scope.** The addendum names `:115,121,161`; the counted-rows
+   and section-coverage regexes inside `cmdHandoff` (the other two `T-E`
+   occurrences) were widened too for consistency — pure superset, all v2
+   T-E3-* rows still green. Narrow back if the ruling was meant literally.
+2. **Case B3 semantics tightened after a real test failure.** "Bound" now means
+   the draft ID appears in a `|`-table row of an epic file (per the spec
+   wording "appears in some epic's Binding Test Contract table"), and draft
+   IDs are extracted only from list-item declarations — prose citations
+   ("per case B3") and prose mentions ("not Z9" in a heading) neither declare
+   nor bind.
+
+Cross-squad: Squad B's T-B1-05 consumes this lane's `contract` verb; Epic B2
+carries the verification task for the regex widening.
