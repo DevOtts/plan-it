@@ -294,6 +294,33 @@ t("T-E5-02", "root and plugin copies are byte-identical", () => {
   }
 });
 
+// ---------- v3 Squad A (Epics A2-A4) — binding-table cases from
+// delivery/v3/epics/epics-1-gatecheck-fd.md that are not enforcement rows in
+// the frozen CONTRACT Cases table (positives + message-precision negatives).
+const FIX3 = join(FIX, "v3");
+
+t("T-V3-A2-01", "contract passes on the real frozen CONTRACT.md (positional form; W5 computed-tally smoke)", () => {
+  const r = gc(["contract", join(ROOT, "delivery", "v3", "CONTRACT.md")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-V3-A2-02", "contract names C-W1-05 + the row ID on a missing run: cell", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "no-run-col")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}`);
+  assert(/C-W1-05/.test(r.out) && /F-CASE-02/.test(r.out), `does not name C-W1-05 + F-CASE-02: ${r.out}`);
+});
+
+t("T-V3-A2-03", "contract --override-manual accepts a >30% manual share deliberately", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "manual-heavy"), "--override-manual"]);
+  assert(r.code === 0, `expected exit 0 with override, got ${r.code}: ${r.out}`);
+});
+
+t("T-V3-A2-04", "contract tally-drift failure names both numbers (hand-typed 5 vs computed 2)", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "tally-drift")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}`);
+  assert(/C-W5-01/.test(r.out) && /\b5\b/.test(r.out) && /\b2\b/.test(r.out), `does not name both numbers: ${r.out}`);
+});
+
 // ---------- v3 (Wave 0+) ----------
 // Binding cases are discovered from delivery/v3/CONTRACT.md's own "## Cases"
 // table (COMPUTED, W5 — never a hand-copied list of the 26 enforcement rows)

@@ -74,6 +74,14 @@ export function mechanismGap(row, opts = {}) {
     const verbs = registeredVerbs(gcSrc);
     if (!verbs.has(verb)) return `verb "${verb}" not yet registered in scripts/gate-check.mjs`;
     if (/--dir\b/.test(row.run) && !supportsDirFlag(gcSrc)) return `verb "${verb}" exists but --dir flag is not yet supported`;
+    // A registered verb is only this row's mechanism once it implements THIS
+    // row's check: every gate-check case implementation fails naming its case
+    // ID (PRD prd-1-gatecheck-fd §2), so a source reference to the ID is the
+    // cheapest honest signal. Without this, registering a verb for one squad's
+    // rows would make another squad's not-yet-implemented rows look "ready"
+    // and either exit 0 (false fail-closed violation) or fail for an
+    // incidental reason (false PASS) — both dishonest under W5/fail-closed.
+    if (!gcSrc.includes(row.id)) return `verb "${verb}" is registered but the ${row.id} check is not yet implemented in scripts/gate-check.mjs (no source reference to the case ID)`;
   }
   return null;
 }
