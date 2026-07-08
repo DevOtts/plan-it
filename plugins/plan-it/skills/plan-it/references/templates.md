@@ -138,14 +138,25 @@ Amendments fold cross-cutting squad findings back here so squads can't drift.
 
 ### `KICKOFF.md` — fresh-session orientation
 ```
-1. What you're building (one line)
-2. First concrete slice (Wave 0 epics, parallel/sequential)
-3. Where code lives (repo table: path · default branch)
-4. Locked decisions (each with rationale)
-5. Phase/wave order
-6. How to run + test (prerequisites + verifiability precheck)
-7. Gotchas (each contract amendment = one trap to avoid)
-8. Handoff state (committed / open / decisions owed)
+0. Pinning (PRD §D4 — machine-checkable resume anchor, always first):
+   Repo: <absolute repo path> @ <full 40-hex git SHA>
+   State: <absolute repo path>/.plan-it/state.json
+   Contract: <path to CONTRACT.md> sha256=<64-hex SHA-256 of CONTRACT.md>
+1. Re-derive tally + reconcile from disk (the builder's first instruction):
+   recompute the board from `.plan-it/state.json` + the CONTRACT case table,
+   reconcile against every total claimed below; on mismatch, stop and report
+   — never build on a stale board (PRD §D5).
+2. What you're building (one line)
+3. First concrete slice (Wave 0 epics, parallel/sequential)
+4. Where code lives (repo table: path · default branch)
+5. Locked decisions (each with rationale)
+6. Phase/wave order
+7. How to run + test (prerequisites + verifiability precheck)
+8. Gotchas (each contract amendment = one trap to avoid)
+9. Handoff state (committed / open / decisions owed). Resume is pinned-only:
+   a fresh session re-enters through block 0 + state.json, never through
+   chat-history archaeology — fuzzy-resume ("continue where we left off",
+   re-reading old sessions as the source of truth) is banned.
 ```
 
 ### `STATUS.md` — live board

@@ -45,6 +45,42 @@ try {
   const filePath = input.tool_input?.file_path ?? input.tool_input?.notebook_path ?? "";
   if (!filePath || !DELIVERABLE_RE.test(filePath)) allow();
 
+  // v3 W4 (C-W4-01) — status-vocabulary hard guard, additive to the freeze
+  // check below. A deliverable write claiming "done"/"complete"/"✅" without a
+  // VERIFIED token + case reference on the same or an adjacent line is denied.
+  // Only recognized tool_input content shapes are scanned; anything else falls
+  // through untouched (and the enclosing try/catch keeps the hook fail-open).
+  const VOCAB = "NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED";
+  const ti = input.tool_input ?? {};
+  const contents = [];
+  if (typeof ti.content === "string") contents.push(ti.content); // Write
+  if (typeof ti.new_string === "string") contents.push(ti.new_string); // Edit
+  if (typeof ti.new_str === "string") contents.push(ti.new_str); // Edit (alt key)
+  if (typeof ti.new_source === "string") contents.push(ti.new_source); // NotebookEdit
+  if (Array.isArray(ti.edits)) {
+    for (const e of ti.edits) if (e && typeof e.new_string === "string") contents.push(e.new_string); // MultiEdit
+  }
+  for (const raw of contents) {
+    // Mention vs use: fenced blocks (blanked line-preservingly) and inline
+    // code spans are being *described*, not claimed — same rationale as
+    // gate-check.mjs's stripCode, ported here (separate file/process).
+    const noFences = raw.replace(/```[\s\S]*?```/g, (m) => m.replace(/[^\n]/g, " "));
+    const rawLines = noFences.split("\n");
+    const scanLines = rawLines.map((l) => l.replace(/`[^`\n]*`/g, " "));
+    for (let i = 0; i < scanLines.length; i++) {
+      const hit = scanLines[i].match(/\b(done|complete)\b|✅/i);
+      if (!hit) continue;
+      const window = rawLines.slice(Math.max(0, i - 1), i + 2).join("\n");
+      if (/\bVERIFIED\b/.test(window) && /\b[A-Z][A-Z0-9-]*-\d+\b/.test(window)) continue;
+      deny(
+        `plan-it W4 (hard-enforced): "${filePath}" is a delivery artifact and this write claims ` +
+          `"${hit[0]}" (content line ${i + 1}) without a VERIFIED token + case reference (e.g. T-E1-01) ` +
+          `on the same or an adjacent line. The status vocabulary is closed: ${VOCAB}. ` +
+          `Claim VERIFIED only next to a case ID and its run output; otherwise write IMPLEMENTED-NOT-VERIFIED.`
+      );
+    }
+  }
+
   const cwd = input.cwd ?? process.cwd();
   const statePath = join(cwd, ".plan-it", "state.json");
   if (!existsSync(statePath)) allow();

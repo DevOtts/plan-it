@@ -493,6 +493,11 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   dry-run shipped — don't hand off without it.)
 - **Assemble:** `delivery/README.md` (index) + `delivery/KICKOFF.md` (orientation:
   one-liner, first slice, repo map, locked decisions, gotchas, handoff state).
+  KICKOFF is *generated*, never copied stale: it MUST open with the "0. Pinning"
+  block (absolute repo path @ full git SHA, `.plan-it/state.json` path, CONTRACT
+  SHA-256) and make "re-derive tally + reconcile from disk, stop-and-report on
+  mismatch" the builder's first numbered step (`references/templates.md`
+  KICKOFF block, PRD §D4–D5).
 - **Fill the board:** `STATUS.md` rows reflect Wave-0 in-progress, rest backlog.
 - **Hand off** (the terminal phase — the build runs in a *fresh* session):
   - Wire the repo to your knowledge base (`/sync-obsidian` or equivalent), if your

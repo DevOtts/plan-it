@@ -1,4 +1,4 @@
-# Fixture delivery note (C-W4-02)
+# Feature handoff notes
 
 ## E9 — sample epic section
 
@@ -11,6 +11,3 @@ Test Contract — Count: 1
 ## Claim under test
 
 The parser feature is VERIFIED and ready to ship.
-
-(Deliberately no fenced output block and no run-output citation near the
-claim above — the naked tag is exactly what C-W4-02 exists to catch.)

@@ -491,6 +491,49 @@ function cmdHandoff(rawArgs) {
       const ph = prose.match(PLACEHOLDER_RE);
       if (ph) fail(`${f}: placeholder "${ph[0]}" inside a FROZEN artifact`);
     }
+
+    // 5b. (C-W4-02) Every VERIFIED claim needs a run-output reference — a
+    //    fenced output block or a `run:`/`output:` citation — within ±5 lines.
+    //    Vocabulary enumerations and IMPLEMENTED-NOT-VERIFIED are mentions,
+    //    not claims.
+    const lines = text.split("\n");
+    const hasRunRef = (i) => {
+      const from = Math.max(0, i - 5);
+      const to = Math.min(lines.length - 1, i + 5);
+      for (let j = from; j <= to; j++) {
+        if (/```/.test(lines[j]) || /\b(run|output):/i.test(lines[j])) return true;
+      }
+      return false;
+    };
+    lines.forEach((line, i) => {
+      const scannable = line.replace(/`[^`\n]*`/g, ""); // backticked = mention
+      if (!/(?<!NOT-)\bVERIFIED\b/.test(scannable)) return;
+      if (/NOT-STARTED/.test(scannable) && /IN-PROGRESS/.test(scannable)) return; // vocab enumeration
+      if (!hasRunRef(i)) {
+        fail(`${f}:${i + 1}: "VERIFIED" without a run-output reference (fenced output or run:/output: citation) within 5 lines — verified means ran, not read`);
+      }
+    });
+
+    // 5c. (C-W4-03) STATUS-board vocabulary: any table with a `Status` column
+    //    (or a "## … STATUS …" heading shape) may only use the 4-term set.
+    const VOCAB = new Set(["NOT-STARTED", "IN-PROGRESS", "IMPLEMENTED-NOT-VERIFIED", "VERIFIED"]);
+    const boardShape = /^#{1,3}[^\n]*\bSTATUS\b/m.test(text) || /^\s*\|[^\n]*\|\s*status\s*\|/im.test(text);
+    if (boardShape) {
+      lines.forEach((line, i) => {
+        if (!/^\s*\|/.test(line)) return;
+        const cells = line.split("|").slice(1, -1).map((c) => c.trim());
+        const col = cells.findIndex((c) => /^status$/i.test(c));
+        if (col === -1) return; // not a header row with a Status column
+        for (let j = i + 2; j < lines.length && /^\s*\|/.test(lines[j]); j++) {
+          const row = lines[j].split("|").slice(1, -1).map((c) => c.trim());
+          const val = row[col] ?? "";
+          if (val === "" || /^:?-+:?$/.test(val)) continue; // separator/empty
+          if (!VOCAB.has(val)) {
+            fail(`${f}:${j + 1}: status "${val}" outside the 4-term vocabulary (NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED)`);
+          }
+        }
+      });
+    }
   }
   if (files.length > 0 && allCaseIds.size === 0) {
     fail(`no T-<EID>-NN test cases found anywhere under ${dir} — a delivery package without a Test Contract cannot hand off`);
@@ -503,6 +546,40 @@ function cmdHandoff(rawArgs) {
   // double-reported (PRD §5 R4). Runs when a repo root is derivable.
   const root = rootFlag ?? (basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : null);
   if (root) reconcileScan(root);
+
+  // 7. (C-W6-04, PRD §D8) plugin↔marketplace parity — scoped: only fires when
+  //    the package carries packaging files (both manifests under the dir).
+  const pkg = { plugin: null, marketplace: null };
+  (function findPkg(d) {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      if (e.name.startsWith(".") && e.name !== ".claude-plugin") continue;
+      const p = join(d, e.name);
+      if (e.isDirectory()) findPkg(p);
+      else if (e.name === "plugin.json" && !pkg.plugin) pkg.plugin = p;
+      else if (e.name === "marketplace.json" && !pkg.marketplace) pkg.marketplace = p;
+    }
+  })(dir);
+  if (pkg.plugin && pkg.marketplace) {
+    try {
+      const pj = JSON.parse(readFileSync(pkg.plugin, "utf8"));
+      const mk = JSON.parse(readFileSync(pkg.marketplace, "utf8"));
+      const entry = (mk.plugins ?? []).find((x) => x?.name === pj.name) ?? (mk.plugins ?? [])[0];
+      if (!entry) {
+        fail(`${pkg.marketplace}: no plugins[] entry matching plugin.json name "${pj.name}"`);
+      } else {
+        let drift = false;
+        for (const field of ["name", "version", "license"]) {
+          if (field in entry && field in pj && entry[field] !== pj[field]) {
+            fail(`packaging parity: ${pkg.plugin} ${field} "${pj[field]}" ≠ ${pkg.marketplace} plugins[] ${field} "${entry[field]}" — one release, one version story`);
+            drift = true;
+          }
+        }
+        if (!drift) ok(`packaging parity: ${pkg.plugin} ↔ ${pkg.marketplace} agree on name/version/license`);
+      }
+    } catch (e) {
+      fail(`packaging parity: unparseable manifest — ${e.message}`);
+    }
+  }
 
   finish("pre-handoff lint (mechanizable half — the judgment half stays with the model)");
 }
@@ -934,6 +1011,175 @@ function cmdReconcile(rawArgs) {
   finish(label);
 }
 
+// ---------------------------------------------------------------- pluginlint
+function collectSkillMds(dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".") && e.name !== ".claude-plugin") continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) collectSkillMds(p, out);
+    else if (e.name === "SKILL.md") out.push(p);
+  }
+  return out;
+}
+
+// EC-D7: the four loader/metadata-parse failure classes that ship broken
+// plugins silently (PRD §D6) — lint them as exit codes.
+function cmdPluginlint(rawArgs) {
+  // Bound to the shared --dir parser (Epic A4/D2); positional callers keep v2 behavior.
+  const { dir: dirFlag, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`pluginlint: ${dirErr}`);
+    return finish("plugin loader/metadata lint (EC-D7)");
+  }
+  const root = dirFlag ?? rest[0];
+  if (!root || !existsSync(root)) {
+    fail(`pluginlint: plugin root not found: ${root ?? "(none given)"}`);
+    return finish("plugin loader/metadata lint (EC-D7)");
+  }
+
+  // C1 + C4 — SKILL.md frontmatter: a plain-scalar value containing a colon
+  // breaks the loader's YAML parse; skill name must match its directory.
+  const skillMds = collectSkillMds(root);
+  const before = failures.length;
+  for (const f of skillMds) {
+    const text = readFileSync(f, "utf8");
+    const fm = text.match(/^---\n([\s\S]*?)\n---/);
+    if (!fm) {
+      fail(`${f}: no YAML frontmatter block`);
+      continue;
+    }
+    let name = null;
+    fm[1].split("\n").forEach((line, i) => {
+      const kv = line.match(/^([A-Za-z0-9_-]+):(?:\s+(.*))?$/);
+      if (!kv) return;
+      const key = kv[1];
+      const val = (kv[2] ?? "").trim();
+      if (key === "name") name = val;
+      if (val === "" || /^['">|&*]/.test(val)) return; // empty / quoted / block scalar / anchor — safe
+      if (/:(\s|$)/.test(val)) {
+        fail(`${f}:${i + 2}: frontmatter "${key}:" is a plain scalar containing a colon — the plugin loader's YAML parse breaks on this. Quote it or use a ">-" block scalar. Offending line: "${line.trim()}"`);
+      }
+    });
+    const dirName = basename(dirname(f));
+    if (name !== null && name !== dirName) {
+      fail(`${f}: frontmatter name "${name}" ≠ directory name "${dirName}" — the loader resolves skills by directory`);
+    }
+  }
+  if (skillMds.length > 0 && failures.length === before) {
+    ok(`${skillMds.length} SKILL.md frontmatter block(s): parse-safe scalars, names match directories`);
+  }
+
+  // C2 — plugin.json required fields.
+  const pluginJson = [join(root, ".claude-plugin", "plugin.json"), join(root, "plugin.json")].find((p) => existsSync(p));
+  if (pluginJson) {
+    try {
+      const pj = JSON.parse(readFileSync(pluginJson, "utf8"));
+      let bad = false;
+      for (const field of ["name", "version", "description"]) {
+        if (!pj[field] || typeof pj[field] !== "string") {
+          fail(`${pluginJson}: missing required field "${field}"`);
+          bad = true;
+        }
+      }
+      if (pj.version && !/^\d+\.\d+\.\d+/.test(pj.version)) {
+        fail(`${pluginJson}: version "${pj.version}" is not semver-shaped (N.N.N)`);
+        bad = true;
+      }
+      if (!bad) ok(`${pluginJson}: required fields present (name, version, description; semver version)`);
+    } catch (e) {
+      fail(`${pluginJson}: unparseable JSON — ${e.message}`);
+    }
+  }
+
+  // C3 — marketplace.json plugins[].source paths must exist on disk.
+  const mkt = [join(root, ".claude-plugin", "marketplace.json"), join(root, "marketplace.json")].find((p) => existsSync(p));
+  if (mkt) {
+    try {
+      const m = JSON.parse(readFileSync(mkt, "utf8"));
+      const base = basename(dirname(mkt)) === ".claude-plugin" ? dirname(dirname(mkt)) : dirname(mkt);
+      let bad = false;
+      for (const entry of m.plugins ?? []) {
+        if (typeof entry?.source !== "string") continue;
+        const resolved = join(base, entry.source);
+        if (!existsSync(resolved)) {
+          fail(`${mkt}: plugins[] entry "${entry.name ?? "?"}" source "${entry.source}" does not exist on disk (resolved: ${resolved})`);
+          bad = true;
+        }
+      }
+      if (!bad) ok(`${mkt}: all plugins[].source paths exist`);
+    } catch (e) {
+      fail(`${mkt}: unparseable JSON — ${e.message}`);
+    }
+  }
+
+  if (skillMds.length === 0 && !pluginJson && !mkt) {
+    fail(`${root}: nothing to lint — no SKILL.md, plugin.json, or marketplace.json found under root`);
+  }
+  finish("plugin loader/metadata lint (EC-D7)");
+}
+
+// ---------------------------------------------------------------- mirror-check
+// PRD §D7: the skill is shipped twice (repo root + plugins/plan-it). These 8
+// pairs must stay byte-identical; drift → exit 2 listing every drifted pair.
+const MIRROR_PAIRS = [
+  ["SKILL.md", "plugins/plan-it/skills/plan-it/SKILL.md"],
+  ["machine.json", "plugins/plan-it/skills/plan-it/machine.json"],
+  ["scripts/gate-check.mjs", "plugins/plan-it/skills/plan-it/scripts/gate-check.mjs"],
+  ["scripts/hooks/planit-guard.mjs", "plugins/plan-it/scripts/hooks/planit-guard.mjs"],
+  ["references/formats.md", "plugins/plan-it/skills/plan-it/references/formats.md"],
+  ["references/machine.md", "plugins/plan-it/skills/plan-it/references/machine.md"],
+  ["references/playbooks.md", "plugins/plan-it/skills/plan-it/references/playbooks.md"],
+  ["references/templates.md", "plugins/plan-it/skills/plan-it/references/templates.md"],
+];
+
+function cmdMirrorCheck(rawArgs) {
+  // Fixture mode: `mirror-check --dir <root>` compares <root>/root/<file> vs
+  // <root>/plugins/plan-it/<file>. Real mode (no args): the fixed 8-pair list
+  // from the repo root. Bound to the shared --dir parser (Epic A4/D2).
+  const { dir: dirFlag, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    console.error(`mirror-check: ${dirErr}`);
+    process.exit(2);
+  }
+  let pairs = MIRROR_PAIRS;
+  let base = ".";
+  if (dirFlag) {
+    base = dirFlag;
+    const rootDir = join(base, "root");
+    if (!existsSync(rootDir)) {
+      console.error(`mirror-check: fixture root not found: ${rootDir}`);
+      process.exit(2);
+    }
+    pairs = readdirSync(rootDir).map((n) => [join("root", n), join("plugins", "plan-it", n)]);
+  }
+  const drifted = [];
+  for (const [rootRel, plugRel] of pairs) {
+    const a = join(base, rootRel);
+    const b = join(base, plugRel);
+    if (!existsSync(a) || !existsSync(b)) {
+      drifted.push(`${rootRel} ↔ ${plugRel}: missing counterpart (${!existsSync(a) ? a : b})`);
+      continue;
+    }
+    const ba = readFileSync(a);
+    const bb = readFileSync(b);
+    if (ba.equals(bb)) {
+      ok(`${rootRel} ≡ ${plugRel} (${ba.length} bytes)`);
+      continue;
+    }
+    let off = 0;
+    const n = Math.min(ba.length, bb.length);
+    while (off < n && ba[off] === bb[off]) off++;
+    drifted.push(`${rootRel} ↔ ${plugRel}: drift at byte offset ${off} (sizes ${ba.length} vs ${bb.length})`);
+  }
+  if (drifted.length === 0) {
+    console.log(`PASS — mirror-check: ${pairs.length} pair(s) byte-identical`);
+    process.exit(0);
+  }
+  console.error(`FAIL — mirror-check: ${drifted.length} of ${pairs.length} pair(s) drifted`);
+  for (const d of drifted) console.error(`  ✗ ${d}`);
+  process.exit(2); // distinct drift exit, per T-C3-06
+}
+
 // ---------------------------------------------------------------- main
 const commands = {
   verify: cmdVerify,
@@ -945,6 +1191,8 @@ const commands = {
   reconcile: cmdReconcile,
   preflight: cmdPreflight,
   "machine-diff": cmdMachineDiff,
+  pluginlint: cmdPluginlint,
+  "mirror-check": cmdMirrorCheck,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -953,7 +1201,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|pluginlint|mirror-check> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root>  frozen-contract structural check (+ casesReviewed in --dir mode; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -963,6 +1211,8 @@ if (isMain) {
     console.error("  reconcile --dir <repo-root>          W5 orphan scan + FD-2 draft→binding case map");
     console.error("  preflight <S|M|L> [--dir <target>]   probe env facts → ENV-FACTS.md (fail-closed)");
     console.error("  machine-diff <live.json> <base.json> live machine additive-only vs baseline");
+    console.error("  pluginlint <plugin-root|--dir plugin-root>  loader/metadata lint (frontmatter, plugin.json, marketplace source, name↔dir)");
+    console.error("  mirror-check [--dir fixture-root]    PRD §D7 mirror parity — exit 2 on drift");
     process.exit(1);
   }
   commands[cmd](args);
