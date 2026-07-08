@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture: user declines test-convention registration", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "discovery",
+  "size": "S",
+  "shape": 1,
+  "gates": {},
+  "testConventions": { "declined": true, "by": "user", "at": "2026-07-08T00:00:00Z" },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "artifacts": [],
+  "history": []
+}

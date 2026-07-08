@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "2.0.0",
+  "run": { "goal": "fixture: freeze attempted before case review", "startedAt": "2026-07-08T00:00:00Z" },
+  "state": "freezeGate",
+  "size": "M",
+  "shape": 2,
+  "gates": { "G1": { "approved": true, "owner": "Fernando Ott", "date": "2026-07-08" } },
+  "casesReviewed": false,
+  "contract": { "version": null, "path": "delivery/v3/CONTRACT.md", "frozenAt": null },
+  "artifacts": [],
+  "history": []
+}
