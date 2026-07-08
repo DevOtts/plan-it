@@ -294,6 +294,98 @@ t("T-E5-02", "root and plugin copies are byte-identical", () => {
   }
 });
 
+// ---------- v3 Squad A (Epics A2-A4) — binding-table cases from
+// delivery/v3/epics/epics-1-gatecheck-fd.md that are not enforcement rows in
+// the frozen CONTRACT Cases table (positives + message-precision negatives).
+const FIX3 = join(FIX, "v3");
+
+t("T-V3-A2-01", "contract passes on the real frozen CONTRACT.md (positional form; W5 computed-tally smoke)", () => {
+  const r = gc(["contract", join(ROOT, "delivery", "v3", "CONTRACT.md")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-V3-A2-02", "contract names C-W1-05 + the row ID on a missing run: cell", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "no-run-col")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}`);
+  assert(/C-W1-05/.test(r.out) && /F-CASE-02/.test(r.out), `does not name C-W1-05 + F-CASE-02: ${r.out}`);
+});
+
+t("T-V3-A2-03", "contract --override-manual accepts a >30% manual share deliberately", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "manual-heavy"), "--override-manual"]);
+  assert(r.code === 0, `expected exit 0 with override, got ${r.code}: ${r.out}`);
+});
+
+t("T-V3-A2-04", "contract tally-drift failure names both numbers (hand-typed 5 vs computed 2)", () => {
+  const r = gc(["contract", "--dir", join(FIX3, "tally-drift")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}`);
+  assert(/C-W5-01/.test(r.out) && /\b5\b/.test(r.out) && /\b2\b/.test(r.out), `does not name both numbers: ${r.out}`);
+});
+
+t("T-A3-A1", "testconv exits 0 on a repo whose CLAUDE.md already has the block (receipt in state.json)", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "conventions-present")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-A3-A2", "testconv exits 2 (needs-human-input) with the research→ask→REGISTER instruction when no block exists", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "no-conventions")]);
+  assert(r.code === 2, `expected exit 2, got ${r.code}: ${r.out}`);
+  assert(/REGISTER/.test(r.out) && /research/i.test(r.out), `instruction does not name research→ask→REGISTER: ${r.out}`);
+});
+
+t("T-A3-A3", "state flags a stale test-conventions receipt (registered:true but block deleted)", () => {
+  const r = gc(["state", join(FIX3, "conventions-stale", ".plan-it", "state.json")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/stale/i.test(r.out) && /re-verify, not silent pass/.test(r.out), `does not flag the stale receipt: ${r.out}`);
+});
+
+t("T-A3-A4", "testconv exits 0 on a declined-by-user receipt (FD-1 registers either way)", () => {
+  const r = gc(["testconv", "--dir", join(FIX3, "conventions-declined")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
+t("T-A4-01", "freeze --dir fails while casesReviewed !== true (C-W1-03)", () => {
+  const r = gc(["freeze", "--dir", join(FIX3, "unreviewed")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/C-W1-03/.test(r.out) && /casesReviewed/.test(r.out), `does not name C-W1-03/casesReviewed: ${r.out}`);
+});
+
+t("T-A4-02", "reconcile flags an orphan PRD requirement and only the orphan (C-W5-02)", () => {
+  const r = gc(["reconcile", "--dir", join(FIX3, "orphan-req")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/C-W5-02: requirement R-1\b/.test(r.out), `does not flag R-1: ${r.out}`);
+  assert(!/C-W5-02: requirement R-2\b/.test(r.out), `covered R-2 falsely flagged: ${r.out}`);
+});
+
+t("T-A4-03", "reconcile flags an epic with zero contract cases (C-W5-03)", () => {
+  const r = gc(["reconcile", "--dir", join(FIX3, "epic-no-cases")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/C-W5-03/.test(r.out) && /\bY1\b/.test(r.out), `does not name the zero-case epic Y1: ${r.out}`);
+});
+
+t("T-A4-B1", "state rejects G2 approved without TEST-CONTRACT-REVIEW.md on disk", () => {
+  const r = gc(["state", join(FIX3, "no-review-file", ".plan-it", "state.json")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/B1 \(FD-2\)/.test(r.out), `does not name case B1: ${r.out}`);
+});
+
+t("T-A4-B2", "state rejects a review file lacking the Reviewed-by user-ack line", () => {
+  const r = gc(["state", join(FIX3, "review-no-ack", ".plan-it", "state.json")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/B2 \(FD-2\)/.test(r.out) && /Reviewed-by/.test(r.out), `does not name case B2 / the ack grammar: ${r.out}`);
+});
+
+t("T-A4-B3", "reconcile flags a draft case bound nowhere and not dropped (B3), not the bound ones", () => {
+  const r = gc(["reconcile", "--dir", join(FIX3, "draft-case-orphan")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  assert(/B3 \(FD-2\)/.test(r.out) && /\bZ9\b/.test(r.out), `does not flag orphan draft case Z9: ${r.out}`);
+  assert(!/draft case A1\b/.test(r.out), `bound draft case A1 falsely flagged: ${r.out}`);
+});
+
+t("T-A4-04", "reconcile passes on a repo with nothing to flag (positive path)", () => {
+  const r = gc(["reconcile", "--dir", join(FIX3, "conventions-present")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+});
+
 // ---------- v3 (Wave 0+) ----------
 // Binding cases are discovered from delivery/v3/CONTRACT.md's own "## Cases"
 // table (COMPUTED, W5 — never a hand-copied list of the 26 enforcement rows)
