@@ -51,10 +51,23 @@ const EXPECTED_STATES = [
   "backboneFreeze", "parallelPlanning", "verify", "handoff", "done",
 ];
 
-t("T-E1-02", "all 15 pipeline states present; done is final", () => {
+// AMD-1 (2026-07-08, approved Fernando Ott — delivery/decisions.md:44,
+// CONTRACT.md:45): the LIVE machine.json is an additive-only structural
+// superset of the byte-pinned v2 regression copy
+// tests/fixtures/v2/machine.v2.fc6abc8.json, verified by `gate-check
+// machine-diff`. The exact-15 enumeration therefore binds against the
+// byte-pinned baseline; the live machine must still carry every v2 state
+// (additions only — no rename/removal).
+const V2_BASELINE = join(ROOT, "tests", "fixtures", "v2", "machine.v2.fc6abc8.json");
+
+t("T-E1-02", "all 15 pipeline states present; done is final (exact on the byte-pinned v2 baseline; live machine.json an additive superset per AMD-1)", () => {
+  const base = JSON.parse(readFileSync(V2_BASELINE, "utf8"));
+  const baseStates = Object.keys(base.states);
+  for (const s of EXPECTED_STATES) assert(baseStates.includes(s), `missing state ${s} in v2 baseline`);
+  assert(baseStates.length === EXPECTED_STATES.length, `expected ${EXPECTED_STATES.length} baseline states, got ${baseStates.length}`);
+  assert(base.states.done.type === "final", "baseline done is not final");
   const states = Object.keys(machine.states);
-  for (const s of EXPECTED_STATES) assert(states.includes(s), `missing state ${s}`);
-  assert(states.length === EXPECTED_STATES.length, `expected ${EXPECTED_STATES.length} states, got ${states.length}`);
+  for (const s of EXPECTED_STATES) assert(states.includes(s), `live machine.json dropped v2 state ${s} — AMD-1 allows additions only`);
   assert(machine.states.done.type === "final", "done is not final");
 });
 

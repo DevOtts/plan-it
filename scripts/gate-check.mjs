@@ -98,12 +98,20 @@ function cmdFreeze(rawArgs) {
       fail(`C-W1-03: casesReviewed !== true in ${join(dir, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
     }
   }
-  // v3 D11 (W3/G1): a frozen package must carry its RUN-POLICY — tiering table,
-  // the reap-on-merge worktree rule, and BOTH halves of the disk-AND-message
-  // delivery rule. Additive failure branch; every existing check above unchanged.
-  const rp = text.match(/^##\s+RUN-POLICY[^\n]*\n([\s\S]*?)(?=\n##\s|$)/m);
+  // v3 D11 (W3/G1) [T-B2-04]: a frozen package must carry its RUN-POLICY —
+  // tiering table, the reap-on-merge worktree rule, and BOTH halves of the
+  // disk-AND-message delivery rule. Additive: v2 semantics stay byte-identical
+  // when the contract never speaks of RUN-POLICY. Presence is required when
+  // (a) the contract references RUN-POLICY outside code spans (mention-vs-use,
+  // same stripCode convention as the placeholder scan), or (b) freeze runs in
+  // --dir mode (the v3 package path). NOTE: end-of-string in the lookahead is
+  // written (?![\s\S]) — a bare $ under /m matches every line end and would
+  // truncate the body to its first line.
+  const rp = text.match(/^##\s+RUN-POLICY[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/m);
   if (!rp) {
-    fail(`no "## RUN-POLICY" section — the tiering policy must be frozen into the package (W3/G1)`);
+    if (dir || /RUN-POLICY/.test(stripCode(text))) {
+      fail(`no "## RUN-POLICY" section — the tiering policy must be frozen into the package (W3/G1)`);
+    }
   } else {
     const body = rp[1];
     if (!body.includes("reap-on-merge")) fail(`RUN-POLICY body missing the "reap-on-merge" worktree rule`);
@@ -263,7 +271,7 @@ export function checkMachineAdditive(live, base) {
       }
       if (l.target !== b.target) {
         if (!live.states?.[l.target]) out.push(`edge ${name}.on.${ev} retargeted to unknown state "${l.target}"`);
-        else if (base.states?.[l.target]) out.push(`edge ${name}.on.${ev} retargeted from "${b.target}" to pre-existing baseline state "${l.target}" — only insertion of NEW states is additive`);
+        else if (base.states?.[l.target]) out.push(`edge ${name}.on.${ev} retargeted (baseline "${b.target}" → "${l.target}") onto a pre-existing baseline state — only insertion of NEW states is additive`);
         // else: retargeted through a NEW state — additive insertion, allowed.
       }
     }
@@ -298,7 +306,9 @@ export function checkRunPolicySeeded(contractText, stateJson) {
     out.push("RUN-POLICY provenance: state gates.G1.decisions missing — tiering policy has no recorded G1 source");
     return out;
   }
-  const rp = String(contractText).match(/^##\s+RUN-POLICY[^\n]*\n([\s\S]*?)(?=\n##\s|$)/m);
+  // end-of-string spelled (?![\s\S]): a bare $ under /m truncates the body to
+  // its first line (it matches every line end).
+  const rp = String(contractText).match(/^##\s+RUN-POLICY[^\n]*\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/m);
   if (!rp) {
     out.push('RUN-POLICY provenance: no "## RUN-POLICY" section to check');
     return out;
@@ -330,7 +340,9 @@ const POINTER_RE = /^(fable-it:[A-Za-z0-9_.:\/-]+(#[A-Za-z0-9_-]+=[^\s|]+)*|\.cl
 
 export function checkEpicTierTable(epicText) {
   const out = [];
-  const sections = [...String(epicText).matchAll(/^##\s+(?!#)([^\n]+)\n([\s\S]*?)(?=\n##\s|$)/gm)]
+  // end-of-string spelled (?![\s\S]): a bare $ under /m truncates each section
+  // body to its first line (it matches every line end).
+  const sections = [...String(epicText).matchAll(/^##\s+(?!#)([^\n]+)\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/gm)]
     .map(([, title, body]) => ({ title: title.trim(), body }))
     .filter((s) => /^(epic\b|[A-Z]{1,3}\d+\b)/i.test(s.title));
   if (sections.length === 0) {
@@ -858,6 +870,17 @@ function reconcileScan(root) {
       if (!epicTexts.some(([, t]) => new RegExp(`\\b${r}\\b`).test(t))) {
         fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under delivery/v3/epics (orphan)`);
       }
+    }
+  }
+
+  // C-W3-01 (D9/D12b, Epic E2) — every epic section must bind a complete Tier
+  // Table (tier | effort | escalation | scaffold-pointer) with a real pointer.
+  // Registered additively inside the canon verb; files with no epic sections
+  // are C-W5-03's concern, not a tier failure.
+  for (const [f, epicText] of epicTexts) {
+    for (const finding of checkEpicTierTable(epicText)) {
+      if (finding.startsWith("no epic sections")) continue;
+      fail(`${finding} [${f}]`);
     }
   }
 
