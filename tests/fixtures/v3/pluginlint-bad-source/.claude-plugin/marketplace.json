@@ -1,6 +1,6 @@
 {
-  "name": "sample-marketplace",
+  "name": "demo-market",
   "plugins": [
-    { "name": "sample-plugin", "source": "./plugins/does-not-exist", "version": "1.0.0" }
+    { "name": "demo", "source": "./plugins/demo", "version": "1.0.0" }
   ]
 }

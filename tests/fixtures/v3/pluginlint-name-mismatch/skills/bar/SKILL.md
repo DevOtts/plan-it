@@ -1,6 +1,7 @@
 ---
 name: foo
-description: "frontmatter name (foo) deliberately does not match its directory (bar)"
+description: >-
+  A perfectly parseable frontmatter whose name does not match its directory.
 ---
 
-# Fixture skill — name/directory mismatch
+Body of the mismatched skill.

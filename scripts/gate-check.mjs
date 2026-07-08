@@ -12,7 +12,7 @@
  * Authored by DevOtts (https://github.com/DevOtts).
  */
 import { readFileSync, statSync, readdirSync, existsSync } from "node:fs";
-import { join, dirname, resolve } from "node:path";
+import { join, dirname, basename, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const failures = [];
@@ -306,15 +306,116 @@ function cmdState([statePath, machinePath]) {
   finish("run state valid");
 }
 
+// ---------------------------------------------------------------- pluginlint
+function collectSkillMds(dir, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".") && e.name !== ".claude-plugin") continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) collectSkillMds(p, out);
+    else if (e.name === "SKILL.md") out.push(p);
+  }
+  return out;
+}
+
+// EC-D7: the four loader/metadata-parse failure classes that ship broken
+// plugins silently (PRD §D6) — lint them as exit codes.
+function cmdPluginlint([root]) {
+  if (!root || !existsSync(root)) {
+    fail(`pluginlint: plugin root not found: ${root ?? "(none given)"}`);
+    return finish("plugin loader/metadata lint (EC-D7)");
+  }
+
+  // C1 + C4 — SKILL.md frontmatter: a plain-scalar value containing a colon
+  // breaks the loader's YAML parse; skill name must match its directory.
+  const skillMds = collectSkillMds(root);
+  const before = failures.length;
+  for (const f of skillMds) {
+    const text = readFileSync(f, "utf8");
+    const fm = text.match(/^---\n([\s\S]*?)\n---/);
+    if (!fm) {
+      fail(`${f}: no YAML frontmatter block`);
+      continue;
+    }
+    let name = null;
+    fm[1].split("\n").forEach((line, i) => {
+      const kv = line.match(/^([A-Za-z0-9_-]+):(?:\s+(.*))?$/);
+      if (!kv) return;
+      const key = kv[1];
+      const val = (kv[2] ?? "").trim();
+      if (key === "name") name = val;
+      if (val === "" || /^['">|&*]/.test(val)) return; // empty / quoted / block scalar / anchor — safe
+      if (/:(\s|$)/.test(val)) {
+        fail(`${f}:${i + 2}: frontmatter "${key}:" is a plain scalar containing a colon — the plugin loader's YAML parse breaks on this. Quote it or use a ">-" block scalar. Offending line: "${line.trim()}"`);
+      }
+    });
+    const dirName = basename(dirname(f));
+    if (name !== null && name !== dirName) {
+      fail(`${f}: frontmatter name "${name}" ≠ directory name "${dirName}" — the loader resolves skills by directory`);
+    }
+  }
+  if (skillMds.length > 0 && failures.length === before) {
+    ok(`${skillMds.length} SKILL.md frontmatter block(s): parse-safe scalars, names match directories`);
+  }
+
+  // C2 — plugin.json required fields.
+  const pluginJson = [join(root, ".claude-plugin", "plugin.json"), join(root, "plugin.json")].find((p) => existsSync(p));
+  if (pluginJson) {
+    try {
+      const pj = JSON.parse(readFileSync(pluginJson, "utf8"));
+      let bad = false;
+      for (const field of ["name", "version", "description"]) {
+        if (!pj[field] || typeof pj[field] !== "string") {
+          fail(`${pluginJson}: missing required field "${field}"`);
+          bad = true;
+        }
+      }
+      if (pj.version && !/^\d+\.\d+\.\d+/.test(pj.version)) {
+        fail(`${pluginJson}: version "${pj.version}" is not semver-shaped (N.N.N)`);
+        bad = true;
+      }
+      if (!bad) ok(`${pluginJson}: required fields present (name, version, description; semver version)`);
+    } catch (e) {
+      fail(`${pluginJson}: unparseable JSON — ${e.message}`);
+    }
+  }
+
+  // C3 — marketplace.json plugins[].source paths must exist on disk.
+  const mkt = [join(root, ".claude-plugin", "marketplace.json"), join(root, "marketplace.json")].find((p) => existsSync(p));
+  if (mkt) {
+    try {
+      const m = JSON.parse(readFileSync(mkt, "utf8"));
+      const base = basename(dirname(mkt)) === ".claude-plugin" ? dirname(dirname(mkt)) : dirname(mkt);
+      let bad = false;
+      for (const entry of m.plugins ?? []) {
+        if (typeof entry?.source !== "string") continue;
+        const resolved = join(base, entry.source);
+        if (!existsSync(resolved)) {
+          fail(`${mkt}: plugins[] entry "${entry.name ?? "?"}" source "${entry.source}" does not exist on disk (resolved: ${resolved})`);
+          bad = true;
+        }
+      }
+      if (!bad) ok(`${mkt}: all plugins[].source paths exist`);
+    } catch (e) {
+      fail(`${mkt}: unparseable JSON — ${e.message}`);
+    }
+  }
+
+  if (skillMds.length === 0 && !pluginJson && !mkt) {
+    fail(`${root}: nothing to lint — no SKILL.md, plugin.json, or marketplace.json found under root`);
+  }
+  finish("plugin loader/metadata lint (EC-D7)");
+}
+
 // ---------------------------------------------------------------- main
 const [, , cmd, ...args] = process.argv;
-const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState };
+const commands = { verify: cmdVerify, freeze: cmdFreeze, handoff: cmdHandoff, state: cmdState, pluginlint: cmdPluginlint };
 if (!cmd || !(cmd in commands)) {
-  console.error("usage: gate-check <verify|freeze|handoff|state> [args...]");
+  console.error("usage: gate-check <verify|freeze|handoff|state|pluginlint> [args...]");
   console.error("  verify  <path...>                    files/dirs exist and are non-empty");
   console.error("  freeze  <CONTRACT.md>                frozen-contract structural check");
   console.error("  handoff <delivery-dir>               pre-handoff consistency lint");
   console.error("  state   <state.json> [machine.json]  validate run state, print next events");
+  console.error("  pluginlint <plugin-root>             loader/metadata lint (frontmatter, plugin.json, marketplace source, name↔dir)");
   process.exit(1);
 }
 commands[cmd](args);
