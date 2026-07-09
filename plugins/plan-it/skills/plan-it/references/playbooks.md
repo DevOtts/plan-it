@@ -227,11 +227,21 @@ difference between "looks complete" and "builds unattended."
    "Core-logic models" section, and every epic building one references its model.
    A confusing workflow shipped model-less is prose control flow handed to the
    builder — the exact failure v2's deterministic core exists to kill.
+11. **Failure-mode depth (D4).** for every modelled machine, the design names ≥1
+   failure state and ≥1 recovery transition, every declared failure state is an
+   asserted case outcome, and the five cascade classes — partial-failure,
+   rollback/compensation, failed-recovery→escalation, recovery/resume,
+   adversarial-verify — are each **covered-or-waived** (a case, or a one-line
+   waiver with a reason; silent absence is a defect). Case count is a floor;
+   this is the depth. See `templates.md` PART B, adversarial-depth profile.
 
 > **Mechanizable half:** items 1 (counts), 4 (grammar), 7 (IDs), and 8 (tokens)
-> are enforced by `node scripts/gate-check.mjs handoff <delivery-dir>` — run it
-> first; the `LINT_CLEAN` machine transition is guarded by its exit code. Items
-> 2, 3, 5, 6, 9, 10 need judgment: they stay yours.
+> are enforced by `node scripts/gate-check.mjs handoff <delivery-dir>`; item 11
+> (failure-mode depth) is enforced by `node scripts/gate-check.mjs adversary
+> <delivery-dir>` — the `ADVERSARY_CLEAN` transition (verify → adversaryGate →
+> handoff) is guarded by its exit code. Run both; the `LINT_CLEAN` and
+> `ADVERSARY_CLEAN` transitions gate on them. Items 2, 3, 5, 6, 9, 10 need
+> judgment: they stay yours.
 
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._

@@ -110,7 +110,16 @@ evidence → design → decisions → test/acceptance plan → risks.
    given-when-then transition list) per confusing workflow surfaced in discovery
    (multi-step, approval-gated, agentic, concurrent, retry/escalation). Epics that
    build a modeled workflow MUST reference its model here. Only the confusing
-   parts get modeled.
+   parts get modeled. **Model the failure half, not just the happy path**
+   (`gate-check adversary` enforces this, D4): a modelled machine must name at
+   least one failure state (taxonomy: `…FAILED`, `…ERROR`, `ROLLED_BACK`,
+   `ESCALATED`, `PARTIAL_FAILURE`, `ABORTED`, `TIMEOUT`, `REJECTED`, `DENIED`) and
+   at least one recovery/compensation transition *out* of a failure state
+   (re-verify, resume, retry, rollback, restore). A happy-path-only chain
+   (`A → B → C`) is a design smell — either it is genuinely linear (then it needs
+   no model, and the gate is N/A), or its failure edges were dropped. This is the
+   depth ceiling: shallow contracts here cap the depth of every downstream test,
+   no matter how faithfully the tests cover them.
 [Changelog v1.0 → v1.x — one line per amendment, with owner]
 ```
 Amendments fold cross-cutting squad findings back here so squads can't drift.
@@ -200,6 +209,36 @@ skill/feature) author **~20 total across the package**. Mix unit/integration/e2e
 ≥3 e2e for integration/UI epics. `[REAL]` = needs a live
 target (real DB, real API, real channel); such a case can never be VERIFIED on a
 mock — unreachable target → IMPLEMENTED-NOT-VERIFIED, never a fake green.
+
+**Adversarial-depth profile (D4 — enforced by `gate-check adversary`).** Case
+count is a floor, not depth. When an epic builds a workflow the CONTRACT models
+as a state machine, the Test Contract must go *past* the happy path and cover the
+five **cascade classes**. Each class is **covered-or-waived** — a case asserts it,
+or one line explicitly waives it with a reason. Silent absence fails the gate closed.
+
+| Cascade class | The case proves… | Waiver grammar (when genuinely N/A) |
+|---|---|---|
+| **partial-failure** | a multi-target op where *some* succeed and some fail — the run lands in a partial state, not all-or-nothing | `partial-failure: N/A — <why single-target/atomic>` |
+| **rollback/compensation** | a failed op is *undone* — prior state restored, not left half-applied | `rollback/compensation: N/A — <why forward-only>` |
+| **failed-recovery→escalation** | recovery *itself* fails (the rollback also fails) → an ESCALATED / dead-letter terminal, not an infinite loop | `failed-recovery→escalation: N/A — <why>` |
+| **recovery/resume** | a failed run is *re-driven* — operator fixes + re-verify, `--resume`, retry, re-dispatch — and reaches success | `recovery/resume: N/A — <why>` |
+| **adversarial-verify** | verification *re-reads the world*, it doesn't trust its own write — tamper the target between write and verify, or round-trip the parser over its own output | `adversarial-verify: N/A — <why>` |
+
+Waivers follow v2's CB-1 pattern — *"no test case waived silently: this line IS
+the waiver."* A waiver line names the class and carries a reason (`— …` / `: …`);
+put it in the epic near the Test Contract, or in `delivery/decisions.md`.
+
+**Depth exemplar (the rotation-engine crown jewel).** The bar to beat: a rotation
+lifecycle epic whose Test Contract carried, beyond the happy `SCHEDULED → … →
+COMPLETE` path — `T-*-06` **PARTIAL_FAILURE** (some bindings PASSED, some FAILED);
+`T-*-07` **ROLLED_BACK** (retry budget exhausted → previous version restored to
+ACTIVE); `T-*-08` **recovery** (operator fixes the binding → re-verify →
+COMPLETE); `T-*-09` **escalation** (the rollback *also* fails → ESCALATED, human
+resolves); and adapter-level `T-*-02` **adversarial-verify** (the target file is
+externally overwritten between Dispatch and Verify → FAILED, proving Verify
+re-reads rather than trusting its own write). Five classes, five real cases — that
+is depth the gate can see. A machine that models only `PENDING → VERIFIED →
+REVOKED (+ one FAILED)` cannot reach it, however completely its cases cover it.
 
 ---
 

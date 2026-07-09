@@ -3,6 +3,53 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 3.2.0 — 2026-07-08
+
+The **adversarial-depth** release — the D4 crown-jewel lever. The same field
+trial that seeded 3.1.0 scored v3 only a *tie* with v2 on **Test Contract
+quality (D4)**: v3 raised the enforcement *floor* (traceability, honesty,
+computed counts) but never touched the failure-mode *depth ceiling*, which is
+set UPSTREAM by the CONTRACT's core-logic state machine. A thin machine (happy
+path + one failure) yields shallow tests that still pass every other v3 gate.
+This release makes failure-mode depth an exit code, not prose, via a new
+`adversary` verb wired as a hard gate (`adversaryGate` state between `verify`
+and `handoff`) plus authoring teeth so the pipeline *writes* deeper contracts.
+All changes are additive: a new verb + a new state (same class as the 3.0/3.1
+verbs/states), the protected v2 core stays byte-identical, and `machine-diff`
+still reports an additive-only superset.
+
+The gate is conditional on a declared state machine — a genuinely linear/CRUD
+contract declares none and the whole gate is N/A (no over-reach; mirrors "no
+run-state ⇒ no v3 demands"). Every demand is covered-or-waived; silent absence
+fails closed.
+
+- **D4 — Test-Contract failure-mode depth is now mechanized.** New
+  `node scripts/gate-check.mjs adversary <delivery-dir>` (guard
+  `adversarialDepth`, transition `ADVERSARY_CLEAN`). Design-depth reads the
+  frozen CONTRACT; coverage-depth reads the epics/cases.
+- **D-A1 — the machine must model ≥1 failure state** (taxonomy on state names:
+  FAIL/ERROR/ROLLBACK/ESCALAT/PARTIAL/ABORT/TIMEOUT/REJECT/DENIED/CANCEL), or
+  reduce to a linear flow (N/A).
+- **D-A2 — ≥1 recovery/compensation transition** — a failure state that is the
+  source of an outgoing edge, or recovery vocabulary in the CONTRACT. A
+  dead-end failure is a design gap or must be waived.
+- **D-B1 — every declared failure state is an asserted case outcome** — an
+  unreachable-in-tests failure state is a coverage hole.
+- **D-B2 — every governance rule (G-n / CB-n) carries a test hook** — referenced
+  by a case, an inline `(test: …)`, or an explicit WAIVED marker.
+- **D-B3 — the five cascade classes each covered-or-waived**: partial-failure,
+  rollback/compensation, failed-recovery→escalation, recovery/resume,
+  adversarial-verify. This is the "beat v2 by far" lever. Waivers may live in an
+  epic or in `decisions.md` (v2's CB-1 pattern).
+
+State extraction scopes to transition arrows + lifecycle enumerations only, so a
+plain value enum (e.g. `ActionResult := OK | DENIED | ERROR`) never seeds a
+phantom coverage obligation; cascade matchers are `\b`-bounded so "scrollback"
+never false-passes rollback. New binding cases: `T-ADV-01` (deep→PASS),
+`T-ADV-02` (thin→FAIL, names the three missing classes), `T-ADV-03`
+(linear→N/A), `T-ADV-04` (waived→PASS). Full suite green: v2 51/51 + v3 25/25,
+mirror-check 8/8, machine-diff additive.
+
 ## 3.1.0 — 2026-07-08
 
 The **enforcement-reach** release. A head-to-head field trial (v2.1.0 vs 3.0.0
