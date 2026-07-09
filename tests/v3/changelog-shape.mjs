@@ -4,8 +4,8 @@
  *
  * Asserts CHANGELOG.md's TOP (most recent) versioned section is dated
  * `## N.N.N — YYYY-MM-DD` and enumerates each shipped item by ID. The required
- * ID set tracks the current release: v3.2.0's adversarial-depth wave shipped the
- * D4 crown-jewel lever and its checks D-A1/D-A2/D-B1/D-B2/D-B3.
+ * ID set tracks the current release: the v3.0.0 debut folds in the adversarial-
+ * depth D4 crown-jewel lever and its checks D-A1/D-A2/D-B1/D-B2/D-B3.
  *
  * This is a [REAL] case against the live CHANGELOG — NOT a fail-closed sweep
  * row. NORMAL exit semantics per AMD-3: exit 0 = the section is present and
@@ -37,7 +37,7 @@ if (headIdx === -1) {
   const end = lines.findIndex((l, i) => i > headIdx && /^##\s/.test(l));
   const section = lines.slice(headIdx, end === -1 ? undefined : end).join("\n");
 
-  // Required ID set for the current (3.2.0) release. When cutting a later
+  // Required ID set for the current (3.0.0) release. When cutting a later
   // release, move these to that release's shipped IDs (same pattern as the
   // version literal in version-triple-match.mjs).
   const required = ["D4", "D-A1", "D-A2", "D-B1", "D-B2", "D-B3"];

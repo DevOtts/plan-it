@@ -12,7 +12,7 @@
  *
  * This is a [REAL] case against the live post-bump tree — NOT a fail-closed
  * sweep row. NORMAL exit semantics per AMD-3: exit 0 = every declared version
- * matches (and equals the expected 3.1.0); exit 1 = a mismatch/skew exists.
+ * matches (and equals the expected 3.0.0); exit 1 = a mismatch/skew exists.
  *
  * Authored by DevOtts (https://github.com/DevOtts).
  */
@@ -21,7 +21,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const EXPECTED = "3.2.0";
+const EXPECTED = "3.0.0";
 const r = (p) => readFileSync(join(ROOT, p), "utf8");
 
 function pluginJsonVersion(p) {

@@ -8,5 +8,13 @@
 *.credentials
 .full.credentials
 
+# v3 field-study source package (root) — contains personal/project-identifying
+# material; kept local-only. The published synthesis lives under docs/research/v3/.
+/research-BRIEF.md
+/research-SYNTHESIS.md
+/research-FOUNDER-INPUT.md
+/research-findings-*.md
+/NEXT-SESSION-PROMPT.md
+
 # OS / editor noise
 .DS_Store

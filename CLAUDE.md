@@ -1,6 +1,6 @@
 # plan-it
 
-Claude Code plugin: deterministic multi-squad planning pipeline (statechart core + gate-check + PreToolUse hard gate). Plugin source: `plugins/plan-it/`. Current: v2.1.0.
+Claude Code plugin: deterministic multi-squad planning pipeline (statechart core + gate-check + PreToolUse hard gate). Plugin source: `plugins/plan-it/`. Current: v3.0.0.
 
 ## Documentation
 
@@ -9,4 +9,4 @@ Conventions: brain-docs schema (type/title/description/status/verified/repos/tag
 
 ## Research
 
-v3 field study package lives at repo root: `research-SYNTHESIS.md` (spec seed), `research-FOUNDER-INPUT.md` (FD-1/FD-2 mandates), `research-BRIEF.md`, `research-findings-{A..H}.md`, `NEXT-SESSION-PROMPT.md`. Index: `docs/research/v3/index.md`.
+The raw v3 field-study package (spec seed, FD-1/FD-2 mandates, brief, 8 findings reports, launch prompt) lives at the repo root but is **git-ignored and local-only** — it carries personal/project-identifying material and is deliberately not published. The public synthesis and its index live under `docs/research/v3/` (`docs/research/v3/index.md`).

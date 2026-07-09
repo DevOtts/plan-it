@@ -256,20 +256,42 @@ human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
 ## Status
 
-`3.0.0` — the "field-hardened core" line: builds on the deterministic core
-(`2.0.0` explicit statechart with persisted run state + executable gate guards;
-`2.1.0` hard gate enforcement via a PreToolUse hook on Claude Code plugin
-installs — see [The deterministic core](#the-deterministic-core-v2)) with the
-enforcement mechanisms from the v3 field study: FD-1 test-convention discovery +
-registration and FD-2 pre-freeze case review, plus six write-time invariants —
-W1 contract hygiene, W2 environment preflight (ENV-FACTS probe manifest), W3
-model-tier enforcement (no hardcoded model IDs), W4 status vocabulary, W5
-computed-never-typed tallies, and W6 kickoff pinning + packaging parity — and
-mirror integrity across the root↔plugin tree. The underlying pipeline, gates,
-packaging shapes, and Test Contract discipline are unchanged from `1.0.0` and
-were reverse-engineered from real multi-squad planning runs — including the
-live-grounding rules, which trace one-for-one to failures where a repo-derived
-assumption contradicted the deployed system.
+`3.0.0` — the **field-hardened core** line and the public debut of v3. Where v2
+made the pipeline *deterministic* (`2.0.0` explicit statechart with persisted run
+state + executable gate guards; `2.1.0` hard gate enforcement via a PreToolUse
+hook on Claude Code plugin installs — see
+[The deterministic core](#the-deterministic-core-v2)), v3 makes the delivery
+package *hard to fake*: every mechanism below ships as a machine-checked
+invariant with a binding Test Contract case, and all v3 verbs/states are strictly
+**additive** over v2 (verified by `gate-check machine-diff` against the v2
+baseline). Three layers land together in this debut:
+
+- **Enforcement floor** — the founder mandates (FD-1 test-convention discovery +
+  registration; FD-2 pre-freeze case review) and six write-time invariants: W1
+  contract hygiene, W2 environment preflight (ENV-FACTS probe manifest), W3
+  model-tier enforcement (no hardcoded model IDs), W4 status vocabulary, W5
+  computed-never-typed tallies, W6 kickoff pinning + packaging parity — plus
+  mirror integrity across the root↔plugin tree.
+- **Enforcement reach** — running v3 against a real *external* project (not
+  plan-it's own dogfood) surfaced two silent freeze-guard bypasses; both are
+  closed fail-closed (E1 freeze checks key off a discoverable run root, not an
+  invocation flag or the dogfood path; E2 the inline-code stripper handles
+  line-wrapped spans), with the protected v2 core still byte-identical.
+- **Adversarial depth (D4)** — the crown-jewel dimension. A new `adversary` verb,
+  wired as a hard gate (`adversaryGate` between `verify` and `handoff`), makes
+  Test-Contract failure-mode depth an exit code, not prose: it demands modeled
+  failure states (D-A1), recovery transitions (D-A2), failure states asserted as
+  cases (D-B1), test-hooked governance rules (D-B2), and five cascade classes
+  each covered-or-waived (D-B3). A genuinely linear/CRUD contract declares no
+  state machine and the gate is N/A — no over-reach; silent absence fails closed.
+  In a blind head-to-head against a v2-authored package (same fuzzy brief, same
+  model, labels swapped across two judges + an adversarial checker), **v3 wins
+  D4, 5 vs 3** — breaking the prior tie on the exact dimension this line targets.
+
+The underlying pipeline, gates, packaging shapes, and Test Contract discipline
+are unchanged from `1.0.0` and were reverse-engineered from real multi-squad
+planning runs — including the live-grounding rules, which trace one-for-one to
+failures where a repo-derived assumption contradicted the deployed system.
 
 Validate locally before relying on it:
 
