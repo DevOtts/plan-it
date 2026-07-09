@@ -1,6 +1,6 @@
 # Skill Publishing Report — DevOtts/plan-it
 
-**Repo:** https://github.com/DevOtts/plan-it (public, MIT) · **Version:** 3.0.0 · **Date:** 2026-07-09
+**Repo:** https://github.com/DevOtts/plan-it (public, MIT) · **Version:** 3.0.1 · **Date:** 2026-07-09
 
 Crawlable prep landed with the v3.0.0 release: root `SKILL.md` (valid frontmatter),
 `LICENSE` file, README with `npx skills add` install paths + a Security section, nine
@@ -14,7 +14,7 @@ never as a fake green.
 | # | Marketplace | Status | Evidence |
 |---|---|---|---|
 | 0 | **skills.sh** (vercel-labs/skills) | ✅ **VERIFIED** | `npx skills add DevOtts/plan-it --list` clones the default branch and prints **"Found 1 skill → plan-it"** with the full description. Valid, installable package. |
-| 1 | **SkillsLLM** (skillsllm.com/submit) | ⏳ **PENDING — needs browser OAuth** | Submit page reachable (HTTP 200). Requires an interactive GitHub-OAuth submission in a Chrome logged in as DevOtts — not yet driven. |
+| 1 | **SkillsLLM** (skillsllm.com/submit) | ✅ **SUBMITTED — pending review** | Repo URL submitted via the GitHub-OAuth form (Chrome logged in as DevOtts). Confirmed green toast: *"Skill submitted successfully! It will be reviewed shortly."* Listing follows their async review + security scan (~24h). |
 | 2 | **SkillsMP** (skillsmp.com) | 🟡 **QUALIFIED — awaiting crawl** | Pure auto-crawl, no form. Search API probe `?q=plan-it` → **0 DevOtts/plan-it hits** (not yet indexed). Repo meets all indexing requirements. |
 | 3 | **SkillHub** (skillhub.club) | 🟡 **QUALIFIED — awaiting crawl** | Pure auto-index, no form (`/submit` is 404). Site reachable (HTTP 200). Re-check the slug on their site in hours. |
 | 4 | **TrustedSkills** (trustedskills.dev) | 🟡 **QUALIFIED — awaiting crawl** | No form; scraper keys on the `openclaw-skill` topic + a release + a `LICENSE` file — all three now present. Auto-discovery ≤6h; first appears "Unverified", then "Community" after 6 security scans. |
@@ -31,9 +31,9 @@ never as a fake green.
 
 ## Recommended next actions
 
-1. **SkillsLLM** — drive the one browser submission (GitHub OAuth as DevOtts). This is
-   the only registry with an interactive form; do it in a Chrome logged in as the repo
-   owner. Star-count line ("100 stars") is advisory, not enforced.
+1. **SkillsLLM** — ✅ done (submitted 2026-07-09, pending their async review). Re-check
+   the catalog in ~24h to confirm the listing went live. Star-count line ("100 stars")
+   was advisory, not enforced — the 1-star repo submitted fine.
 2. **OSM** — retry `curl https://www.osmagent.com` in a day; when up, `osm signup` (needs
    an account) → `osm login` → `osm publish` from the repo root.
 3. **Re-run the crawl probes in 6–24h** to flip SkillsMP / SkillHub / TrustedSkills from

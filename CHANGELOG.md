@@ -3,6 +3,25 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 3.0.1 — 2026-07-09
+
+Packaging patch — no pipeline or enforcement changes. Aligns plan-it with the
+shared **DevOtts** plugin marketplace (which also hosts `fable-it`).
+
+- **M1 — marketplace namespace.** The marketplace's `name` is renamed
+  `plan-it` → `devotts`, so the install command is now
+  `/plugin install plan-it@devotts` (was `plan-it@plan-it`). The GitHub add
+  path is unchanged: `/plugin marketplace add DevOtts/plan-it`. The plugin
+  itself is still named `plan-it`; only the marketplace namespace moved.
+  **Breaking for anyone who already added the marketplace under the old name** —
+  re-run the `add` step (or `/plugin marketplace remove plan-it` first).
+- **M2 — version parity.** Bumped `3.0.0` → `3.0.1` across all six version
+  mirrors (plugin.json, marketplace, both `SKILL.md` and both `machine.json`
+  copies) so plan-it tracks the same release line as the other DevOtts plugins
+  in the `devotts` marketplace. The release gates (`version-triple-match`,
+  `changelog-shape`) are re-pinned to `3.0.1`; the mirror-integrity and
+  additive-only guarantees from 3.0.0 are unchanged.
+
 ## 3.0.0 — 2026-07-09
 
 The **field-hardened core** release — the public debut of the v3 line. Where v2

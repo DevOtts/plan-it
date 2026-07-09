@@ -279,9 +279,9 @@ t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => 
 });
 
 // ---------- E5: packaging ----------
-t("T-E5-01", "plugin.json version is 3.0.0 and hooks.json is valid", () => {
+t("T-E5-01", "plugin.json version is 3.0.1 and hooks.json is valid", () => {
   const pj = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/.claude-plugin/plugin.json"), "utf8"));
-  assert(pj.version === "3.0.0", `version is ${pj.version}`);
+  assert(pj.version === "3.0.1", `version is ${pj.version}`);
   const hooks = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/hooks/hooks.json"), "utf8"));
   const pre = hooks.hooks?.PreToolUse;
   assert(Array.isArray(pre) && pre.length > 0, "no PreToolUse hooks declared");

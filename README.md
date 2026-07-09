@@ -80,7 +80,7 @@ None of that is a capability problem. It's a *planning* problem: no frozen contr
 /plugin marketplace add DevOtts/plan-it
 
 # 2. Install the plugin (plugin-name@marketplace-name)
-/plugin install plan-it@plan-it
+/plugin install plan-it@devotts
 ```
 
 Then invoke it with `/plan-it <your idea, brain-dump, or transcription>`. On
@@ -255,6 +255,10 @@ Each also works standalone: `plan-it`'s package is plain markdown any agent (or
 human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
 ## Status
+
+`3.0.1` — packaging patch: the plugin now installs from the shared **DevOtts**
+marketplace (`/plugin install plan-it@devotts`, alongside `fable-it`) and the
+version is bumped to `3.0.1` for parity. No pipeline or enforcement changes.
 
 `3.0.0` — the **field-hardened core** line and the public debut of v3. Where v2
 made the pipeline *deterministic* (`2.0.0` explicit statechart with persisted run

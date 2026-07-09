@@ -14,7 +14,7 @@
 /plugin marketplace add DevOtts/plan-it
 
 # 2. Install the plugin (plugin-name@marketplace-name)
-/plugin install plan-it@plan-it
+/plugin install plan-it@devotts
 ```
 
 Verify with `/plugin` → the `plan-it` skill should be listed. Then run:
