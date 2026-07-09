@@ -72,7 +72,7 @@ t("T-E1-02", "all 15 pipeline states present; done is final (exact on the byte-p
 });
 
 t("T-E1-03", "every guard maps to an existing gate-check subcommand", () => {
-  const validChecks = new Set(["verify", "freeze", "handoff", "state"]);
+  const validChecks = new Set(["verify", "freeze", "handoff", "state", "adversary"]);
   const guardsUsed = new Set();
   for (const node of Object.values(machine.states)) {
     for (const trans of Object.values(node.on ?? {})) {
@@ -279,9 +279,9 @@ t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => 
 });
 
 // ---------- E5: packaging ----------
-t("T-E5-01", "plugin.json version is 3.1.0 and hooks.json is valid", () => {
+t("T-E5-01", "plugin.json version is 3.2.0 and hooks.json is valid", () => {
   const pj = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/.claude-plugin/plugin.json"), "utf8"));
-  assert(pj.version === "3.1.0", `version is ${pj.version}`);
+  assert(pj.version === "3.2.0", `version is ${pj.version}`);
   const hooks = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/hooks/hooks.json"), "utf8"));
   const pre = hooks.hooks?.PreToolUse;
   assert(Array.isArray(pre) && pre.length > 0, "no PreToolUse hooks declared");
@@ -434,6 +434,50 @@ t("T-W31-2d", "v2 byte-identical: a freestanding contract with no run-state is n
   const r = gc(["freeze", join(FIX, "contract-good.md")]);
   assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
   assert(!/RUN-POLICY/.test(r.out) || /no placeholders/.test(r.out), `v2 contract wrongly held to RUN-POLICY: ${r.out}`);
+});
+
+// ---------- v3.2 adversarial-depth gate (D4 crown-jewel lever) ----------
+// The `adversary` verb makes failure-mode DEPTH an exit code. It is conditional
+// on a declared state machine: a linear/CRUD contract declares none and the
+// gate is N/A (no over-reach). When a machine IS declared, every declared
+// failure state must be an asserted case outcome, and each of the five cascade
+// classes must be covered-or-waived — silent absence fails closed. These four
+// fixtures pin the four outcomes: deep→PASS, thin→FAIL(names the gaps),
+// linear→PASS(N/A), waived→PASS(escape hatch, waivers in decisions.md).
+const ADV = (name) => join(FIX3, name);
+
+t("T-ADV-01", "adversary PASSES a deep machine: every failure state asserted, all 5 cascade classes covered", () => {
+  const r = gc(["adversary", ADV("adversary-deep")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+  assert(/failure-mode depth/.test(r.out), `no success line: ${r.out}`);
+  for (const c of ["partial-failure", "rollback/compensation", "failed-recovery→escalation", "recovery/resume", "adversarial-verify"]) {
+    assert(new RegExp(`cascade "${c.replace(/[/()[\]]/g, "\\$&")}": COVERED`).test(r.out), `class ${c} not reported COVERED: ${r.out}`);
+  }
+});
+
+t("T-ADV-02", "adversary FAILS a thin v3-arm-like machine, naming exactly the three missing cascade classes", () => {
+  const r = gc(["adversary", ADV("adversary-thin")]);
+  assert(r.code === 1, `expected exit 1, got ${r.code}: ${r.out}`);
+  for (const gap of ["partial-failure", "rollback/compensation", "failed-recovery→escalation"]) {
+    assert(new RegExp(`D-B3: cascade class "${gap.replace(/[/()[\]]/g, "\\$&")}"`).test(r.out), `did not flag missing class ${gap}: ${r.out}`);
+  }
+  // the two honest classes it DOES cover must not be flagged as gaps
+  assert(!/D-B3: cascade class "recovery\/resume"/.test(r.out), `falsely flagged recovery/resume: ${r.out}`);
+  assert(!/D-B3: cascade class "adversarial-verify"/.test(r.out), `falsely flagged adversarial-verify: ${r.out}`);
+});
+
+t("T-ADV-03", "adversary is N/A (PASS) on a genuinely linear/CRUD contract — no over-reach", () => {
+  const r = gc(["adversary", ADV("adversary-linear")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+  assert(/N\/A/.test(r.out) && /linear\/CRUD/.test(r.out), `did not report N/A for a machine-less contract: ${r.out}`);
+});
+
+t("T-ADV-04", "adversary PASSES via explicit waivers (v2 CB-1 pattern) recorded in decisions.md", () => {
+  const r = gc(["adversary", ADV("adversary-waived")]);
+  assert(r.code === 0, `expected exit 0, got ${r.code}: ${r.out}`);
+  for (const w of ["partial-failure", "rollback/compensation", "failed-recovery→escalation"]) {
+    assert(new RegExp(`cascade "${w.replace(/[/()[\]]/g, "\\$&")}": WAIVED`).test(r.out), `class ${w} not reported WAIVED: ${r.out}`);
+  }
 });
 
 // ---------- v3 (Wave 0+) ----------

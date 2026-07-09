@@ -26,7 +26,7 @@ description: >-
   exit code — not prose discipline — decides whether the pipeline advances.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 3.1.0
+version: 3.2.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
@@ -115,7 +115,11 @@ edges, determinism at the core*:
   what makes a run survive a crash or a fresh session.
 - **`scripts/gate-check.mjs`** — the guards as exit codes: `verify` (Rule 3,
   idle ≠ delivered), `freeze` (Rule 1, no contract → no squads), `handoff` (the
-  mechanizable half of playbooks §F), `state` (Rule 2, gates recorded).
+  mechanizable half of playbooks §F), `state` (Rule 2, gates recorded),
+  `adversary` (Rule 6 / D4 — failure-mode depth: a modelled machine must cover-or-
+  waive the five cascade classes; N/A for linear workflows). The `LINT_CLEAN` and
+  `ADVERSARY_CLEAN` transitions (verify → adversaryGate → handoff) gate on the
+  last two.
 
 The fuzzy phases — discovery, synthesis, spec authoring, judgment — stay
 LLM-at-the-node (tagged `llmAtTheNode` in the machine). Do not formalize them;
@@ -375,13 +379,19 @@ Author the design docs **in dependency order** (skeletons in
 7. `06` Roadmap & open questions — phased plan, first vertical slice, risks, the decision list
 
 Methodology to honor while authoring:
-- **Model the confusing parts** — when discovery surfaced a workflow that is
-  multi-step, approval-gated, agentic, concurrent, or retry/escalation-laden, the
-  spec MUST include an explicit model of it (statechart, state-transition table,
-  or equivalent — a given/when/then transition list is enough), and the epics that
-  build it reference the model. The CONTRACT carries these under "Core-logic
-  models." Only the confusing parts — modeling is not ceremony when it replaces
-  confusion, and only then.
+- **Model the confusing parts — including the failure half** — when discovery
+  surfaced a workflow that is multi-step, approval-gated, agentic, concurrent, or
+  retry/escalation-laden, the spec MUST include an explicit model of it (statechart,
+  state-transition table, or equivalent — a given/when/then transition list is
+  enough), and the epics that build it reference the model. The CONTRACT carries
+  these under "Core-logic models." Only the confusing parts — modeling is not
+  ceremony when it replaces confusion, and only then. **A model is not just the
+  happy path**: name at least one failure state and one recovery/compensation
+  transition out of it, or the downstream Test Contract has no depth to reach for.
+  `gate-check adversary` (D4) enforces this at the `adversaryGate` state — the five
+  cascade classes (partial-failure, rollback/compensation, failed-recovery→
+  escalation, recovery/resume, adversarial-verify) must each be covered-or-waived.
+  A genuinely linear workflow declares no machine and the gate is N/A (no over-reach).
 - **Never greenfield when code exists** — every doc shows what's already built and
   how to *promote* it (mapping tables), not just what's new.
 - **Contradiction-driven** — start from pain (01), derive principles (02),
@@ -483,6 +493,11 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   — the `LINT_CLEAN` transition is guarded by it. It checks ID grammar, declared-vs-
   counted case totals, `[REAL]` tallies, per-epic Test Contract presence, and token
   lint. The judgment half below still needs you.
+- **Then run the adversarial-depth gate:** `node scripts/gate-check.mjs adversary delivery/`
+  — the `ADVERSARY_CLEAN` transition (verify → adversaryGate → handoff) is guarded by
+  it (D4). When the CONTRACT declares a state machine, it enforces failure-mode depth:
+  the machine models failures + recovery, every declared failure state is an asserted
+  case, and the five cascade classes are covered-or-waived. Linear workflows: N/A, passes.
 - **Run the pre-handoff consistency gate** (`references/playbooks.md` §F) — the lint
   that makes a package build *unattended*: counts add up (count tags, don't hand-type);
   every goal & governance rule has a test; the CONTRACT verb/API surface reconciles

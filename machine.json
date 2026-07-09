@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/statelyai/xstate/main/packages/core/src/types.ts",
   "id": "plan-it",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "plan-it pipeline statechart — the explicit model the SKILL.md prose explains. Deterministic core: states, gates, and guards live here; the fuzzy work (research, synthesis, authoring) is LLM-at-the-node inside each state. Paste this file into https://stately.ai/viz to see the pipeline.",
   "initial": "intake",
   "context": {
@@ -33,6 +33,11 @@
         "check": "state",
         "usage": "node scripts/gate-check.mjs state .plan-it/state.json machine.json",
         "rule": "Rule 2 — human gates are recorded with owner + date in the state file before the pipeline advances."
+      },
+      "adversarialDepth": {
+        "check": "adversary",
+        "usage": "node scripts/gate-check.mjs adversary <delivery-dir>",
+        "rule": "Rule 6 (v3.2, D4) — failure-mode depth as an exit code. When the CONTRACT declares a state machine, its failure/recovery states must be modelled (D-A1/D-A2), every declared failure state must be an asserted case outcome (D-B1), every governance rule must carry a test hook (D-B2), and the five cascade classes (partial-failure, rollback/compensation, failed-recovery→escalation, recovery/resume, adversarial-verify) must each be covered-or-waived (D-B3). Linear/CRUD workflows declare no machine → N/A → pass (no over-reach)."
       }
     }
   },
@@ -185,7 +190,17 @@
         "does": "Enforce the Test Contract gate + run the pre-handoff consistency lint; fix and re-lint until clean."
       },
       "on": {
-        "LINT_CLEAN": { "target": "handoff", "guard": "handoffLintClean" }
+        "LINT_CLEAN": { "target": "adversaryGate", "guard": "handoffLintClean" }
+      }
+    },
+    "adversaryGate": {
+      "meta": {
+        "phase": 10,
+        "title": "Adversarial-depth gate",
+        "does": "v3.2 D4 hard gate: after the lint is clean but before handoff, prove failure-mode depth. When the CONTRACT declares a state machine, the delivery must model its failure/recovery paths and cover-or-waive the five cascade classes (partial-failure, rollback/compensation, failed-recovery→escalation, recovery/resume, adversarial-verify). Silent absence fails closed; a genuinely linear workflow declares no machine and is N/A."
+      },
+      "on": {
+        "ADVERSARY_CLEAN": { "target": "handoff", "guard": "adversarialDepth" }
       }
     },
     "handoff": {

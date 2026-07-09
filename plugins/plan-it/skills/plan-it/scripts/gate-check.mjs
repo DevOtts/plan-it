@@ -9,6 +9,7 @@
  *   state   <state.json> [machine.json]  validate the run state; print current state + allowed events
  *   preflight <S|M|L> [--dir <target>]   run the shape-tiered env probes, write ENV-FACTS.md (v3 W2)
  *   machine-diff <live.json> <base.json> live machine must be an additive-only superset of baseline (v3 E1)
+ *   adversary <delivery-dir|--dir root> failure-mode depth: declared machine models failures+recovery, cascade classes covered-or-waived (v3.2 D4)
  *
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
@@ -319,6 +320,260 @@ function cmdMachineDiff([livePath, basePath]) {
   if (live && base) for (const f of checkMachineAdditive(live, base)) fail(f);
   if (failures.length === 0) ok(`${livePath} is an additive-only superset of ${basePath}`);
   finish("machine additive-only vs baseline (no state/event/guard dropped, renamed, or retargeted into old states)");
+}
+
+// ---------------------------------------------------------------- v3.2: adversary (adversarial-depth gate, D4)
+// The D4 crown-jewel lever. v3's earlier enforcement raised the FLOOR
+// (traceability, honesty, computed counts) but never touched the failure-mode
+// DEPTH CEILING — which is set UPSTREAM by the CONTRACT's core-logic state
+// machine. A thin machine (happy path + one failure) yields shallow tests that
+// still pass every other v3 gate; the field trial's D4 tie was exactly this.
+// This gate makes failure-mode depth mechanizable: exit code, not prose.
+//
+// It is conditional on a DECLARED state machine — a linear/CRUD workflow
+// declares none and the whole gate is N/A (no over-reach; mirrors "no run-state
+// ⇒ no v3 demands"). Every demand is COVERED-or-WAIVED: a genuinely simple flow
+// waives a class with a reason (v2's CB-1 pattern), and silent absence fails
+// closed. Design-depth reads the frozen CONTRACT (D-A*); coverage-depth reads
+// the epics/cases (D-B*).
+
+// A state token: an UPPER-CASE identifier of ≥2 chars (SCHEDULED, ROLLED_BACK,
+// VERIFY-FAILED). Common all-caps non-states are stopworded so they never seed
+// a phantom obligation.
+const STATE_TOKEN_RE = /[A-Z][A-Z0-9]+(?:[_-][A-Z0-9]+)*/g;
+const STATE_STOPWORDS = new Set([
+  "RUN", "POLICY", "REAL", "TBD", "TODO", "CONTRACT", "API", "CLI", "SHA", "MD5", "JSON", "YAML",
+  "ID", "IDS", "DOD", "PRD", "AMD", "FD", "CB", "REST", "HTTP", "HTTPS", "URL", "URI", "UUID",
+  "OK", "NA", "WAIVED", "AND", "OR", "NOT", "THE", "FOR", "GET", "PUT", "POST", "CRUD", "MVP",
+  "SLA", "UTC", "ISO", "CSV", "XML", "SQL", "CPU", "RAM", "PII", "TTL", "PR", "CI", "CD", "QA",
+]);
+// A transition arrow: -->, →, or a labelled --(label)-->. This is what defines
+// a state MACHINE (a lifecycle graph) — as opposed to a value enumeration.
+const ARROW_RE = /-+\s*\([^)]*\)\s*-*>|-{1,}>|=>|→/;
+// A *lifecycle* enumeration authoritatively lists machine states: its type name
+// is lifecycle-ish (RotationState, VerifyStatus, *Phase/*Stage/*Machine). A
+// plain value enum (ActionResult := OK|DENIED|ERROR, AdapterType := …) is NOT a
+// machine and must not seed phantom state obligations — that conflation is what
+// would false-fail a deep package on a value like "DENIED".
+const LIFECYCLE_ENUM_RE = /^[^\n:=]*\b\w*(?:state|status|phase|stage|lifecycle|machine)\b[^\n:=]*:{1,2}=(.+)$/i;
+function isMachineLine(line) {
+  return ARROW_RE.test(line);
+}
+// States = tokens that are transition endpoints (source/target of an arrow, plus
+// any dangling state named on an arrow line), UNION the members of a lifecycle
+// enumeration. Arrow-label prose (inside `(…)`) is stripped so words like the
+// "FAILED" in "--(some PASSED, some FAILED)-->" never count as a state.
+function extractStates(contractText) {
+  const states = new Set();
+  for (const rawLine of String(contractText).split("\n")) {
+    if (ARROW_RE.test(rawLine)) {
+      const noLabels = rawLine.replace(/\([^)]*\)/g, " ");
+      for (const m of noLabels.matchAll(STATE_TOKEN_RE)) {
+        if (!STATE_STOPWORDS.has(m[0])) states.add(m[0]);
+      }
+    }
+    const em = rawLine.match(LIFECYCLE_ENUM_RE);
+    if (em) {
+      for (const m of em[1].matchAll(STATE_TOKEN_RE)) {
+        if (!STATE_STOPWORDS.has(m[0])) states.add(m[0]);
+      }
+    }
+  }
+  return states;
+}
+
+// Failure/terminal-error state taxonomy (matched against state NAMES) and the
+// recovery/compensation vocabulary (matched against CONTRACT prose).
+const FAILURE_TAXONOMY_RE = /FAIL|ERROR|ROLL.?BACK|ESCALAT|PARTIAL|ABORT|TIMEOUT|REJECT|DENIED|CANCEL/i;
+const RECOVERY_VOCAB_RE = /\bre-?verif|\bresume\b|\bretry\b|\brollback\b|re-?dispatch|\brestore\b|operator fixes|\bcompensat/i;
+
+// A loose matcher for a state token in prose: separators become optional so
+// ROLLED_BACK / ROLLED-BACK / "rolled back" all match one declared state.
+function stateProseRe(token) {
+  const body = token
+    .split(/[_-]/)
+    .map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("[\\s_-]?");
+  return new RegExp(`\\b${body}\\b`, "i");
+}
+
+// Is any failure-named state the SOURCE of a transition edge? (a failure state
+// with an outgoing arrow = a recovery/compensation path, structurally.)
+function hasFailureSourceEdge(contractText) {
+  const re = new RegExp(`([A-Z][A-Z0-9_-]+)\\s*(?:${ARROW_RE.source})`, "g");
+  for (const line of String(contractText).split("\n")) {
+    if (!isMachineLine(line)) continue;
+    for (const m of line.matchAll(re)) {
+      if (FAILURE_TAXONOMY_RE.test(m[1])) return true;
+    }
+  }
+  return false;
+}
+
+// The five cascade classes — the "beat v2 by far" lever. Each must be COVERED
+// (a case asserts it) or WAIVED (named with a reason); silent absence fails.
+// NOTE on word boundaries: the leading `\b` is load-bearing. Without it,
+// `roll[\s_-]?back` matches inside "sc-rollback" (scrollback) and false-passes a
+// package that never rolls anything back. The `(?:ed|s|ing)?` infix catches
+// ROLLED_BACK / "rolled back" / rollback / "roll back" as one class.
+const CASCADE_CLASSES = [
+  { key: "partial-failure", cover: /\bpartial[\s_-]?fail|\bpartially (?:failed|applied|propagated|revoked)/i, name: /\bpartial/i },
+  { key: "rollback/compensation", cover: /\broll(?:ed|s|ing)?[\s_-]?back\b|\bcompensat|\brevert\b|\bundo\b/i, name: /\broll(?:ed|s|ing)?[\s_-]?back\b|\bcompensat|\brevert\b/i },
+  { key: "failed-recovery→escalation", cover: /\bescalat|\bunrecoverab|\broll(?:ed|s|ing)?[\s_-]?back\b[^.\n]*\bfail|\bdead[\s-]?letter\b/i, name: /\bescalat|\bunrecoverab/i },
+  { key: "recovery/resume", cover: /\bresume\b|\bre-?verif|\bretry\b|\bre-?dispatch\b|\brecover(?:s|ed|y|ing)?\b|\boperator fixes\b/i, name: /\bresume\b|\brecover|\bretry\b|\bre-?verif/i },
+  { key: "adversarial-verify", cover: /\badversar|\btamper|\bexternally (?:overwritten|modified|changed|altered)|\bre-?reads?\b|\bround[\s_-]?trip\b|\bproves it\b/i, name: /\badversar|\btamper|\bround[\s_-]?trip\b/i },
+];
+
+// A class is WAIVED when a line names it (its `name` regex) alongside an
+// explicit WAIVED / N/A marker AND a reason (an em/en dash, `--`, `: text`,
+// "because", or a leading "no").
+function classWaived(waiverText, klass) {
+  for (const line of String(waiverText).split("\n")) {
+    if (!/\b(WAIVED|N\/A)\b/i.test(line)) continue;
+    if (!klass.name.test(line)) continue;
+    if (/—|–|--|:\s*\S|because|\bno\b/i.test(line)) return line.trim().slice(0, 120);
+  }
+  return null;
+}
+
+// Pure, importable core (mirrors checkMachineAdditive / checkEpicTierTable).
+// Returns { na, problems[], notes[] } — na ⇒ no declared machine ⇒ gate PASS.
+export function checkAdversarialDepth({ contractText = "", epicText = "", waiverText = "" }) {
+  const problems = [];
+  const notes = [];
+  const states = extractStates(contractText);
+
+  // Gate condition: a declared, multi-step state machine. Fewer than 2 declared
+  // states ⇒ a linear/CRUD flow ⇒ the whole gate is N/A (no over-reach).
+  if (states.size < 2) {
+    notes.push(`no multi-state machine declared in CONTRACT (${states.size} state token(s)) — linear/CRUD workflow, adversarial-depth gate N/A`);
+    return { na: true, problems, notes };
+  }
+  const failureStates = [...states].filter((s) => FAILURE_TAXONOMY_RE.test(s));
+  notes.push(`declared ${states.size} states; ${failureStates.length} failure state(s): ${failureStates.join(", ") || "(none)"}`);
+
+  // D-A1 — the machine must model at least one failure state.
+  if (failureStates.length === 0) {
+    problems.push(`D-A1: CONTRACT declares a ${states.size}-state machine but models NO failure state (taxonomy: FAIL|ERROR|ROLLBACK|ESCALAT|PARTIAL|ABORT|TIMEOUT|REJECT|DENIED) — model the failure path, or reduce to a linear flow (which is N/A here)`);
+  }
+
+  // D-A2 — at least one recovery/compensation transition: recovery vocabulary in
+  // the CONTRACT, or a failure state that is the source of an outgoing edge.
+  if (failureStates.length > 0 && !RECOVERY_VOCAB_RE.test(contractText) && !hasFailureSourceEdge(contractText)) {
+    problems.push(`D-A2: no recovery/compensation transition — the machine enters a failure state but nothing leaves it (no failure-state-source edge, no re-verify/resume/retry/rollback/restore vocabulary). A dead-end failure is a design gap or must be WAIVED`);
+  }
+
+  // D-B1 — every declared failure state is an asserted outcome of ≥1 case.
+  for (const s of failureStates) {
+    if (!stateProseRe(s).test(epicText)) {
+      problems.push(`D-B1: failure state "${s}" is declared in the machine but no test case asserts it as an outcome — an unreachable-in-tests failure state is a coverage hole`);
+    }
+  }
+
+  // D-B2 — every governance rule (G-n / CB-n) is referenced by a case, carries
+  // an inline (test: …) hook, or is explicitly WAIVED. Schema-free teeth
+  // (revives the deferred E3): SOMETHING must declare each rule tested.
+  const govIds = [...new Set([...String(contractText).matchAll(/\b((?:G|CB)-\d+)\b/g)].map((m) => m[1]))];
+  const contractLines = String(contractText).split("\n");
+  for (const g of govIds) {
+    const gRe = new RegExp(`\\b${g}\\b`);
+    const inEpic = gRe.test(epicText);
+    const hooked = contractLines.some((l) => gRe.test(l) && /\(test:|WAIVED|N\/A|\binverse-op\b|\bnegative\b/i.test(l));
+    if (!inEpic && !hooked) {
+      problems.push(`D-B2: governance rule "${g}" has no test hook — not referenced by any case, and its CONTRACT line carries no "(test: …)" / WAIVED marker`);
+    }
+  }
+
+  // D-B3 — the five cascade classes, each COVERED or WAIVED. This is the lever.
+  for (const klass of CASCADE_CLASSES) {
+    if (klass.cover.test(epicText)) {
+      notes.push(`cascade "${klass.key}": COVERED`);
+      continue;
+    }
+    const waiver = classWaived(waiverText, klass);
+    if (waiver) {
+      notes.push(`cascade "${klass.key}": WAIVED — ${waiver}`);
+      continue;
+    }
+    problems.push(`D-B3: cascade class "${klass.key}" is neither COVERED by a case nor explicitly WAIVED — silent absence fails closed. Add a case that exercises it, or waive it with a reason (e.g. "${klass.key}: N/A — <why>")`);
+  }
+
+  return { na: false, problems, notes };
+}
+
+function cmdAdversary(rawArgs) {
+  const label = "adversarial-depth (D4: failure-mode coverage)";
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`adversary: ${dirErr}`);
+    return finish(label);
+  }
+  let deliveryDir;
+  if (dir) {
+    deliveryDir = existsSync(join(dir, "delivery")) ? join(dir, "delivery") : dir;
+  } else {
+    deliveryDir = rest[0];
+    if (!deliveryDir) {
+      fail("adversary: usage: gate-check adversary <delivery-dir> | gate-check adversary --dir <repo-root>");
+      return finish(label);
+    }
+  }
+  if (!existsSync(deliveryDir)) {
+    fail(`adversary: delivery dir not found: ${deliveryDir}`);
+    return finish(label);
+  }
+  const cands = [join(deliveryDir, "CONTRACT.md"), join(deliveryDir, "v3", "CONTRACT.md")];
+  const contractPath = cands.find(existsSync) || cands[0];
+  let contractText;
+  try {
+    contractText = readFileSync(contractPath, "utf8");
+  } catch {
+    fail(`adversary: CONTRACT not found: ${contractPath}`);
+    return finish(label);
+  }
+
+  // Coverage text = every case-bearing epic file under delivery, EXCLUDING the
+  // CONTRACT itself (the CONTRACT *declares* the machine; it is never coverage).
+  const files = collectMdFiles(deliveryDir);
+  const contractAbs = resolve(contractPath);
+  const caseRe = /\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b/;
+  const epicParts = [];
+  for (const f of files) {
+    if (resolve(f) === contractAbs) continue;
+    const t = readFileSync(f, "utf8");
+    const norm = f.replace(/\\/g, "/");
+    if (/\/epics?\//i.test(norm) || /^epics?[-.]/i.test(basename(norm)) || caseRe.test(t)) {
+      epicParts.push(t);
+    }
+  }
+  const epicText = epicParts.join("\n\n");
+
+  // Waivers may also live in a decisions.md. Candidates are anchored to the
+  // RESOLVED delivery/repo dirs only — never a bare CWD-relative path, which
+  // would leak the invoking repo's own delivery/decisions.md into an unrelated
+  // package under test (a test-isolation + correctness hazard).
+  const decisionCands = [join(deliveryDir, "decisions.md"), join(deliveryDir, "..", "decisions.md")];
+  if (dir) decisionCands.unshift(join(dir, "delivery", "decisions.md"));
+  let decisionsText = "";
+  for (const dp of decisionCands) {
+    if (existsSync(dp)) {
+      decisionsText = readFileSync(dp, "utf8");
+      break;
+    }
+  }
+  const waiverText = `${epicText}\n\n${decisionsText}`;
+
+  const res = checkAdversarialDepth({ contractText, epicText, waiverText });
+  for (const n of res.notes) console.log(`  · ${n}`);
+  if (res.na) {
+    console.log(`PASS — ${label}: N/A — ${res.notes[res.notes.length - 1]}`);
+    process.exit(0);
+  }
+  for (const p of res.problems) fail(p);
+  if (failures.length === 0) {
+    ok("failure-mode depth: machine models failures + recovery; every declared failure state & cascade class is covered-or-waived");
+  }
+  finish(label);
 }
 
 // ---------------------------------------------------------------- v3: tiering policy (W3/G2)
@@ -1368,6 +1623,7 @@ const commands = {
   reconcile: cmdReconcile,
   preflight: cmdPreflight,
   "machine-diff": cmdMachineDiff,
+  adversary: cmdAdversary,
   pluginlint: cmdPluginlint,
   "mirror-check": cmdMirrorCheck,
 };
@@ -1378,7 +1634,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|pluginlint|mirror-check> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root>  frozen-contract structural check (+ casesReviewed in --dir mode; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -1388,6 +1644,7 @@ if (isMain) {
     console.error("  reconcile --dir <repo-root>          W5 orphan scan + FD-2 draft→binding case map");
     console.error("  preflight <S|M|L> [--dir <target>]   probe env facts → ENV-FACTS.md (fail-closed)");
     console.error("  machine-diff <live.json> <base.json> live machine additive-only vs baseline");
+    console.error("  adversary <delivery-dir|--dir root>  failure-mode depth gate (D4): declared machine models failures+recovery; cascade classes covered-or-waived (N/A when no machine)");
     console.error("  pluginlint <plugin-root|--dir plugin-root>  loader/metadata lint (frontmatter, plugin.json, marketplace source, name↔dir)");
     console.error("  mirror-check [--dir fixture-root]    PRD §D7 mirror parity — exit 2 on drift");
     process.exit(1);
