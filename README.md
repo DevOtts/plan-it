@@ -254,6 +254,12 @@ They're two halves of one lifecycle, designed to compose:
 Each also works standalone: `plan-it`'s package is plain markdown any agent (or
 human team) can execute; `fable-it` accepts any well-formed goal + DoD.
 
+**The third leg — [`review-it`](https://github.com/DevOtts/review-it):** plan-it
+plans, fable-it builds, **review-it verifies**. The Test Contract plan-it authors
+per epic is exactly what review-it's `contract-qa` mode runs against the finished
+build — independent verification with an 11-rule gate catalog (no self-graded
+green), closing the plan → build → review triangle.
+
 ## Status
 
 `3.0.1` — packaging patch: the plugin now installs from the shared **DevOtts**
