@@ -131,7 +131,7 @@ Amendments fold cross-cutting squad findings back here so squads can't drift.
 3. Waves (Wave 0..N diagram: which epics, which squads, barriers)
 4. Test standard (≥10/epic, T-<EID>-NN naming, [REAL] rules, verifiability precheck)
 5. Branching & hygiene (one branch per epic, merge-on-green, cross-repo coordination)
-6. The fable-it runbook (per epic: branch → /fable-it → /iterate until green → ship → unblock)
+6. The build-it runbook (per epic: branch → /build-it → /iterate until green → ship → unblock)
 7. Tracking (STATUS.md is the board)
 ```
 

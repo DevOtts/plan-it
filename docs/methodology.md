@@ -103,7 +103,7 @@ Full definitions live in the skill's `references/templates.md` (PART D).
 Guided, with autonomous bursts: research and authoring run unattended at high
 reasoning effort; the pipeline stops only at G1 (scope), G2 (decisions), G3
 (delivery approval). This is the inverse of
-[`fable-it`](https://github.com/DevOtts/fable-it), which runs fully unattended
+[`build-it`](https://github.com/DevOtts/build-it), which runs fully unattended
 — because planning is where the human's judgment is *the* input, and building
 is where it mostly isn't.
 
@@ -111,7 +111,7 @@ is where it mostly isn't.
 
 - Wired examples: a public sample run (fuzzy demand → full package) as a fixture.
 - A packaged consistency-lint script (today the lint is a checklist the skill executes).
-- Tighter `plan-it` → `fable-it` state handoff (shared `.taskstate/` conventions).
+- Tighter `plan-it` → `build-it` state handoff (shared `.taskstate/` conventions).
 
 ---
 

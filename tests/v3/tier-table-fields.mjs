@@ -2,7 +2,7 @@
 /**
  * C-W3-03 — an epic's Tier Table parses with all four fields (tier | effort
  * | escalation | scaffold-pointer), and the scaffold-pointer must be a real
- * pointer (`fable-it:<preset>` or `.claude/agents/<file>.md`), never inline
+ * pointer (`build-it:<preset>` or `.claude/agents/<file>.md`), never inline
  * prompt prose. The mechanism is the exported `checkEpicTierTable(epicText)`
  * function (scripts/gate-check.mjs ~line 341, `TIER_HEADER_RE`/`POINTER_RE`)
  * — imported directly (import-safe: CLI dispatch is guarded by `isMain`, so
@@ -11,7 +11,7 @@
  * Fixtures (existing on disk, already named for this case in their own
  * READMEs — T-B2-02):
  *   - tests/fixtures/v3/tier-table-good/delivery/v3/epics/epics-sample.md
- *     — valid 4-field row, fable-it:iteration-impl pointer.
+ *     — valid 4-field row, build-it:iteration-impl pointer.
  *   - tests/fixtures/v3/tier-table-bad-pointer/.../epics-sample.md — same
  *     shape, but the pointer cell is inline prompt prose with whitespace.
  * Plus one in-script text (no fixture dir needed — checkEpicTierTable takes
@@ -58,7 +58,7 @@ const missingFieldFindings = checkEpicTierTable(MISSING_FIELD_TEXT);
 
 let broken = null;
 if (goodFindings.length > 0) {
-  broken = `valid 4-field table with a fable-it pointer was flagged: ${JSON.stringify(goodFindings)}`;
+  broken = `valid 4-field table with a build-it pointer was flagged: ${JSON.stringify(goodFindings)}`;
 } else if (badPointerFindings.length === 0) {
   broken = "inline-prose scaffold-pointer (whitespace, not a pointer grammar) was NOT flagged";
 } else if (!badPointerFindings.some((f) => /whitespace|pointer grammar/.test(f))) {
@@ -73,5 +73,5 @@ if (broken) {
   console.log(`BROKEN — ${broken}`);
   process.exit(0); // enforcement broken → exit 0 (see header)
 }
-console.log(`OK — checkEpicTierTable accepts the valid 4-field/fable-it-pointer table with zero complaints, and rejects both an inline-prose pointer (${JSON.stringify(badPointerFindings)}) and a row missing the scaffold-pointer field (${JSON.stringify(missingFieldFindings)}). Exiting 1 per the C-META-01 fail-closed sweep convention.`);
+console.log(`OK — checkEpicTierTable accepts the valid 4-field/build-it-pointer table with zero complaints, and rejects both an inline-prose pointer (${JSON.stringify(badPointerFindings)}) and a row missing the scaffold-pointer field (${JSON.stringify(missingFieldFindings)}). Exiting 1 per the C-META-01 fail-closed sweep convention.`);
 process.exit(1);

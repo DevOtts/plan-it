@@ -5,8 +5,8 @@
  * G2 decision #1 (delivery/decisions.md 2026-07-07: "Squad C F2 resolution
  * CONFIRMED: claim-softened") resolved the aggregator question by SOFTENING
  * the claim rather than building an aggregator repo — no aggregator exists
- * among DevOtts' repos, and fable-it's own marketplace self-registers only
- * fable-it. This case guards that resolution: the live
+ * among DevOtts' repos, and build-it's own marketplace self-registers only
+ * build-it. This case guards that resolution: the live
  * `.claude-plugin/marketplace.json` must NOT assert it is "also published in
  * the wider DevOtts marketplace" (or any equivalent aggregator claim), and the
  * detector that enforces this must actually catch such a claim when present.

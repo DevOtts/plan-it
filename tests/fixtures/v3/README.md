@@ -47,7 +47,7 @@ find tests/fixtures/v3 -mindepth 1 -maxdepth 1 | wc -l
 | `credentials-unprocured/` | T-B3-06 | G2: unprocured credential, no owner | real |
 | `credentials-gated/` | T-B3-07 (positive) | G2: GATED-with-owner, verified copy in CONTRACT | real |
 | `no-tier/` | T-B2-01 | reconcile: epic without a Tier Table | real |
-| `tier-table-good/` | T-B2-02 (positive) | Tier Table 4-field parse, fable-it pointer | real |
+| `tier-table-good/` | T-B2-02 (positive) | Tier Table 4-field parse, build-it pointer | real |
 | `tier-table-bad-pointer/` | T-B2-02 | Tier Table: scaffold-pointer is inline prose | real |
 | `preflight-s/` | C-W2-02 / T-B1-03 | preflight: S-shape 6-probe set | **STUB** (see below) |
 | `preflight-ml/` | C-W2-02 / T-B1-04 | preflight: M/L-shape 9-probe set | **STUB** |

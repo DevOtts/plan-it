@@ -188,7 +188,7 @@ Beyond `KICKOFF.md` + the next-session prompt:
 ## F. Pre-handoff consistency gate (run before Phase 10 hands off)
 
 Every item below was a REAL defect a dry-run package shipped — each would have
-blocked an unattended `/fable-it` build. Run this lint over the whole package;
+blocked an unattended `/build-it` build. Run this lint over the whole package;
 treat failures as blocking; fix and re-lint until clean. Cheap to run, and it's the
 difference between "looks complete" and "builds unattended."
 

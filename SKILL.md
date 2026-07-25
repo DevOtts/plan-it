@@ -2,8 +2,8 @@
 name: plan-it
 description: >-
   Turn a fuzzy idea, brain-dump, or transcription into a COMPLETE spec set + agile
-  delivery package, ready to hand to /fable-it. The front-end to /fable-it: plan-it
-  plans it, fable-it builds it. Runs a ~10-phase discovery → spec → agile-split
+  delivery package, ready to hand to /build-it. The front-end to /build-it: plan-it
+  plans it, build-it builds it. Runs a ~10-phase discovery → spec → agile-split
   pipeline — pre-grounds the codebase, fans out parallel Claude teams (xhigh) to
   research independent subsystems, authors the design docs in dependency order,
   pauses at ONE batched human-decision gate, then freezes a shared CONTRACT and
@@ -18,7 +18,7 @@ description: >-
   a buildable plan. Built for BOTH humans AND
   conductor agents: a conductor that
   receives a new demand runs /plan-it to produce the package before dispatching
-  workers. The inverse of /fable-it (which builds) and predecessor to
+  workers. The inverse of /build-it (which builds) and predecessor to
   /next-session-prompt (which hands off the finished plan). v2 adds a
   deterministic core: the pipeline is an explicit statechart (machine.json), every
   run persists its position in .plan-it/state.json (crash/compaction-resumable),
@@ -40,12 +40,12 @@ keywords: [planning, discovery, specs, prd, epics, test-contract, agile, definit
 
 **Take a fuzzy demand → ship a buildable delivery package.** This is the planning
 conductor: the disciplined front-half of the lifecycle that ends exactly where
-`/fable-it` begins. It does *discovery* (research the ground truth), *spec*
+`/build-it` begins. It does *discovery* (research the ground truth), *spec*
 (author the design docs), and *agile split* (PRDs, epics, tests, the shared
 contract) — then hands off.
 
 ```
-  /plan-it  ─────────────►  docs/ + delivery/  ─────────────►  /fable-it
+  /plan-it  ─────────────►  docs/ + delivery/  ─────────────►  /build-it
   (discovery → spec → plan)   (the buildable package)            (builds it)
 ```
 
@@ -178,7 +178,7 @@ Rules of the Test Contract:
 
 5. **Execution path:** `/full-qa` runs the contract, `/iterate` loops it to 100%,
    `chrome-cdp-control` drives UI scenarios. **The contract is the bridge from
-   plan-it → fable-it: `/fable-it`'s Definition of Done = this contract.**
+   plan-it → build-it: `/build-it`'s Definition of Done = this contract.**
 
 Grammars and the contract header format: `references/formats.md` (the Test Contract
 block + §4–5).
@@ -352,7 +352,7 @@ Shared mechanics for any fan-out:
   don't average.
 - **Independently verify the centerpiece** yourself rather than trust the team blind.
 
-Use the `Agent` tool (`Explore`/`general-purpose`), or `/fable-it`'s team machinery
+Use the `Agent` tool (`Explore`/`general-purpose`), or `/build-it`'s team machinery
 for larger runs. Keep all *synthesis* single-threaded in the main thread.
 
 ---
@@ -432,7 +432,7 @@ backbone **first**, because squads build their PRDs against it:
    primitive interface, enums/literals, repo ownership + branch rules, definition
    of "shipped," changelog.
 2. `delivery/00-program-plan.md` — squads, epic backlog, waves, test standard,
-   branching, the fable-it runbook, the board pointer.
+   branching, the build-it runbook, the board pointer.
 3. `delivery/STATUS.md` — the live board, all epics in backlog.
 
 (For size S/M, fold these into fewer files — a contract section + a single plan.)
@@ -521,7 +521,7 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
     reusable patterns, memory.
   - Produce the launch handoff (`/next-session-prompt`, or author it directly) —
     the KICKOFF doc **and** the exact copy-paste launch
-    prompt (this is the `sample-prompt-prd.txt`-style artifact that `/fable-it`
+    prompt (this is the `sample-prompt-prd.txt`-style artifact that `/build-it`
     consumes). Done.
 - **Optional handoff enrichments** (playbooks §E): a `README.md` consolidation hub
   (reading-order table + decisions-in-one-screen + GATING items); a `KICKOFFS.md`
@@ -536,7 +536,7 @@ locked decisions, and the launch prompt.
 
 ## Composes with
 
-- **[`/fable-it`](https://github.com/DevOtts/fable-it)** — the build engine `plan-it` feeds. The handoff prompt targets it.
+- **[`/build-it`](https://github.com/DevOtts/build-it)** — the build engine `plan-it` feeds. The handoff prompt targets it.
 - **`/read-chat`** (optional) — resolve pointer sessions in pre-grounding.
 - **`/sync-obsidian`, `/session-debrief`, `/next-session-prompt`** (optional) — the
   handoff trio; degrade to inline equivalents when absent.

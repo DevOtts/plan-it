@@ -1,4 +1,5 @@
-# fable-it run reports (generated per run — never commit)
+# build-it (legacy .fable-it-reports/ kept ignored) run reports (generated per run — never commit)
+.build-it-reports/
 .fable-it-reports/
 .taskstate/
 

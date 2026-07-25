@@ -207,7 +207,7 @@
       "meta": {
         "phase": 10,
         "title": "Handoff",
-        "does": "Assemble README/KICKOFF, fill the board, produce the launch prompt for the build agent (/fable-it)."
+        "does": "Assemble README/KICKOFF, fill the board, produce the launch prompt for the build agent (/build-it)."
       },
       "on": {
         "HANDED_OFF": { "target": "done" }

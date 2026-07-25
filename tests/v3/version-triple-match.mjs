@@ -29,7 +29,7 @@ function pluginJsonVersion(p) {
 }
 function marketplacePluginVersion(p) {
   const mk = JSON.parse(r(p));
-  return mk.plugins?.[0]?.version ?? null;
+  return (mk.plugins?.find(p => p.name === 'plan-it') ?? mk.plugins?.[0])?.version ?? null;
 }
 function skillFrontmatterVersion(p) {
   // frontmatter is the first --- ... --- block; version: is a top-level key.
@@ -50,7 +50,7 @@ function changelogTopVersion(p) {
 
 const sources = {
   "plugin.json": pluginJsonVersion("plugins/plan-it/.claude-plugin/plugin.json"),
-  "marketplace.json plugins[0]": marketplacePluginVersion(".claude-plugin/marketplace.json"),
+  "marketplace.json plugins[plan-it]": marketplacePluginVersion(".claude-plugin/marketplace.json"),
   "SKILL.md (root)": skillFrontmatterVersion("SKILL.md"),
   "SKILL.md (mirror)": skillFrontmatterVersion("plugins/plan-it/skills/plan-it/SKILL.md"),
   "machine.json (root)": pluginJsonVersion("machine.json"),

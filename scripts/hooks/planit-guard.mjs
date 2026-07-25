@@ -96,7 +96,7 @@ try {
       deny(
         `plan-it W3 (hard-enforced): "${filePath}" is a delivery artifact and this write ` +
           `hardcodes model ID "${hit[0]}" (content line ${i + 1}). Tiers resolve to concrete ` +
-          `models at execution time — reference a tier (top/mid/low) or a fable-it scaffold ` +
+          `models at execution time — reference a tier (top/mid/low) or a build-it scaffold ` +
           `pointer, never a literal claude-* model ID.`
       );
     }

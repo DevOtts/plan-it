@@ -18,7 +18,7 @@
   <!-- title -->
   <text x="600" y="78" text-anchor="middle" font-size="46" font-weight="700" fill="#e8eefc">plan-it</text>
   <text x="600" y="116" text-anchor="middle" font-size="21" fill="#7dd3fc">Turn a fuzzy idea into a buildable delivery package.</text>
-  <text x="600" y="146" text-anchor="middle" font-size="15" class="mono" fill="#5b6b85">discovery → spec → agile split — plan-it plans it, fable-it builds it</text>
+  <text x="600" y="146" text-anchor="middle" font-size="15" class="mono" fill="#5b6b85">discovery → spec → agile split — plan-it plans it, build-it builds it</text>
 
   <!-- fuzzy demand (left) -->
   <rect x="40" y="300" width="150" height="96" rx="12" fill="#16233c" stroke="#33415c" stroke-width="1.5" stroke-dasharray="6 5"/>
@@ -70,7 +70,7 @@
   <text x="1076" y="332" text-anchor="middle" font-size="16" font-weight="600" fill="#bbf7d0">delivery package</text>
   <text x="1076" y="354" text-anchor="middle" font-size="11" class="mono" fill="#5e8b6f">docs/ + delivery/</text>
   <text x="1076" y="371" text-anchor="middle" font-size="11" class="mono" fill="#5e8b6f">CONTRACT v1.0 ✓</text>
-  <text x="1076" y="388" text-anchor="middle" font-size="11" class="mono" fill="#7dd3fc">→ /fable-it</text>
+  <text x="1076" y="388" text-anchor="middle" font-size="11" class="mono" fill="#7dd3fc">→ /build-it</text>
 
   <!-- caption -->
   <text x="600" y="566" text-anchor="middle" font-size="14" fill="#5b6b85">Three human gates, one frozen <tspan class="mono" fill="#7dd3fc">CONTRACT</tspan>, and every epic ends in a binding <tspan class="mono" fill="#7dd3fc">Test Contract</tspan> — 100% pass = done.</text>

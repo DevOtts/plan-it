@@ -2,7 +2,7 @@
 
 These are composable building blocks proven across many real planning sessions.
 Mix them into whichever packaging shape you picked (see `templates.md` PART D).
-Use the exact grammars — they are what makes downstream tools (`/fable-it`,
+Use the exact grammars — they are what makes downstream tools (`/build-it`,
 `/full-qa`, board generators) ingest the output cleanly.
 
 ---
@@ -185,7 +185,7 @@ A `[REAL]` case never counts as VERIFIED on a mock.
 
 ## 8. Honest run-report / DELIVERY-LOG (the truth board)
 
-Per-run report (the `/fable-it` report shape):
+Per-run report (the `/build-it` report shape):
 ```
 ## DoD status
 | # | Criterion | Status | Evidence / Blocker |

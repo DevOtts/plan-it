@@ -615,9 +615,9 @@ export function checkRunPolicySeeded(contractText, stateJson) {
 
 // D9/D12b — every epic section must bind a Tier Table with the four fields:
 // tier | effort | escalation | scaffold-pointer. The pointer is a real pointer
-// (fable-it:<preset> or .claude/agents/<file>.md), never inline prompt prose.
+// (build-it:<preset> or .claude/agents/<file>.md), never inline prompt prose.
 const TIER_HEADER_RE = /^\|\s*tier\s*\|\s*effort\s*\|\s*escalation\s*\|\s*scaffold-pointer\s*\|?\s*$/i;
-const POINTER_RE = /^(fable-it:[A-Za-z0-9_.:\/-]+(#[A-Za-z0-9_-]+=[^\s|]+)*|\.claude\/agents\/[A-Za-z0-9_.-]+\.md)$/;
+const POINTER_RE = /^(build-it:[A-Za-z0-9_.:\/-]+(#[A-Za-z0-9_-]+=[^\s|]+)*|\.claude\/agents\/[A-Za-z0-9_.-]+\.md)$/;
 
 export function checkEpicTierTable(epicText) {
   const out = [];
@@ -654,7 +654,7 @@ export function checkEpicTierTable(epicText) {
       if (!escalation) out.push(`epic "${title}": Tier Table row missing escalation`);
       if (!pointer) out.push(`epic "${title}": Tier Table row missing scaffold-pointer`);
       else if (/\s/.test(pointer)) out.push(`epic "${title}": scaffold-pointer contains whitespace — inline prompt prose is not a pointer: "${pointer.slice(0, 60)}"`);
-      else if (!POINTER_RE.test(pointer)) out.push(`epic "${title}": scaffold-pointer "${pointer}" does not match the pointer grammar (fable-it:<preset>[#k=v…] or .claude/agents/<name>.md)`);
+      else if (!POINTER_RE.test(pointer)) out.push(`epic "${title}": scaffold-pointer "${pointer}" does not match the pointer grammar (build-it:<preset>[#k=v…] or .claude/agents/<name>.md)`);
     }
     if (!sawRow) out.push(`epic "${title}": Tier Table has a header but no rows`);
   }

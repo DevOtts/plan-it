@@ -12,11 +12,11 @@
 </p>
 
 <p>
-  <em>The planning front-end to <a href="https://github.com/DevOtts/fable-it">/fable-it</a>: plan-it plans it, fable-it builds it.</em>
+  <em>The planning front-end to <a href="https://github.com/DevOtts/build-it">/build-it</a>: plan-it plans it, build-it builds it.</em>
 </p>
 
 <a href="#how-it-works">
-  <img src="assets/plan-it-hero.svg" alt="plan-it — a fuzzy demand flows through discovery, spec and agile split, each with a human gate, into a delivery package handed to /fable-it" width="100%">
+  <img src="assets/plan-it-hero.svg" alt="plan-it — a fuzzy demand flows through discovery, spec and agile split, each with a human gate, into a delivery package handed to /build-it" width="100%">
 </a>
 
 <p>
@@ -58,7 +58,7 @@ You describe a feature in three paragraphs and dispatch an agent overnight. In t
 None of that is a capability problem. It's a *planning* problem: no frozen contract for parallel work to agree on, no single gate where the human injects the decisions only a human can make, and no pre-registered definition of what "working" even means. `plan-it` fixes all three structurally — with a frozen `CONTRACT.md` that squads write *to*, one numbered decision round with a recommendation attached to every item, and a Test Contract authored *at planning time*, so the build agent inherits its Definition of Done instead of improvising one.
 
 <a href="#how-it-works">
-  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /fable-it — plus the five non-negotiable rules" width="100%">
+  <img src="assets/plan-it-pipeline.svg" alt="The ~10-phase plan-it pipeline: intake, scope gate G1, pre-ground, discovery fan-out, synthesis, spec docs, decision gate G2, contract freeze G3, squad fan-out, verify + handoff to /build-it — plus the five non-negotiable rules" width="100%">
 </a>
 
 ## Installation
@@ -125,7 +125,7 @@ Run `npx skills add DevOtts/plan-it --list`, then target your agent.
 Three autonomous bursts, three human gates, one frozen contract.
 
 ```
-  /plan-it  ─────────────►  docs/ + delivery/  ─────────────►  /fable-it
+  /plan-it  ─────────────►  docs/ + delivery/  ─────────────►  /build-it
   (discovery → spec → plan)   (the buildable package)            (builds it)
 ```
 
@@ -211,7 +211,7 @@ feature is not "done" until 100% of them pass.**
 This is Specification by Example (Gojko Adzic) + ATDD/BDD for code, and
 Eval-Driven Development for LLM features — authored *at planning time* so the
 cases are a binding contract, not an afterthought. And it's the bridge to the
-build: **`/fable-it`'s Definition of Done *is* this contract.** No partial ship,
+build: **`/build-it`'s Definition of Done *is* this contract.** No partial ship,
 no VERIFIED-on-a-mock — a case whose real target is unreachable is reported
 IMPLEMENTED-NOT-VERIFIED, never a fake green.
 
@@ -240,11 +240,11 @@ docs/                          delivery/
                                  KICKOFF.md + launch prompt
 ```
 
-## plan-it × fable-it
+## plan-it × build-it
 
 They're two halves of one lifecycle, designed to compose:
 
-| | [`plan-it`](https://github.com/DevOtts/plan-it) | [`fable-it`](https://github.com/DevOtts/fable-it) |
+| | [`plan-it`](https://github.com/DevOtts/plan-it) | [`build-it`](https://github.com/DevOtts/build-it) |
 |---|---|---|
 | Job | discovery → spec → agile split | goal + DoD → verified delivery |
 | Runs | guided, with 3 human gates | unattended, overnight |
@@ -252,10 +252,10 @@ They're two halves of one lifecycle, designed to compose:
 | The bridge | authors the Test Contract | adopts it as its Definition of Done |
 
 Each also works standalone: `plan-it`'s package is plain markdown any agent (or
-human team) can execute; `fable-it` accepts any well-formed goal + DoD.
+human team) can execute; `build-it` accepts any well-formed goal + DoD.
 
 **The third leg — [`review-it`](https://github.com/DevOtts/review-it):** plan-it
-plans, fable-it builds, **review-it verifies**. The Test Contract plan-it authors
+plans, build-it builds, **review-it verifies**. The Test Contract plan-it authors
 per epic is exactly what review-it's `contract-qa` mode runs against the finished
 build — independent verification with an 11-rule gate catalog (no self-graded
 green), closing the plan → build → review triangle.
@@ -263,7 +263,7 @@ green), closing the plan → build → review triangle.
 ## Status
 
 `3.0.1` — packaging patch: the plugin now installs from the shared **DevOtts**
-marketplace (`/plugin install plan-it@devotts`, alongside `fable-it`) and the
+marketplace (`/plugin install plan-it@devotts`, alongside `build-it`) and the
 version is bumped to `3.0.1` for parity. No pipeline or enforcement changes.
 
 `3.0.0` — the **field-hardened core** line and the public debut of v3. Where v2

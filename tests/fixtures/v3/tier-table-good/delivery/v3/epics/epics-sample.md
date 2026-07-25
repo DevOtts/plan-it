@@ -6,7 +6,7 @@
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | spec'd-implementation | escalate-on-struggle-one-tier-up | fable-it:iteration-impl |
+| mid | spec'd-implementation | escalate-on-struggle-one-tier-up | build-it:iteration-impl |
 
 ### Binding Test Contract
 

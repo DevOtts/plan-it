@@ -52,12 +52,12 @@ The last artifact is a launch prompt. Open a **fresh session** and paste it —
 typically:
 
 ```
-/fable-it
+/build-it
 goal: <one line from KICKOFF.md>
 DoD: the Test Contract in delivery/epics-*.md — 100% pass
 ```
 
-`/fable-it` (or any build agent) inherits the Test Contract as its Definition
+`/build-it` (or any build agent) inherits the Test Contract as its Definition
 of Done: it iterates until every registered case passes, and reports each one
 VERIFIED / IMPLEMENTED-NOT-VERIFIED / BLOCKED — no fake greens.
 

@@ -77,7 +77,7 @@ authoring.
 
 `plan-it` composes with, but does not require:
 
-- [`fable-it`](https://github.com/DevOtts/fable-it) — the autonomous build agent
+- [`build-it`](https://github.com/DevOtts/build-it) — the autonomous build agent
   the delivery package is designed for. Its Definition of Done is plan-it's
   Test Contract.
 - A session-reading skill (`/read-chat` or similar) — resolves "see my other
