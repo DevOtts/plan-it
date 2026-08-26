@@ -103,7 +103,19 @@ try {
   }
 
   const cwd = input.cwd ?? process.cwd();
-  const statePath = join(cwd, ".plan-it", "state.json");
+
+  // Resolve the NAMED run's state file when the deliverable path names a program
+  // (docs/implementation/<name>/...), falling back to the generic state.json.
+  // Fixes: generic-file resolution denied legitimate writes for a named run
+  // whenever the project also carries an unrelated, unfrozen generic/other-named
+  // run (docs/implementation/open-sessions-closeout/backlog/
+  // plan-it-guard-hook-wrong-state-file-on-named-runs.md).
+  const programMatch = filePath.match(/(^|[\\/])docs[\\/]implementation[\\/]([^\\/]+)[\\/]/i);
+  const namedStatePath = programMatch
+    ? join(cwd, ".plan-it", `${programMatch[2]}.state.json`)
+    : null;
+  const statePath =
+    namedStatePath && existsSync(namedStatePath) ? namedStatePath : join(cwd, ".plan-it", "state.json");
   if (!existsSync(statePath)) allow();
 
   const state = JSON.parse(readFileSync(statePath, "utf8"));
