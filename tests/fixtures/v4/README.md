@@ -37,7 +37,22 @@ Ownership (CONTRACT §2): SQ-B owns everything here except `report/` (SQ-A).
 | `guard-unfrozen-named/`, `guard-unfrozen-named-frozen/` | V4B3 | T-V4B3-14 |
 | `guard-legacy-docs/`, `guard-broken-named/` | V4B3 | T-V4B3-15 |
 | `epic-heading-v4/` | V4B3 | T-V4B3-17 |
+| `defaults-not-orphans/` | V4B4 | T-V4B4-17 (AMD-7) |
+| `mirror/` | V4B4 | stamp helper, not a case fixture |
+| `mirror-fresh/` | V4B4 | T-V4B4-01 |
+| `mirror-stale/` | V4B4 | T-V4B4-02 |
+| `mirror-unstamped/` | V4B4 | T-V4B4-03 |
+| `mirror-malformed/`, `mirror-md-missing/` | V4B4 | T-V4B4-04 |
+| `mirror-embed-changed/`, `mirror-brand-repo/` | V4B4 | T-V4B4-05 |
+| `mirror-missing-twin/` | V4B4 | T-V4B4-06 |
+| `mirror-escalated/` | V4B4 | T-V4B4-07 |
+| `glossary-unknown-id/` | V4B4 | T-V4B4-08, 10 |
+| `glossary-good/`, `glossary-missing/` | V4B4 | T-V4B4-09 |
+| `disposition-missing/` | V4B4 | T-V4B4-11 |
+| `disposition-contract-case/` | V4B4 | T-V4B4-12 |
+| `disposition-tally-drift/` | V4B4 | T-V4B4-13 |
+| `disposition-good/`, `disposition-bad-path/`, `disposition-malformed/` | V4B4 | T-V4B4-14 |
+| `envfacts-tool-only/`, `envfacts-tool-only-no-column/` | V4B4 | T-V4B4-15, 16 |
 
-Further V4B4–V4B5 fixtures (`mirror-*`, `glossary-*`, `disposition-*`,
-`envfacts-*`, `dogfood-project/`) land as those epics build, each with its
-own `README.md`.
+Further V4B5 fixtures (`dogfood-project/`) land as that epic builds, each
+with its own `README.md`.

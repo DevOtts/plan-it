@@ -12,6 +12,8 @@
  *   adversary <delivery-dir|--dir root> failure-mode depth: declared machine models failures+recovery, cascade classes covered-or-waived (v3.2 D4)
  *   archive <slug> [--dir root]       move a done/closedWithoutPlan run to .plan-it/done/ (v4 D-B8)
  *   runs [--dir root] [--json]        list every plan-it run, live + archived, computed counts (v4 D-B8)
+ *   mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (v4 D-B9)
+ *   glossary <delivery-dir>           first-use ID coverage against GLOSSARY.md (v4 D-B10)
  *
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
@@ -20,6 +22,7 @@ import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSy
 import { execFileSync } from "node:child_process";
 import { join, dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 // v4 D-B13: the epic-id token, widened from the 3.0.1 [A-Z]\d+ (E1, A2, B3)
 // so a V4<letter><n>-shaped id (V4B1) is recognized too — everywhere an epic
@@ -232,10 +235,13 @@ function envFactsMarkdown(shape, rows) {
     `- shape: ${shape} (${rows.length}-probe set — formats.md §9)`,
     "- generated-by: `gate-check preflight` (deterministic; re-run to refresh)",
     "- status vocabulary: PRESENT | ABSENT | TIMEOUT — ABSENT/TIMEOUT fail the preflight gate",
+    // v4 D-B12: optional 5th "tool" column — when a probe wraps another tool
+    // (e.g. `node scripts/check-gh.mjs` really probes `gh`), an ABSENT/TIMEOUT
+    // result blacklists only that declared tool, never every argv token.
     "",
-    "| id | check | status | evidence |",
-    "|---|---|---|---|",
-    ...rows.map((r) => `| ${r.id} | \`${r.check}\` | ${r.status} | ${r.evidence} |`),
+    "| id | check | status | evidence | tool |",
+    "|---|---|---|---|---|",
+    ...rows.map((r) => `| ${r.id} | \`${r.check}\` | ${r.status} | ${r.evidence} | ${r.tool ? `\`${r.tool}\`` : ""} |`),
     "",
   ];
   return lines.join("\n");
@@ -302,7 +308,7 @@ function cmdPreflight(rawArgs) {
         evidence = firstLine(e.stderr || e.stdout || e.message) || `exit ${e.status ?? "?"}`;
       }
     }
-    rows.push({ id, check: p.check.join(" "), status, evidence });
+    rows.push({ id, check: p.check.join(" "), status, evidence, tool: p.tool });
     (status === "PRESENT" ? ok : fail)(`${id}: ${status} — ${evidence}`);
   }
   // ENV-FACTS.md is written even when probes fail: recording the facts IS the job.
@@ -959,6 +965,45 @@ function cmdHandoff(rawArgs) {
     }
   }
 
+  // v4 D-B10 — step 8 (embedded glossary): scoped — fires when GLOSSARY.md
+  // exists under the dir, or the resolved run's machineVersion major ≥ 4
+  // (then its absence itself fails, C-E10-02). Same failures[], one finish().
+  const runState = rootFlag ? readState(rootFlag, runSlug) : null;
+  const machineMajor = (() => {
+    const v = runState?.machineVersion;
+    const m = typeof v === "string" && v.match(/^(\d+)\./);
+    return m ? Number(m[1]) : null;
+  })();
+  const glossaryPath = join(dir, "GLOSSARY.md");
+  if (existsSync(glossaryPath)) {
+    const gres = checkGlossaryDir(dir);
+    for (const l of gres.unknownLines) fail(l);
+  } else if (machineMajor !== null && machineMajor >= 4) {
+    fail(`C-E10-02 (G-8): GLOSSARY.md missing under ${dir} at handoff (machineVersion major ${machineMajor})`);
+  }
+
+  // v4 D-B9 — step 9 (embedded mirror): scoped — fires when a stamped .html
+  // exists under the dir, or machineVersion major ≥ 4 (then --require-html,
+  // G-6). A stale twin matching a recorded render.outputs[].sha256 is
+  // ESCALATED (failed-recovery); otherwise MIRROR_STALE (mechanical re-render).
+  const anyHtmlStamped = walkFiles(dir, ".html").some((h) => {
+    try {
+      return /planit-source/.test(readFileSync(h, "utf8"));
+    } catch {
+      return false;
+    }
+  });
+  if (anyHtmlStamped || (machineMajor !== null && machineMajor >= 4)) {
+    const renderOutputs = runState?.render?.outputs ?? null;
+    const mres = checkMirrorDir(dir, true, renderOutputs);
+    // mres.lines mixes fresh reports with problems (a partial result, T-V4B4-06
+    // §"the fresh pair reported fresh") — only the non-fresh lines are failures.
+    for (const l of mres.lines) {
+      if (l.startsWith("MIRROR_FRESH") || l.startsWith("note:")) ok(l);
+      else fail(l);
+    }
+  }
+
   finish("pre-handoff lint (mechanizable half — the judgment half stays with the model)");
 }
 
@@ -1184,6 +1229,19 @@ function cmdState(rawArgs) {
       if (row?.contradicted !== true) continue;
       if (!contradictions.some((c) => c?.id === row.id)) {
         fail(`C-E7-03: default "${row?.id}" is contradicted:true but has no matching entry in gates.G4.contradictions[]`);
+      }
+    }
+  }
+  // v4 D-B10 (G-8, C-E10-02): GLOSSARY.md required at handoff for v4 runs.
+  // machineVersion major < 4 (or absent — legacy v2/v3 fixtures) never
+  // triggers this check.
+  if (root && ["handoff", "done"].includes(state.state)) {
+    const mvMatch = typeof state.machineVersion === "string" && state.machineVersion.match(/^(\d+)\./);
+    const mvMajor = mvMatch ? Number(mvMatch[1]) : null;
+    if (mvMajor !== null && mvMajor >= 4) {
+      const glossaryPath = join(deliveryDirFor(root), "GLOSSARY.md");
+      if (!existsSync(glossaryPath)) {
+        fail(`C-E10-02 (G-8): GLOSSARY.md missing at handoff — ${glossaryPath} not found (machineVersion ${state.machineVersion})`);
       }
     }
   }
@@ -1425,6 +1483,11 @@ function looseCaseRows(text) {
 // `check` argv of any row whose status is ABSENT or TIMEOUT (both "fail the
 // preflight gate", per the ENV-FACTS header). Absent file → empty set, so the
 // cross-check is a no-op until a preflight has actually run.
+// v4 D-B12 (LG-7, G-12, C-E6-03): an ABSENT/TIMEOUT row blacklists only its
+// declared `tool` (5th cell, when present) or the check's argv[0] — never
+// the remaining argv tokens. Blacklisting every token (the 3.0.1 behavior)
+// meant one failed `node scripts/check-gh.mjs` probe marked every unrelated
+// `node …` CONTRACT case unrunnable.
 function unavailableToolsFromEnvFacts(dir) {
   const factsPath = join(dir, "ENV-FACTS.md");
   const unavailable = new Set();
@@ -1433,11 +1496,15 @@ function unavailableToolsFromEnvFacts(dir) {
     if (!line.trimStart().startsWith("|")) continue;
     const cells = line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
     if (cells.length < 3) continue;
-    const [id, check, status] = cells;
+    const [id, check, status, , tool] = cells; // id | check | status | evidence | tool
     if (id === "id" || /^-+$/.test(id)) continue; // header / separator
     if (status !== "ABSENT" && status !== "TIMEOUT") continue;
-    for (const tok of check.replace(/`/g, "").split(/\s+/)) {
-      if (tok && !tok.startsWith("-")) unavailable.add(tok);
+    const declaredTool = (tool ?? "").replace(/`/g, "").trim();
+    if (declaredTool) {
+      unavailable.add(declaredTool);
+    } else {
+      const argv0 = check.replace(/`/g, "").trim().split(/\s+/)[0];
+      if (argv0) unavailable.add(argv0);
     }
   }
   return unavailable;
@@ -1512,7 +1579,7 @@ function cmdContract(rawArgs) {
         if (!r.run || r.run.startsWith("manual:")) continue;
         const cmd = r.run.split(/\s+/)[0];
         if (unavailable.has(cmd)) {
-          fail(`C-W2-03: case ${r.id} run: invokes "${cmd}", which ENV-FACTS.md marks ABSENT/TIMEOUT — the case is not runnable in this environment (probe the tool or gate the case)`);
+          fail(`C-W2-03 (C-E6-03): case ${r.id} run: invokes "${cmd}", which ENV-FACTS.md marks ABSENT/TIMEOUT — the case is not runnable in this environment (probe the tool or gate the case)`);
         }
       }
     }
@@ -1639,6 +1706,11 @@ function reconcileScan(root, slug) {
   // are collected per section, skipping risk-register / assumption / out-of-
   // scope sections: an `R3` under `## Risks` is a risk register entry, not a
   // requirement that an epic must cover.
+  // v4 AMD-7 (T-V4B4-17): the §5 defaults grammar (`R<n>`) collides with this
+  // 3.0.1 requirement grammar — a PRD citing a recorded default ("R2/R10 …")
+  // as rationale is not an orphan requirement. Skip any `R<n>` token that
+  // appears in the resolved state file's gates.G2.defaults[].id.
+  const recordedDefaultIds = new Set((readState(root, slug)?.gates?.G2?.defaults ?? []).map((d) => d?.id).filter(Boolean));
   for (const f of mdUnder(prdsDir)) {
     const raw = stripCode(readFileSync(f, "utf8"));
     const reqs = new Set();
@@ -1648,6 +1720,7 @@ function reconcileScan(root, slug) {
       for (const m of sec.matchAll(/\bR-?\d+\b/g)) reqs.add(m[0]);
     }
     for (const r of reqs) {
+      if (recordedDefaultIds.has(r)) continue; // AMD-7: a recorded default, not a PRD requirement
       if (!epicTexts.some(([, t]) => new RegExp(`\\b${r}\\b`).test(t))) {
         fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under ${epicsDir} (orphan)`);
       }
@@ -1735,6 +1808,116 @@ function reconcileScan(root, slug) {
       if (!bound && !new RegExp(`\\b${id}\\b`).test(decisions)) {
         fail(`B3 (FD-2): draft case ${id} in ${reviewPath} is bound in no epic Binding Test Contract table row and has no delivery/decisions.md drop entry — split/rename allowed, silent drops are not`);
       }
+    }
+  }
+
+  checkDispositions(root, deliveryDir);
+}
+
+// v4 D-B11 (G-3, G-5, G-9): disposition counting. Scoped — fires only when
+// <deliveryDir>/STATUS.md has a Disposition column or a "## Residuals"
+// heading; a package with neither (e.g. every v3 fixture) is byte-identical.
+// The "## Log" section (including [incidental] bullets) is excluded from
+// every count — it is prose history, not board state.
+const DISPOSITION_RE = /^(backlog-with-reason:\s*\S.*|owner-gated:\s*\S.*|IMPLEMENTED-NOT-VERIFIED:\s*\S+\s+\S.*)$/;
+
+function tableRows(lines, headerIdx) {
+  const rows = [];
+  for (let j = headerIdx + 2; j < lines.length && /^\s*\|/.test(lines[j]); j++) {
+    rows.push({ j, cells: lines[j].split("|").slice(1, -1).map((c) => c.trim()) });
+  }
+  return rows;
+}
+
+function checkDispositions(root, deliveryDir) {
+  const statusPath = join(deliveryDir, "STATUS.md");
+  if (!existsSync(statusPath)) return;
+  const fullText = readFileSync(statusPath, "utf8");
+  const logIdx = fullText.search(/^##\s+Log\b/m);
+  const text = logIdx === -1 ? fullText : fullText.slice(0, logIdx);
+  const lines = text.split("\n");
+
+  let scoped = false;
+  let backlogCount = 0, ownerGatedCount = 0, invCount = 0;
+
+  // The STATUS board: first table whose header names both Status and Disposition.
+  for (let i = 0; i < lines.length; i++) {
+    if (!/^\s*\|/.test(lines[i])) continue;
+    const header = lines[i].split("|").slice(1, -1).map((c) => c.trim());
+    const statusCol = header.findIndex((c) => /^status$/i.test(c));
+    const dispCol = header.findIndex((c) => /^disposition$/i.test(c));
+    if (statusCol === -1 || dispCol === -1) continue;
+    scoped = true;
+    const eidCol = header.findIndex((c) => /^eid$/i.test(c));
+    for (const { j, cells: row } of tableRows(lines, i)) {
+      const status = row[statusCol] ?? "";
+      if (status === "" || /^:?-+:?$/.test(status)) continue; // separator/empty row
+      const disp = (row[dispCol] ?? "").trim();
+      const rowLabel = eidCol !== -1 && row[eidCol] ? row[eidCol] : `line ${j + 1}`;
+      if (status === "VERIFIED") {
+        if (disp !== "" && disp !== "—" && disp !== "-") {
+          fail(`C-E8-01 (G-3): STATUS row ${rowLabel} is VERIFIED but Disposition is "${disp}" (must be empty or "—")`);
+        }
+        continue;
+      }
+      if (!DISPOSITION_RE.test(disp)) {
+        fail(`C-E8-01 (G-3): STATUS row ${rowLabel} is ${status} with no disposition — need backlog-with-reason:, owner-gated:, or IMPLEMENTED-NOT-VERIFIED:`);
+        continue;
+      }
+      if (disp.startsWith("backlog-with-reason:")) {
+        const p = disp.slice("backlog-with-reason:".length).trim();
+        if (!existsSync(join(root, p)) && !existsSync(join(deliveryDir, p))) {
+          fail(`C-E8-01 (G-3): STATUS row ${rowLabel} backlog-with-reason path "${p}" does not exist`);
+        }
+        backlogCount++;
+      } else if (disp.startsWith("owner-gated:")) {
+        ownerGatedCount++;
+      } else if (disp.startsWith("IMPLEMENTED-NOT-VERIFIED:")) {
+        invCount++;
+      }
+    }
+    break;
+  }
+
+  // "## Residuals" — Item column matching a contract case (T-/C-) may never
+  // carry backlog-with-reason (G-9): a binding case is INV or owner-gated,
+  // never quietly deferred to the backlog.
+  const resIdx = text.search(/^##\s+Residuals\b/m);
+  if (resIdx !== -1) {
+    scoped = true;
+    const rest = text.slice(resIdx);
+    const nextHead = rest.slice(3).search(/^##\s/m);
+    const block = (nextHead === -1 ? rest : rest.slice(0, nextHead + 3)).split("\n");
+    for (let i = 0; i < block.length; i++) {
+      if (!/^\s*\|/.test(block[i])) continue;
+      const header = block[i].split("|").slice(1, -1).map((c) => c.trim());
+      const itemCol = header.findIndex((c) => /^item$/i.test(c));
+      const dispCol = header.findIndex((c) => /^disposition$/i.test(c));
+      if (itemCol === -1 || dispCol === -1) continue;
+      for (const { cells: row } of tableRows(block, i)) {
+        const item = (row[itemCol] ?? "").trim();
+        const disp = (row[dispCol] ?? "").trim();
+        if (!item) continue;
+        if (/^(T|C)-/.test(item) && disp.startsWith("backlog-with-reason:")) {
+          fail(`C-E8-02 (G-9): contract cases never move to backlog — ${item}`);
+        }
+        if (disp.startsWith("backlog-with-reason:")) backlogCount++;
+        else if (disp.startsWith("owner-gated:")) ownerGatedCount++;
+        else if (disp.startsWith("IMPLEMENTED-NOT-VERIFIED:")) invCount++;
+      }
+      break;
+    }
+  }
+
+  if (!scoped) return;
+
+  const typed = text.match(/Dispositions:\s*(\d+)\s*backlog\s*·\s*(\d+)\s*owner-gated\s*·\s*(\d+)\s*INV/i);
+  if (typed) {
+    const [, tN, tM, tK] = typed;
+    if (Number(tN) !== backlogCount || Number(tM) !== ownerGatedCount || Number(tK) !== invCount) {
+      fail(
+        `C-E8-03 (G-5): typed dispositions ${tN}/${tM}/${tK} disagree with computed ${backlogCount}/${ownerGatedCount}/${invCount} (backlog/owner-gated/INV)`
+      );
     }
   }
 }
@@ -1873,6 +2056,302 @@ function cmdPluginlint(rawArgs) {
     fail(`${root}: nothing to lint — no SKILL.md, plugin.json, or marketplace.json found under root`);
   }
   finish("plugin loader/metadata lint (EC-D7)");
+}
+
+// ---------------------------------------------------------------- v4: mirror (D-B9, E2)
+// Family-kind basenames per CONTRACT §1 vocabulary: every md of these kinds
+// should carry a rendered .html twin at handoff (G-6).
+const MIRROR_FAMILY_BASENAMES = ["SCOPE-BRIEF", "TRIAGE", "DECISIONS", "CONTRACT", "KICKOFF", "PLAN-REVIEW", "GLOSSARY"];
+
+function sha256Bytes(buf) {
+  return createHash("sha256").update(buf).digest("hex");
+}
+
+// Stamp grammar (CONTRACT §4.3): `<meta name="planit-*" content="...">` in
+// the twin's <head>. Relpaths are relative to the twin's OWN directory.
+function parseStampMeta(html) {
+  const meta = {};
+  const re = /<meta\s+name="(planit-[a-z]+)"\s+content="([^"]*)"\s*\/?>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) meta[m[1]] = m[2];
+  return meta;
+}
+
+// Recomputes every stamped hash from bytes on disk — never trusts the stamp,
+// never invokes the renderer (D-B9). Returns { code, lines }: 0 fresh, 1
+// rejected/malformed (HTML_UNSTAMPED or a structural defect), 2 stale.
+function checkMirrorTwin(mdPath, htmlPath, renderOutputs = null) {
+  let html;
+  try {
+    html = readFileSync(htmlPath, "utf8");
+  } catch (e) {
+    return { code: 1, lines: [`mirror: cannot read ${htmlPath}: ${e.message}`] };
+  }
+  const meta = parseStampMeta(html);
+  const source = meta["planit-source"];
+  if (!source) {
+    return {
+      code: 1,
+      lines: [`HTML_UNSTAMPED ⇒ MIRROR_REJECTED (C-E2-07): ${htmlPath} carries no planit-source meta — hand-authored HTML is refused, markdown is always the source`],
+    };
+  }
+  const sm = source.match(/^(\S+)\s+sha256=([0-9a-fA-F]+)$/);
+  if (!sm || sm[2].length !== 64) {
+    return { code: 1, lines: [`malformed stamp (C-E2-07): ${htmlPath} planit-source "${source}" is not "<relpath> sha256=<64-hex>"`] };
+  }
+  const [, relpath, stampedHash] = sm;
+  const resolvedMd = resolve(dirname(htmlPath), relpath);
+  if (!existsSync(mdPath) || !existsSync(resolvedMd)) {
+    return { code: 1, lines: [`source not found (C-E2-07): ${htmlPath} planit-source names "${relpath}" — not found relative to ${dirname(htmlPath)}`] };
+  }
+  const currentHash = sha256Bytes(readFileSync(mdPath));
+  const staleReasons = [];
+  if (currentHash !== stampedHash.toLowerCase()) {
+    staleReasons.push(`stamped ${stampedHash.slice(0, 12)} vs current ${currentHash.slice(0, 12)} (source ${basename(mdPath)})`);
+  }
+  if (meta["planit-embeds"]) {
+    for (const pair of meta["planit-embeds"].split(";").map((s) => s.trim()).filter(Boolean)) {
+      const em = pair.match(/^(\S+)\s+sha256=([0-9a-fA-F]+)$/);
+      if (!em) {
+        staleReasons.push(`malformed embed stamp: "${pair}"`);
+        continue;
+      }
+      const [, erel, ehash] = em;
+      const eabs = resolve(dirname(htmlPath), erel);
+      if (!existsSync(eabs)) {
+        staleReasons.push(`embed ${erel}: not found`);
+        continue;
+      }
+      const ecur = sha256Bytes(readFileSync(eabs));
+      if (ecur !== ehash.toLowerCase()) staleReasons.push(`stamped ${ehash.slice(0, 12)} vs current ${ecur.slice(0, 12)} (embed ${erel})`);
+    }
+  }
+  if (meta["planit-brand"]) {
+    const bm = meta["planit-brand"].match(/^(default|repo:\S+)\s+sha256=([0-9a-fA-F]+)$/);
+    if (!bm) {
+      staleReasons.push(`malformed brand stamp: "${meta["planit-brand"]}"`);
+    } else {
+      const [, spec, bhash] = bm;
+      let babs;
+      if (spec === "default") {
+        const here = dirname(fileURLToPath(import.meta.url));
+        babs = join(here, "..", "assets", "brand", "default.brand.json");
+      } else {
+        babs = resolve(dirname(htmlPath), spec.slice("repo:".length));
+      }
+      if (!existsSync(babs)) {
+        staleReasons.push(`brand: not found (${babs})`);
+      } else {
+        const bcur = sha256Bytes(readFileSync(babs));
+        if (bcur !== bhash.toLowerCase()) staleReasons.push(`stamped ${bhash.slice(0, 12)} vs current ${bcur.slice(0, 12)} (brand)`);
+      }
+    }
+  }
+  if (staleReasons.length > 0) {
+    // v4 D-B9 failed-recovery escalation: a re-render whose OWN output bytes
+    // are recorded in state.render.outputs[].sha256, yet the twin is STILL
+    // stale against the (shape-changed) md — re-rendering again would just
+    // reproduce the same stale bytes. Escalate to the human instead of
+    // looping; only checked when renderOutputs is supplied (handoff step 9),
+    // never for the plain two-arg CLI form.
+    if (renderOutputs) {
+      const onDiskHash = sha256Bytes(readFileSync(htmlPath));
+      if (renderOutputs.some((o) => o?.sha256 === onDiskHash)) {
+        return {
+          code: 1,
+          lines: [`ESCALATED (C-E2-07): ${htmlPath} still stale after re-render — the md changed shape; update the manifest`],
+        };
+      }
+    }
+    return { code: 2, lines: [`MIRROR_STALE (C-E2-06): ${htmlPath} — ${staleReasons.join("; ")} — re-render`] };
+  }
+  return { code: 0, lines: [`MIRROR_FRESH (C-E2-06): ${htmlPath} sha256:${currentHash.slice(0, 12)}`] };
+}
+
+function walkFiles(dir, ext, out = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith(".")) continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) walkFiles(p, ext, out);
+    else if (e.name.endsWith(ext)) out.push(p);
+  }
+  return out;
+}
+
+// Scans a delivery dir: every stamped .html is checked; a family-kind md
+// with no .html twin is reported (fails under --require-html, informational
+// otherwise — a non-family md without html never fails). Returns
+// { code, lines } — the max severity across every check (partial result,
+// every finding named, never a silent skip).
+function checkMirrorDir(dir, requireHtml, renderOutputs = null) {
+  const lines = [];
+  let worst = 0;
+  const htmls = walkFiles(dir, ".html");
+  for (const htmlPath of htmls) {
+    const mdGuess = htmlPath.slice(0, -".html".length) + ".md";
+    const res = checkMirrorTwin(mdGuess, htmlPath, renderOutputs);
+    lines.push(...res.lines);
+    if (res.code > worst) worst = res.code;
+  }
+  const checkedHtmlBases = new Set(htmls.map((h) => h.slice(0, -".html".length)));
+  for (const mdPath of walkFiles(dir, ".md")) {
+    const base = basename(mdPath, ".md");
+    if (!MIRROR_FAMILY_BASENAMES.includes(base)) continue;
+    const stem = mdPath.slice(0, -".md".length);
+    if (checkedHtmlBases.has(stem)) continue; // has a twin, already checked above
+    if (requireHtml) {
+      lines.push(`missing twin: ${basename(mdPath)} (C-E2-05): no .html twin under --require-html`);
+      worst = Math.max(worst, 2);
+    } else {
+      lines.push(`note: missing twin (C-E2-05, informational): ${basename(mdPath)}`);
+    }
+  }
+  return { code: worst, lines };
+}
+
+function cmdMirror(rawArgs) {
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    console.error(`mirror: ${dirErr}`);
+    process.exit(1);
+  }
+  if (dir) {
+    if (!existsSync(dir)) {
+      console.error(`mirror: delivery dir not found: ${dir}`);
+      process.exit(1);
+    }
+    const requireHtml = rest.includes("--require-html");
+    const res = checkMirrorDir(dir, requireHtml);
+    for (const l of res.lines) (res.code === 0 ? console.log : console.error)(l);
+    if (res.code === 0) console.log(`PASS — mirror --dir: ${dir}`);
+    process.exit(res.code);
+  }
+  const [mdPath, htmlPath] = rest;
+  if (!mdPath || !htmlPath) {
+    console.error("mirror: usage: gate-check mirror <md> <html> | gate-check mirror --dir <delivery> [--require-html]");
+    process.exit(1);
+  }
+  const res = checkMirrorTwin(mdPath, htmlPath);
+  for (const l of res.lines) (res.code === 0 ? console.log : console.error)(l);
+  process.exit(res.code);
+}
+
+// ---------------------------------------------------------------- v4: glossary (D-B10, G-8)
+const GLOSSARY_SCAN_FILES = ["KICKOFF.md", "DECISIONS.md", "STATUS.md", "SESSIONS.md", "GATE.md", "PLAN-REVIEW.md", "SCOPE-BRIEF.md", "00-program-plan.md"];
+// An ID-shaped token: an uppercase-led run of dash-joined alphanumeric
+// segments, filtered post-match to require at least one digit somewhere
+// (excludes plain capitalized words like "SKILL" or "README"). Catches
+// bare ids ("V4B1", "R1"), dash-chained ones ("AMD-4", "LG-7"), and
+// multi-segment case ids ("T-A4-B1", "C-E7-04") as ONE token — a narrower
+// regex requiring a digit immediately after the first segment (as a literal
+// reading of D-B10's grammar would) drops the leading letter-segment
+// whenever the next segment starts with a letter (e.g. "T-A4-B1" ⇒ "A4-B1"
+// only), which breaks the family-pattern match this lint exists to run.
+const GLOSSARY_TOKEN_RE = /\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
+const GLOSSARY_STOPLIST = new Set(["UTF8", "SHA256", "ISO8601", "HTTP2", "X11", "MD5", "I18N", "E2E"]);
+
+// A family item ("T-*-NN", "C-E<n>-NN", "V4B<n>", "R1 … R12") becomes either
+// an expanded literal set (a numeric range) or a regex ("*" -> [A-Za-z0-9.]+,
+// "NN" -> [A-Z0-9]{2,3}, "<n>"/a bare trailing "n" -> \d+).
+function expandGlossaryRange(item) {
+  const m = item.match(/^([A-Za-z]+-?)(\d+)\s*(?:…|\.\.\.|-{1,2}|–)\s*(?:[A-Za-z-]+)?(\d+)$/);
+  if (!m) return null;
+  const [, prefix, loStr, hiStr] = m;
+  const lo = Number(loStr), hi = Number(hiStr);
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo || hi - lo > 500) return null;
+  const ids = [];
+  for (let i = lo; i <= hi; i++) ids.push(`${prefix}${i}`);
+  return ids;
+}
+function familyItemToRegex(item) {
+  if (!/(\*|<n>|\bNN\b|n$)/.test(item)) return null;
+  const hasTrailingBareN = /n$/.test(item) && !/NN$/.test(item) && !item.endsWith("<n>");
+  let s = item.split("<n>").join("@@NUM@@");
+  s = s.replace(/\bNN\b/g, "@@NN@@");
+  s = s.split("*").join("@@STAR@@");
+  if (hasTrailingBareN) s = s.replace(/n$/, "@@NUM@@");
+  if (!/@@/.test(s)) return null; // no placeholder actually substituted -> not a family pattern
+  s = s.replace(/[.+?^${}()|[\]\\]/g, "\\$&");
+  s = s.split("@@NUM@@").join("\\d+");
+  s = s.split("@@NN@@").join("[A-Z0-9]{2,3}");
+  s = s.split("@@STAR@@").join("[A-Za-z0-9.]+");
+  return new RegExp(`^${s}$`);
+}
+function parseGlossaryEntries(text) {
+  const literals = new Set();
+  const regexes = [];
+  for (const line of text.split("\n")) {
+    const m = line.match(/^\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$/);
+    if (!m) continue;
+    const idCell = m[1].trim();
+    if (/^id$/i.test(idCell) || /^:?-+:?$/.test(idCell)) continue;
+    for (let item of idCell.split(/[·,]/).map((s) => s.trim()).filter(Boolean)) {
+      item = item.replace(/^`|`$/g, "");
+      const range = expandGlossaryRange(item);
+      if (range) {
+        range.forEach((id) => literals.add(id));
+        continue;
+      }
+      const re = familyItemToRegex(item);
+      if (re) {
+        regexes.push(re);
+        continue;
+      }
+      literals.add(item);
+    }
+  }
+  return { literals, regexes };
+}
+
+// Shared core (CLI `glossary` verb + cmdHandoff step 8, never double-
+// implemented). Returns { missingGlossary, unknownLines, resolvedCount }.
+function checkGlossaryDir(dir) {
+  const glossaryPath = join(dir, "GLOSSARY.md");
+  if (!existsSync(glossaryPath)) {
+    return { missingGlossary: true, glossaryPath, unknownLines: [], resolvedCount: 0 };
+  }
+  const { literals, regexes } = parseGlossaryEntries(readFileSync(glossaryPath, "utf8"));
+  const isKnown = (tok) => literals.has(tok) || regexes.some((re) => re.test(tok));
+  const unknownLines = [];
+  let resolvedCount = 0;
+  for (const name of GLOSSARY_SCAN_FILES) {
+    const p = join(dir, name);
+    if (!existsSync(p)) continue;
+    const lines = stripCode(readFileSync(p, "utf8")).split("\n");
+    lines.forEach((line, i) => {
+      for (const m of line.matchAll(GLOSSARY_TOKEN_RE)) {
+        const tok = m[0];
+        if (!/\d/.test(tok)) continue; // ID-shaped tokens always carry a digit somewhere
+        if (GLOSSARY_STOPLIST.has(tok)) continue;
+        if (isKnown(tok)) {
+          resolvedCount++;
+          continue;
+        }
+        unknownLines.push(`${p}:${i + 1}: unknown ID "${tok}" — add a GLOSSARY.md row (C-E10-01)`);
+      }
+    });
+  }
+  return { missingGlossary: false, glossaryPath, unknownLines, resolvedCount };
+}
+
+function cmdGlossary(rawArgs) {
+  const dir = rawArgs[0];
+  if (!dir) {
+    console.error("glossary: usage: gate-check glossary <delivery-dir>");
+    process.exit(1);
+  }
+  const res = checkGlossaryDir(dir);
+  if (res.missingGlossary) {
+    console.error(`glossary: ${res.glossaryPath} not found`);
+    process.exit(1);
+  }
+  if (res.unknownLines.length > 0) {
+    for (const u of res.unknownLines) console.error(u);
+    console.error(`FAIL — glossary: ${res.unknownLines.length} unknown ID(s) — C-E10-01`);
+    process.exit(1);
+  }
+  console.log(`PASS — glossary: ${res.resolvedCount} ID mention(s) resolved against ${res.glossaryPath}`);
+  process.exit(0);
 }
 
 // ---------------------------------------------------------------- mirror-check
@@ -2086,6 +2565,8 @@ const commands = {
   "mirror-check": cmdMirrorCheck,
   archive: cmdArchive,
   runs: cmdRuns,
+  mirror: cmdMirror,
+  glossary: cmdGlossary,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -2094,7 +2575,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -2109,6 +2590,8 @@ if (isMain) {
     console.error("  mirror-check [--dir fixture-root]    PRD §D7 mirror parity — exit 2 on drift");
     console.error("  archive <slug> [--dir repo-root]     move a done/closedWithoutPlan run to .plan-it/done/ (1 = refused)");
     console.error("  runs [--dir repo-root] [--json]      list every plan-it run (live + archived), computed counts");
+    console.error("  mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (0 fresh · 2 stale · 1 unstamped/malformed)");
+    console.error("  glossary <delivery-dir>              first-use ID coverage (1 = unknown ID, named file:line)");
     process.exit(1);
   }
   commands[cmd](args);
