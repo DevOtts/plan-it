@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="../CONTRACT.md sha256=3bca8d6103143583963f3de4c44d69c66fb70a82d63ae48639b40ac965a8781b">
+<meta name="planit-embeds" content="CONTRACT.md sha256=3bca8d6103143583963f3de4c44d69c66fb70a82d63ae48639b40ac965a8781b">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="CONTRACT">
+<title>plan-it v4 — CONTRACT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">CONTRACT</p>
+<h1>plan-it v4 — CONTRACT</h1>
+<p class="sub">Version: v1.2 — FROZEN 2026-09-07 (ratified by Fernando Ott at PLAN-REVIEW, gate G4)</p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>plan-it</td><td>the planning front-end: fuzzy demand → delivery package</td><td>SKILL.md</td></tr>
+<tr><td>build-it</td><td>the autonomous build engine that consumes the package</td><td>SKILL.md — Composes with</td></tr>
+<tr><td>review-it</td><td>the independent verification leg (runs the Test Contract)</td><td>README — plan-it × build-it</td></tr>
+<tr><td>conclude-it</td><td>the session-close ritual; ships the ancestor of the v4 renderer</td><td>~/.claude/skills/conclude-it</td></tr>
+<tr><td>DoD</td><td>Definition of Done — the numbered, individually verifiable criteria</td><td>SKILL.md Phase 1</td></tr>
+<tr><td>PRD</td><td>Product Requirements Document — one per squad</td><td>templates.md PART B</td></tr>
+<tr><td>epic</td><td>a buildable unit ending in a binding Test Contract</td><td>templates.md PART B</td></tr>
+<tr><td>Test Contract</td><td>up to ~20 cases with expected outputs registered at planning time; DoD = 100% pass</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>CONTRACT</td><td>the frozen shared law squads build against (vocabulary, schema, interfaces, ownership)</td><td>SKILL.md Rule 1</td></tr>
+<tr><td>squad</td><td>one build lane with disjoint files, usually one session</td><td>00-program-plan.md</td></tr>
+<tr><td>wave</td><td>a group of epics built together; `Wn`</td><td>00-program-plan.md</td></tr>
+<tr><td>G0</td><td>gate: anamnesis — the up-front questionnaire (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G1</td><td>gate: scope — size, shape, topology, DoD</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>G2</td><td>gate: decisions — the batched judgment calls with recommendations</td><td>SKILL.md Phase 7</td></tr>
+<tr><td>G3</td><td>gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;</td><td>SKILL.md Phase 8</td></tr>
+<tr><td>G4</td><td>gate: plan review — the single review-and-contradict round (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G-n</td><td>a governance rule inside a CONTRACT (dash: rule; no dash: gate)</td><td>CONTRACT §6</td></tr>
+<tr><td>size S/M/L</td><td>how much gets written: single feature / multi-feature / from-scratch program</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>shape 1–5</td><td>the package form: multi-doc + delivery / single-file PRD / research→locked architecture→phase PRDs / numbered PRD-NN / refactor catalog</td><td>templates.md PART D</td></tr>
+<tr><td>topology</td><td>how the build runs: solo · orchestrator+squads · headless</td><td>CONTRACT §1</td></tr>
+<tr><td>mode</td><td>autonomous-draft (default) or guided</td><td>CONTRACT §1</td></tr>
+<tr><td>[REAL]</td><td>a test case needing a live target; never VERIFIED on a mock</td><td>formats.md — Test Contract</td></tr>
+<tr><td>INV / IMPLEMENTED-NOT-VERIFIED</td><td>built, but the proving case could not run</td><td>formats.md §7</td></tr>
+<tr><td>NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED</td><td>the closed status vocabulary</td><td>gate-check W4</td></tr>
+<tr><td>disposition</td><td>what happens to a non-green item at close: backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>CONTRACT §5</td></tr>
+<tr><td>FD-1</td><td>founder mandate: test-convention discovery registered in CLAUDE.md</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>FD-2</td><td>founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md)</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>W1–W6 (CHANGELOG)</td><td>the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>D4 (CHANGELOG)</td><td>the v3 adversarial-depth ruling behind the `adversary` verb — not this run's D4 ruling</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>AMD-n</td><td>a dated amendment to a frozen contract</td><td>delivery/decisions.md</td></tr>
+<tr><td>xhigh</td><td>Claude Code's highest `/effort` reasoning setting</td><td>SKILL.md — Autonomy posture</td></tr>
+<tr><td>CDP</td><td>Chrome DevTools Protocol — drives UI test cases</td><td>formats.md §4</td></tr>
+<tr><td>ATDD / BDD</td><td>Acceptance-Test-Driven / Behaviour-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>SbE / EDD</td><td>Specification by Example / Eval-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>twin</td><td>the `&lt;NAME&gt;.html` rendered beside a canonical `&lt;NAME&gt;.md`</td><td>CONTRACT §1</td></tr>
+<tr><td>manifest</td><td>the JSON a low-tier author writes for the renderer (`planit-report/1`)</td><td>CONTRACT §4.2</td></tr>
+<tr><td>stamp</td><td>`&lt;meta name=&quot;planit-*&quot;&gt;` provenance in a twin (`&lt;relpath&gt; sha256=&lt;hash&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>deliveryRoot</td><td>the repo-relative folder a run's package lives in</td><td>CONTRACT §1</td></tr>
+<tr><td>tier top/mid/low</td><td>model tiers resolved at execution time; never a model ID</td><td>RUN-POLICY</td></tr>
+<tr><td>mirror pair</td><td>a root file and its byte-identical plugin copy (11 in v4)</td><td>gate-check mirror-check</td></tr>
+<tr><td>machine-diff</td><td>the additive-only check of a live machine against a pinned baseline</td><td>gate-check</td></tr>
+<tr><td>WCAG</td><td>Web Content Accessibility Guidelines — the contrast ratios cited for brand tokens</td><td>01-findings §2.2</td></tr>
+<tr><td>E1</td><td>scope brief: the human-readable explanation of size, shape and topology rendered before gate G1</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E2</td><td>HTML report layer: the zero-dependency renderer and report-family kinds with provenance stamps</td><td>delivery/v4/CONTRACT.md §4</td></tr>
+<tr><td>E3</td><td>decision queue: the DECISIONS/PLAN-REVIEW kind with ruled, defaults, authorizations and owner actions</td><td>delivery/v4/CONTRACT.md §2</td></tr>
+<tr><td>E4</td><td>build topology: the user's choice at G1 with plan-it's recommendation; solo · orchestrator+squads · headless</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E5</td><td>show-don't-describe: enumerating the honest states of every surface (good, empty, misconfigured)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E6</td><td>triage + measurement: the triage verdict determines CLOSED_WITHOUT_PLAN exit; measurements are read-only or say they are not</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E7</td><td>anamnesis + review round: the up-front questionnaire (G0) and single review-and-contradict gate (G4)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E8</td><td>residual disposition: every non-green item at close gets one of backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>delivery/v4/DECISIONS.md — Defaults</td></tr>
+<tr><td>E9</td><td>named runs: every plan-it execution has a slug; state lives in `.plan-it/&lt;slug&gt;.state.json`</td><td>delivery/v4/CONTRACT.md §1</td></tr>
+<tr><td>E10</td><td>readable acronyms: the glossary seed copied at intake; every acronym explained on first use</td><td>delivery/v4/GLOSSARY.md</td></tr>
+<tr><td>D1</td><td>autonomous-draft is the default mode; guided selectable at anamnesis</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D2</td><td>brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D3</td><td>HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D4</td><td>topology is the user's choice at G1 with plan-it's recommendation shown</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D5</td><td>the copy-your-rulings block ships in 4.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D6</td><td>all ten enhancements in 4.0.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D7</td><td>v4 is built by an orchestrator + three squads + QA</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>R1</td><td>CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R2</td><td>&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R3</td><td>typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R4</td><td>optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R5</td><td>orchestrator = top tier in RUN-POLICY</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R6</td><td>incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R7</td><td>brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R8</td><td>mirror pairs 8 → 11 (renderer, template, brand JSON)</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R9</td><td>mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R10</td><td>the state file names the package folder; every verb derives paths from `run.deliveryRoot`</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R11</td><td>harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R12</td><td>renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>A-1</td><td>squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-2</td><td>the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-3</td><td>QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-4</td><td>the orchestrator commits the guard mirror fix applied during planning as its first W0 commit</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>O-1</td><td>remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-2</td><td>read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-3</td><td>ratify R7 (brand contrast deviation) or send the exact colours you want as text</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-4</td><td>decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>W0</td><td>orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY</td><td>00-program-plan.md</td></tr>
+<tr><td>W1</td><td>three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason</td><td>00-program-plan.md</td></tr>
+<tr><td>W2</td><td>integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0</td><td>00-program-plan.md</td></tr>
+<tr><td>W3</td><td>QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered</td><td>00-program-plan.md</td></tr>
+<tr><td>W4</td><td>release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written</td><td>00-program-plan.md</td></tr>
+<tr><td>SQ-A</td><td>renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-B</td><td>deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-C</td><td>prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>LG-1 … LG-18</td><td>live-grounding facts measured by the coordinator</td><td>research/00-main-thread-grounding.md</td></tr>
+<tr><td>F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21</td><td>research findings by stream (A renderer · B core · C prose · D precedents)</td><td>research/stream-*.md</td></tr>
+<tr><td>D-A&lt;n&gt; · D-B&lt;n&gt; · D-C&lt;n&gt;</td><td>PRD-level design decisions per squad (renderer · core · prose), cited by every epic task</td><td>delivery/v4/prds/</td></tr>
+<tr><td>ab0c192</td><td>the W0 commit that landed the v4 planning package and the guard mirror fix (A-4)</td><td>STATUS.md ## Log</td></tr>
+<tr><td>V4A&lt;n&gt; · V4B&lt;n&gt; · V4C&lt;n&gt;</td><td>epic IDs per squad</td><td>delivery/v4/epics/</td></tr>
+<tr><td>C-E*-NN</td><td>enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)</td><td>CONTRACT ## Cases</td></tr>
+<tr><td>T-*-NN</td><td>per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)</td><td>delivery/v4/epics/</td></tr>
+<tr><td>T-E*-NN</td><td>v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs)</td><td>tests/run-contract.mjs</td></tr>
+<tr><td>C-W*-NN · C-META-NN</td><td>v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist)</td><td>delivery/v3/CONTRACT.md</td></tr>
+<tr><td>SHA-256</td><td>the hash function behind every pin and stamp (`sha256=&lt;64-hex&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>AMD-8</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-7</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-6</td><td>orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-4</td><td>harness amendment: gate count bound to the v2 baseline; required for the machine-diff check</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-5</td><td>harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`</td><td>delivery/decisions.md</td></tr>
+<tr><td>CLOSED_WITHOUT_PLAN · REVIEW_CONTRADICTED · RENDERED_PARTIAL · RENDER_FAILED · MIRROR_STALE · MIRROR_REJECTED · HTML_UNSTAMPED · ESCALATED · WRITE_DENIED · ARCHIVE_REFUSED</td><td>failure and recovery states of the v4 core-logic models</td><td>CONTRACT §3</td></tr>
+<tr><td>planit-report/1 · planit-brand/1</td><td>the manifest and brand token schemas</td><td>CONTRACT §4</td></tr>
+<tr><td>7fcff27</td><td>the commit that added named-state resolution to the root guard only</td><td>01-findings §2.9</td></tr>
+<tr><td>P2-11</td><td>the owner ruling (2026-08-26) that made worktrees-only a plan-it/build-it enhancement</td><td>LG-16</td></tr></table></div></details>
+<h2>CONTRACT</h2>
+<details class="more" open><summary>Full report</summary><div class="mdout"><script type="text/markdown">
+# plan-it v4 — CONTRACT
+
+Version: **v1.2 — FROZEN 2026-09-07** (AMD-7 and AMD-8 applied by the orchestrator during W1, see Changelog; v1.0 (ratified by Fernando Ott at PLAN-REVIEW, gate G4, 2026-09-07: defaults R1–R12 confirmed as applied; authorizations A-1, A-3, A-4 granted; A-2 held until owner action O-2. Drafted as v1.0-draft, amended to v1.1-draft after squad planning, ratified to v1.0 — see Changelog. Post-freeze changes only via dated `AMD-n` entries in `delivery/decisions.md`.)
+Basis: `docs/v4/01-findings.md` (synthesis) + `docs/v4/02-v4-design.md` (design) + rulings D1–D7 (Fernando Ott, 2026-09-07) recorded in `delivery/v4/DECISIONS.md`.
+Tally: COMPUTED — run `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs contract delivery/v4/CONTRACT.md` (never hand-edit counts).
+Fixtures: violating repos under `tests/fixtures/v4/` — every enforcement case must FAIL CLOSED against its fixture; the v4 renderer cases run against `tests/fixtures/v4/report/`.
+Glossary: `delivery/v4/GLOSSARY.md` (every ID and acronym used below has a row there — first-use rule, E10).
+
+## 1 · Vocabulary — use these words everywhere
+
+| Term | Meaning |
+|---|---|
+| run | one plan-it execution, identified by a slug; its state lives in one state file |
+| state file | `.plan-it/<slug>.state.json` (named) or `.plan-it/state.json` (generic, legacy) |
+| deliveryRoot | the repo-relative folder holding a run's package (this run: `delivery/v4/`) |
+| mode | `autonomous-draft` (default) or `guided`; recorded at anamnesis |
+| anamnesis | gate G0: the one up-front questionnaire of everything the run will need from the human |
+| scope brief | the human-readable explanation of size, shape and topology rendered before gate G1 |
+| topology | how the build is run: `solo` · `orchestrator+squads` · `headless` |
+| triage verdict | one of `plan` · `build-instead` · `owner-decision` · `skip`, recorded before any plan |
+| default | a G2 decision the run applied from its own recommendation, marked for contradiction at G4 |
+| plan review | gate G4: the single review-and-contradict round on the complete draft package |
+| draft contract | a CONTRACT whose header carries `-draft`; frozen FOR squads, not yet ratified by the human |
+| twin | the `<NAME>.html` rendered beside a canonical `<NAME>.md`; markdown is the source, HTML is derived |
+| manifest | the JSON (`schema: planit-report/1`) a low-tier author writes; the renderer turns it into a twin |
+| stamp | a `<meta name="planit-*">` in a twin's head carrying `<relpath> sha256=<hash>` provenance |
+| disposition | the closed word for what happens to a non-green item at close: `backlog-with-reason` · `owner-gated` · `IMPLEMENTED-NOT-VERIFIED` |
+| glossary | `GLOSSARY.md`: static plan-it vocabulary + the IDs this run minted, one row each |
+| legend line | one line listing what each per-run ID prefix means, required wherever three or more per-run IDs appear together |
+
+Status vocabulary is closed and unchanged: NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED.
+
+## 2 · Package layout and ownership (disjoint lanes — no co-editing)
+
+Paths are under `plugins/plan-it/skills/plan-it/` unless noted; the root copies are mirrors and follow. `MIRROR_PAIRS` grows from 8 to **11**: `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json` join the eight existing pairs.
+
+| Squad | Owns (exclusive) | Never touches |
+|---|---|---|
+| **SQ-A Renderer** | `scripts/build-report.mjs` · `scripts/report-template.html` · `assets/brand/default.brand.json` · `references/report-family.md` · `tests/v4/renderer/*` · `tests/fixtures/v4/report/**` | gate-check, machine, guard, SKILL, other references |
+| **SQ-B Core** | `machine.json` · `scripts/gate-check.mjs` · `plugins/plan-it/scripts/hooks/planit-guard.mjs` (+ root mirror) · `tests/run-contract.mjs` · `tests/v3/lib/contract-cases.mjs` · `tests/v4/core/*` · `tests/fixtures/v4/**` except `tests/fixtures/v4/report/**` (SQ-A) — machine, guard, portfolio, glossary, disposition, mirror, triage-no-memo, planreview-no-file, draft-*, defaults-empty, deliveryroot-*, envfacts-*, dogfood-project · `tests/fixtures/v3/machine.v3.7fcff27.json` (the orchestrator creates it in W0; V4B1 verifies its SHA-256 and never overwrites) · `tests/v3/mirror-wired-into-release.mjs` · `tests/v3/fail-closed-sweep.mjs` (exit-polarity for positive harness rows) | renderer files, SKILL, references, docs, packaging |
+| **SQ-C Prose & packaging** | `SKILL.md` · `references/{templates,formats,playbooks,machine}.md` · `docs/**` · `README.md` · `CHANGELOG.md` · `plugins/plan-it/.claude-plugin/plugin.json` · `.claude-plugin/marketplace.json` · `tests/v3/version-triple-match.mjs` · `tests/v3/kickoff-pinning.mjs` · `tests/v3/changelog-shape.mjs` · `tests/v4/prose/*` | code files owned by SQ-A / SQ-B |
+| **Orchestrator** | `delivery/v4/STATUS.md` · `delivery/v4/CONTRACT.md` amendments · `delivery/decisions.md` (AMD-4, AMD-5) · root mirrors sync · merges · W0 | squad lanes |
+| **QA** | `delivery/v4/QA-REPORT.md` | everything else (read-only) |
+
+Branch pattern: `epic/v4<squad-letter>-<slug>` (e.g. `epic/v4a-renderer-core`). Squads work in git worktrees (governance rule G-10). Cross-lane needs are resolved by amendment to this CONTRACT via the orchestrator, never by editing another lane's file.
+
+## 3 · Core-logic models (the confusing parts, modelled — including the failure half)
+
+### 3.1 The v4 pipeline statechart (additive superset of 3.0.1; `machine.json`)
+
+All 17 baseline states, 17 baseline events and 5 baseline guards keep their names and guard mappings. Eight new states; three baseline edges retargeted through new states (permitted by `checkMachineAdditive`). Transitions (arrows are the machine):
+
+```
+intake -> triage                                  (INTAKE_CAPTURED, retargeted through NEW state)
+triage -> anamnesis                               (TRIAGE_PLAN, guard triageRecorded)
+triage -> CLOSED_WITHOUT_PLAN                     (TRIAGE_BUILD_INSTEAD | TRIAGE_SKIP | TRIAGE_OWNER_DECISION, guard triageRecorded; memo on disk or the guard REJECTS)
+anamnesis[G0, human] -> dodLock                   (G0_ANSWERED, guard gateRecorded)
+dodLock -> scopeBrief                             (DOD_LOCKED, retargeted through NEW state)
+scopeBrief -> scopeGate                           (BRIEF_RENDERED, guard artifactsOnDisk)
+scopeGate[G1] -> preGround -> discovery -> preflight -> synthesis -> specAuthoring     (unchanged)
+specAuthoring -> decisionGate[G2]                 (SPECS_DRAFTED — guided)
+specAuthoring -> defaultsApplied                  (SPECS_DRAFTED_AUTONOMOUS — autonomous)
+defaultsApplied -> coherencePass                  (DEFAULTS_APPLIED, guard defaultsRecorded)
+coherencePass -> freezeGate[G3]                   (COHERENT — guided)
+coherencePass -> backboneFreeze                   (COHERENT_AUTONOMOUS)
+freezeGate -> backboneFreeze                      (G3_APPROVED, guard gateRecorded)
+backboneFreeze -> parallelPlanning                (CONTRACT_FROZEN, guard contractFrozen; autonomous = freeze --draft)
+parallelPlanning -> parallelPlanning              (AMENDMENT)
+parallelPlanning -> verify -> adversaryGate       (unchanged)
+adversaryGate -> render                           (ADVERSARY_CLEAN, guard adversarialDepth, retargeted through NEW state)
+render -> handoff                                 (RENDERED — guided, guard artifactsOnDisk)
+render -> planReview[G4, human]                   (REVIEW_READY — autonomous, guard artifactsOnDisk)
+planReview -> freeze                              (REVIEW_ANSWERED, guard planReviewed; records G4 + G2 answers + G3)
+freeze -> handoff                                 (CONTRACT_FINAL, guard contractFrozen; v1.0-draft -> v1.0)
+freeze -> parallelPlanning                        (REVIEW_CONTRADICTED — recovery: a contradiction that changes the CONTRACT re-enters squads as an AMENDMENT, then verify -> adversaryGate -> render -> planReview again)
+handoff -> done                                   (HANDED_OFF)
+```
+
+Lifecycle states for the state file: `state ∈ {intake, triage, anamnesis, dodLock, scopeBrief, scopeGate, preGround, discovery, preflight, synthesis, specAuthoring, decisionGate, defaultsApplied, coherencePass, freezeGate, backboneFreeze, parallelPlanning, verify, adversaryGate, render, planReview, freeze, handoff, done, CLOSED_WITHOUT_PLAN}`.
+
+Machine ids are camelCase like the 17 baseline ids: the non-plan terminal's id is `closedWithoutPlan`; its `meta.title` and the `state` verb's printout use `CLOSED_WITHOUT_PLAN` (case C-E6-02 matches the printout). Failure and recovery, named: `CLOSED_WITHOUT_PLAN` is the honest terminal exit for the three non-plan verdicts; a missing memo makes the `state` verb REJECT the transition (fix: write the memo). `REVIEW_CONTRADICTED` is the recovery loop after a human contradiction. `planReview` is REJECTED by `state` when `PLAN-REVIEW.md` is missing (fix: write it). `render` is REJECTED by `artifactsOnDisk` when a twin is missing. A draft at `handoff` is REJECTED ("draft contract cannot hand off"). Mode-inconsistent history is REJECTED. Escalation: a second REVIEW_CONTRADICTED on the same default is not re-defaulted — it is written as an open decision card for the owner (ESCALATED to the human, never guessed again).
+
+### 3.2 The renderer and mirror lifecycle (`build-report.mjs` + `gate-check mirror`)
+
+```
+RENDER_REQUESTED -> RENDERED                      (exit 0)
+RENDER_REQUESTED -> RENDERED_PARTIAL              (exit 2: warnings — missing embed, unresolved glossary ID, brand fell back, mockup without provenance; the page is written with visible placeholders)
+RENDER_REQUESTED -> RENDER_FAILED                 (exit 1: nothing written — manifest unreadable, kind unknown, measurement read_only:false)
+RENDER_FAILED -> RENDER_REQUESTED                 (fix the manifest; retry)
+RENDERED_PARTIAL -> RENDER_REQUESTED              (fix the missing input; re-render)
+RENDERED -> MIRROR_FRESH                          (gate-check mirror exit 0)
+RENDERED -> MIRROR_STALE                          (exit 2: source md, embed or brand changed since the stamp)
+MIRROR_STALE -> RENDER_REQUESTED                  (recovery: re-render is mechanical, no model call)
+MIRROR_STALE -> ESCALATED                         (failed recovery: still stale after re-render ⇒ the md changed shape ⇒ the low-tier author updates the manifest; reported in STATUS)
+HTML_UNSTAMPED -> MIRROR_REJECTED                 (exit 1: hand-authored HTML is refused; the HTML is never the source)
+```
+
+### 3.3 The write guard (`planit-guard.mjs`)
+
+```
+WRITE_REQUESTED -> RESOLVE_RUN                    (scan .plan-it/*.state.json; longest deliveryRoot prefix wins; legacy docs/implementation/<name>/ match; generic; none)
+RESOLVE_RUN -> ALLOWED                            (no state file, or contract.version non-empty, or path is not a deliverable)
+RESOLVE_RUN -> WRITE_DENIED                       (deliverable write while the RESOLVED run's contract.version is null; reason names the resolved file)
+WRITE_DENIED -> WRITE_REQUESTED                   (recovery: freeze the contract (or --draft), record contract.version, retry)
+any error -> ALLOWED                              (fail-open, always)
+```
+
+### 3.4 Run archive
+
+```
+ARCHIVE_REQUESTED -> ARCHIVED                     (state ∈ {done, CLOSED_WITHOUT_PLAN}; moved to .plan-it/done/; archive{} appended)
+ARCHIVE_REQUESTED -> ARCHIVE_REFUSED              (non-terminal run, or target exists; exit 1; no --force)
+ARCHIVE_REFUSED -> ARCHIVE_REQUESTED              (finish the run or record a triage verdict, then retry)
+```
+
+Cascade classes (adversary gate D-B3): **partial-failure** = RENDERED_PARTIAL (case C-E2-02) · **rollback/compensation** = REVIEW_CONTRADICTED → AMENDMENT (C-E7-06), ARCHIVE_REFUSED (C-E9-05) · **failed-recovery → escalation** = MIRROR_STALE → ESCALATED (C-E2-07), second contradiction → ESCALATED (C-E7-06) · **recovery/resume** = `state --run` resume after crash (C-E9-01), MIRROR_STALE → re-render (C-E2-06), WRITE_DENIED → freeze → retry (C-E9-08) · **adversarial-verify** = stamp tamper (C-E2-06), guard tested in BOTH copies (C-E9-07), fabricated mockup refused (C-E5-01).
+
+## 4 · Interfaces (binding signatures)
+
+### 4.1 Renderer CLI
+`node scripts/build-report.mjs <manifest.json> [--open] [--brand <path>|default] [--out <file>] [--check] [--strict]` — exit 0 rendered · 2 rendered with warnings · 1 error (nothing written). `--check`: render to memory and compare with the existing twin (0 identical / 2 stale-or-missing / 1 error), never writes. `--open`: default off; macOS `open -a "Google Chrome"` then `open`; linux `xdg-open`; win32 `cmd /c start`; suppressed by `PLANIT_NO_OPEN=1` or a non-TTY stdout; never changes the exit code. Stdout: one line `built: <path> (<bytes> bytes) brand=<default|repo:<relpath>> stamp=sha256:<12-hex> html-blocks=<n>`. Determinism: same manifest + template + brand + embed bytes ⇒ byte-identical HTML; no timestamps, no absolute paths written.
+
+### 4.2 Manifest `planit-report/1`
+Top level: `schema` (required, `planit-report/1`), `kind` (required, one of SCOPE-BRIEF · TRIAGE · RESEARCH-REPORT · DECISIONS · CONTRACT · KICKOFF · PLAN-REVIEW · GLOSSARY · LEGACY), `title`, `subtitle_html`, `source{path}` (the md twin; hashed into the stamp), `output`, `glossary{path}`, `rulings{path}`, `allow_tokens[]` (non-model `claude-*` names), `sections[]{id, heading, blocks[]}`. Conclude-it's `sections[].{table,cards,html}` is accepted and rewritten to blocks (kind LEGACY, exit 2 unless `--strict`).
+Block types (each with the failure state in `references/report-family.md`): `table` · `cards` · `decision-card` (`id`, `kind ∈ decision|authorization|owner-action`, `question_html`, `options[]`, `recommendation`, `why_yours_html`, `unblocks_html`, optional `deadline`, `embed`, `status ∈ open|ruled`, `ruling`) · `embed` · `mockup` (requires `provenance{source, rows_read, read_at, read_only:true}`) · `flow` (mermaid source) · `states` (`good`, `empty`, `misconfigured`) · `measurement` (`value`, `unit`, `where`, `read_at`, `read_only:true`) · `rulings` · `rulings-forward` · `copy-rulings` · `glossary` · `lockbox` · `tally` (counted from referenced sections) · `triage-card` (`verdict ∈ plan|build|decide|skip`) · `copy` · `html`.
+
+### 4.3 Stamps (mirror contract)
+`<meta name="planit-source" content="<relpath> sha256=<64-hex>">` · `planit-embeds` (`;`-separated `<relpath> sha256=<hash>`) · `planit-brand` (`default sha256=…` or `repo:<relpath> sha256=…`) · `planit-renderer` (`build-report.mjs/4.0.0 template sha256=…`) · `planit-kind`. Relpaths are relative to the twin's directory, forward slashes, no `./`; hashes are over raw bytes.
+
+### 4.4 Brand `planit-brand/1`
+`{schema, name, source, palette{…hex}, fonts{display, body, mono, googleFontsHref}, roles{light{bg, card, line, ink, muted, accent, accentBg, ok, warn, bad, info, chip, hold}, dark{…}}}`. Detection order: `--brand` flag → `.plan-it/brand.json` → `brand.json` · `assets/brand/brand.json` · `docs/brand/brand.json` · `brand/brand.json` → markdown guideline present-but-not-tokenised (warning, default used, badge says so) → bundled default. The default is the Her0 palette with the R7 contrast mapping (Signal/Flare/Info/Warn as chip backgrounds in light mode; muted = Steel).
+
+### 4.5 gate-check verbs (new or extended; all zero-dep; exit 0 pass · 1 fail · 2 action-required where stated)
+`state <file|--dir root> [--run <slug>]` (+ checks: triage payload, defaults recorded, plan-review artifact, draft-cannot-hand-off, mode consistency) · `freeze <CONTRACT.md> [--draft] [--run]` · `testconv --dir <root> [--run]` (receipt to the resolved file) · `contract|reconcile|adversary|handoff` resolve the package dir from `run.deliveryRoot` (fallback `delivery/`, then `delivery/v3/`) · `reconcile`'s C-W5-02 orphan scan skips `R<n>` tokens recorded as default IDs in the resolved state file (`gates.G2.defaults[].id`) — the §5 defaults grammar collides with the PRD requirement grammar (AMD-7) · `mirror <md> <html>` / `mirror --dir <delivery> [--require-html]` (0 fresh · 2 stale · 1 unstamped/malformed; `--dir` skips `<delivery>/resources/**`, the declared run-input folder, which is never a twin — AMD-8; recomputes the stamped hashes itself with `node:crypto` and never invokes the renderer — `build-report.mjs --check` is the renderer's own convenience, not a gate-check dependency) · `glossary <delivery-dir>` (1 = unknown ID, named with file:line) · `archive <slug> [--dir root]` (1 = refused) · `runs [--dir root] [--json]` (0 even for zero runs) · `handoff` embeds `reconcile` (dispositions), `glossary`, `mirror` as scoped steps.
+
+### 4.6 State-file additions (all optional; `state` tolerates extra keys)
+`run.name` (`^[a-z0-9][a-z0-9-]*<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="../CONTRACT.md sha256=3bca8d6103143583963f3de4c44d69c66fb70a82d63ae48639b40ac965a8781b">
+<meta name="planit-embeds" content="CONTRACT.md sha256=3bca8d6103143583963f3de4c44d69c66fb70a82d63ae48639b40ac965a8781b">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="CONTRACT">
+<title>plan-it v4 — CONTRACT</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">CONTRACT</p>
+<h1>plan-it v4 — CONTRACT</h1>
+<p class="sub">Version: v1.2 — FROZEN 2026-09-07 (ratified by Fernando Ott at PLAN-REVIEW, gate G4)</p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>plan-it</td><td>the planning front-end: fuzzy demand → delivery package</td><td>SKILL.md</td></tr>
+<tr><td>build-it</td><td>the autonomous build engine that consumes the package</td><td>SKILL.md — Composes with</td></tr>
+<tr><td>review-it</td><td>the independent verification leg (runs the Test Contract)</td><td>README — plan-it × build-it</td></tr>
+<tr><td>conclude-it</td><td>the session-close ritual; ships the ancestor of the v4 renderer</td><td>~/.claude/skills/conclude-it</td></tr>
+<tr><td>DoD</td><td>Definition of Done — the numbered, individually verifiable criteria</td><td>SKILL.md Phase 1</td></tr>
+<tr><td>PRD</td><td>Product Requirements Document — one per squad</td><td>templates.md PART B</td></tr>
+<tr><td>epic</td><td>a buildable unit ending in a binding Test Contract</td><td>templates.md PART B</td></tr>
+<tr><td>Test Contract</td><td>up to ~20 cases with expected outputs registered at planning time; DoD = 100% pass</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>CONTRACT</td><td>the frozen shared law squads build against (vocabulary, schema, interfaces, ownership)</td><td>SKILL.md Rule 1</td></tr>
+<tr><td>squad</td><td>one build lane with disjoint files, usually one session</td><td>00-program-plan.md</td></tr>
+<tr><td>wave</td><td>a group of epics built together; `Wn`</td><td>00-program-plan.md</td></tr>
+<tr><td>G0</td><td>gate: anamnesis — the up-front questionnaire (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G1</td><td>gate: scope — size, shape, topology, DoD</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>G2</td><td>gate: decisions — the batched judgment calls with recommendations</td><td>SKILL.md Phase 7</td></tr>
+<tr><td>G3</td><td>gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;</td><td>SKILL.md Phase 8</td></tr>
+<tr><td>G4</td><td>gate: plan review — the single review-and-contradict round (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G-n</td><td>a governance rule inside a CONTRACT (dash: rule; no dash: gate)</td><td>CONTRACT §6</td></tr>
+<tr><td>size S/M/L</td><td>how much gets written: single feature / multi-feature / from-scratch program</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>shape 1–5</td><td>the package form: multi-doc + delivery / single-file PRD / research→locked architecture→phase PRDs / numbered PRD-NN / refactor catalog</td><td>templates.md PART D</td></tr>
+<tr><td>topology</td><td>how the build runs: solo · orchestrator+squads · headless</td><td>CONTRACT §1</td></tr>
+<tr><td>mode</td><td>autonomous-draft (default) or guided</td><td>CONTRACT §1</td></tr>
+<tr><td>[REAL]</td><td>a test case needing a live target; never VERIFIED on a mock</td><td>formats.md — Test Contract</td></tr>
+<tr><td>INV / IMPLEMENTED-NOT-VERIFIED</td><td>built, but the proving case could not run</td><td>formats.md §7</td></tr>
+<tr><td>NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED</td><td>the closed status vocabulary</td><td>gate-check W4</td></tr>
+<tr><td>disposition</td><td>what happens to a non-green item at close: backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>CONTRACT §5</td></tr>
+<tr><td>FD-1</td><td>founder mandate: test-convention discovery registered in CLAUDE.md</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>FD-2</td><td>founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md)</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>W1–W6 (CHANGELOG)</td><td>the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>D4 (CHANGELOG)</td><td>the v3 adversarial-depth ruling behind the `adversary` verb — not this run's D4 ruling</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>AMD-n</td><td>a dated amendment to a frozen contract</td><td>delivery/decisions.md</td></tr>
+<tr><td>xhigh</td><td>Claude Code's highest `/effort` reasoning setting</td><td>SKILL.md — Autonomy posture</td></tr>
+<tr><td>CDP</td><td>Chrome DevTools Protocol — drives UI test cases</td><td>formats.md §4</td></tr>
+<tr><td>ATDD / BDD</td><td>Acceptance-Test-Driven / Behaviour-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>SbE / EDD</td><td>Specification by Example / Eval-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>twin</td><td>the `&lt;NAME&gt;.html` rendered beside a canonical `&lt;NAME&gt;.md`</td><td>CONTRACT §1</td></tr>
+<tr><td>manifest</td><td>the JSON a low-tier author writes for the renderer (`planit-report/1`)</td><td>CONTRACT §4.2</td></tr>
+<tr><td>stamp</td><td>`&lt;meta name=&quot;planit-*&quot;&gt;` provenance in a twin (`&lt;relpath&gt; sha256=&lt;hash&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>deliveryRoot</td><td>the repo-relative folder a run's package lives in</td><td>CONTRACT §1</td></tr>
+<tr><td>tier top/mid/low</td><td>model tiers resolved at execution time; never a model ID</td><td>RUN-POLICY</td></tr>
+<tr><td>mirror pair</td><td>a root file and its byte-identical plugin copy (11 in v4)</td><td>gate-check mirror-check</td></tr>
+<tr><td>machine-diff</td><td>the additive-only check of a live machine against a pinned baseline</td><td>gate-check</td></tr>
+<tr><td>WCAG</td><td>Web Content Accessibility Guidelines — the contrast ratios cited for brand tokens</td><td>01-findings §2.2</td></tr>
+<tr><td>E1</td><td>scope brief: the human-readable explanation of size, shape and topology rendered before gate G1</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E2</td><td>HTML report layer: the zero-dependency renderer and report-family kinds with provenance stamps</td><td>delivery/v4/CONTRACT.md §4</td></tr>
+<tr><td>E3</td><td>decision queue: the DECISIONS/PLAN-REVIEW kind with ruled, defaults, authorizations and owner actions</td><td>delivery/v4/CONTRACT.md §2</td></tr>
+<tr><td>E4</td><td>build topology: the user's choice at G1 with plan-it's recommendation; solo · orchestrator+squads · headless</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E5</td><td>show-don't-describe: enumerating the honest states of every surface (good, empty, misconfigured)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E6</td><td>triage + measurement: the triage verdict determines CLOSED_WITHOUT_PLAN exit; measurements are read-only or say they are not</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E7</td><td>anamnesis + review round: the up-front questionnaire (G0) and single review-and-contradict gate (G4)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E8</td><td>residual disposition: every non-green item at close gets one of backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>delivery/v4/DECISIONS.md — Defaults</td></tr>
+<tr><td>E9</td><td>named runs: every plan-it execution has a slug; state lives in `.plan-it/&lt;slug&gt;.state.json`</td><td>delivery/v4/CONTRACT.md §1</td></tr>
+<tr><td>E10</td><td>readable acronyms: the glossary seed copied at intake; every acronym explained on first use</td><td>delivery/v4/GLOSSARY.md</td></tr>
+<tr><td>D1</td><td>autonomous-draft is the default mode; guided selectable at anamnesis</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D2</td><td>brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D3</td><td>HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D4</td><td>topology is the user's choice at G1 with plan-it's recommendation shown</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D5</td><td>the copy-your-rulings block ships in 4.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D6</td><td>all ten enhancements in 4.0.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D7</td><td>v4 is built by an orchestrator + three squads + QA</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>R1</td><td>CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R2</td><td>&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R3</td><td>typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R4</td><td>optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R5</td><td>orchestrator = top tier in RUN-POLICY</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R6</td><td>incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R7</td><td>brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R8</td><td>mirror pairs 8 → 11 (renderer, template, brand JSON)</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R9</td><td>mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R10</td><td>the state file names the package folder; every verb derives paths from `run.deliveryRoot`</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R11</td><td>harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R12</td><td>renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>A-1</td><td>squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-2</td><td>the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-3</td><td>QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-4</td><td>the orchestrator commits the guard mirror fix applied during planning as its first W0 commit</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>O-1</td><td>remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-2</td><td>read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-3</td><td>ratify R7 (brand contrast deviation) or send the exact colours you want as text</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-4</td><td>decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>W0</td><td>orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY</td><td>00-program-plan.md</td></tr>
+<tr><td>W1</td><td>three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason</td><td>00-program-plan.md</td></tr>
+<tr><td>W2</td><td>integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0</td><td>00-program-plan.md</td></tr>
+<tr><td>W3</td><td>QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered</td><td>00-program-plan.md</td></tr>
+<tr><td>W4</td><td>release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written</td><td>00-program-plan.md</td></tr>
+<tr><td>SQ-A</td><td>renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-B</td><td>deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-C</td><td>prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>LG-1 … LG-18</td><td>live-grounding facts measured by the coordinator</td><td>research/00-main-thread-grounding.md</td></tr>
+<tr><td>F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21</td><td>research findings by stream (A renderer · B core · C prose · D precedents)</td><td>research/stream-*.md</td></tr>
+<tr><td>D-A&lt;n&gt; · D-B&lt;n&gt; · D-C&lt;n&gt;</td><td>PRD-level design decisions per squad (renderer · core · prose), cited by every epic task</td><td>delivery/v4/prds/</td></tr>
+<tr><td>ab0c192</td><td>the W0 commit that landed the v4 planning package and the guard mirror fix (A-4)</td><td>STATUS.md ## Log</td></tr>
+<tr><td>V4A&lt;n&gt; · V4B&lt;n&gt; · V4C&lt;n&gt;</td><td>epic IDs per squad</td><td>delivery/v4/epics/</td></tr>
+<tr><td>C-E*-NN</td><td>enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)</td><td>CONTRACT ## Cases</td></tr>
+<tr><td>T-*-NN</td><td>per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)</td><td>delivery/v4/epics/</td></tr>
+<tr><td>T-E*-NN</td><td>v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs)</td><td>tests/run-contract.mjs</td></tr>
+<tr><td>C-W*-NN · C-META-NN</td><td>v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist)</td><td>delivery/v3/CONTRACT.md</td></tr>
+<tr><td>SHA-256</td><td>the hash function behind every pin and stamp (`sha256=&lt;64-hex&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>AMD-8</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-7</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-6</td><td>orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-4</td><td>harness amendment: gate count bound to the v2 baseline; required for the machine-diff check</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-5</td><td>harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`</td><td>delivery/decisions.md</td></tr>
+<tr><td>CLOSED_WITHOUT_PLAN · REVIEW_CONTRADICTED · RENDERED_PARTIAL · RENDER_FAILED · MIRROR_STALE · MIRROR_REJECTED · HTML_UNSTAMPED · ESCALATED · WRITE_DENIED · ARCHIVE_REFUSED</td><td>failure and recovery states of the v4 core-logic models</td><td>CONTRACT §3</td></tr>
+<tr><td>planit-report/1 · planit-brand/1</td><td>the manifest and brand token schemas</td><td>CONTRACT §4</td></tr>
+<tr><td>7fcff27</td><td>the commit that added named-state resolution to the root guard only</td><td>01-findings §2.9</td></tr>
+<tr><td>P2-11</td><td>the owner ruling (2026-08-26) that made worktrees-only a plan-it/build-it enhancement</td><td>LG-16</td></tr></table></div></details>
+) · `run.mode` · `run.topology` · `run.deliveryRoot` (trailing slash) · `run.anamnesis` · `triage{verdict, measuredAt, measurements[], memo}` · `gates.G0` · `gates.G2.defaults[]{id, question, default, rationale, source:"recommended", contradicted}` · `gates.G2.pendingReview` (boolean; a provisional G2 record before `planReview`) · `gates.G4{approved, owner, date, contradictions[]}` · `contract.draft` · `render{manifest, outputs[]{md, html, sha256}}` · `archive{archivedAt, from}`. `meta.stateFile` = `.plan-it/<slug>.state.json`; `meta.stateFileFallback` = `.plan-it/state.json`.
+
+## 5 · Grammars
+
+- **IDs.** Cases in this CONTRACT: `C-E<n>-NN` (enhancement-scoped). Per-epic Test Contract cases: `T-<EID>-NN`. Epics: `V4<squad-letter><n>` (e.g. `V4A1`). Governance rules: `G-<n>`. Defaults: `R<n>`. Rulings: `D<n>`. Owner actions: `O-<n>`. Authorizations: `A-<n>`. Amendments: `AMD-<n>`. Waves: `W<n>`. The v3 harness grammar `C-(W\d+|META)-\d{2}` is widened by SQ-B to also accept `C-E\d+-\d{2}` (case C-E9-10). Until V4B3 also widens the 3.0.1 epic-heading grammar (`[A-Z]\d+`), every v4 epic heading reads `## Epic V4<letter><n> — <title>` so the 3.0.1 lints (Tier Table, Test Contract presence, zero-case) can see it.
+- **Legend line.** Any artifact where three or more per-run ID prefixes appear carries one line: `Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Rn default · Dn ruling — see GLOSSARY.md`.
+- **GLOSSARY.md rows.** `| ID | Expansion | Where defined |`; ID cell is a literal ID or a family pattern (`T-*-NN`, `C-E*-NN`).
+- **STATUS.md board.** `| EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch | Disposition |` + `## Residuals` (`| Item | Disposition | Reason / exit criterion | Evidence |`) + `## Log` (reverse-chronological dated bullets; `[incidental]` tag for unasked-for findings). Disposition cell: empty when Status = `VERIFIED`; exactly one of `backlog-with-reason: <path>` · `owner-gated: <owner>` · `IMPLEMENTED-NOT-VERIFIED: <case> <target>` when Status = `IMPLEMENTED-NOT-VERIFIED`; optional (empty or exactly one of those) when Status = `NOT-STARTED` or `IN-PROGRESS` — a disposition is a closing word (§1) and a freshly handed-off board of NOT-STARTED rows is the healthy path (AMD-8). A typed `Dispositions: N backlog · M owner-gated · K INV` line must equal the computed counts.
+- **Measurement block.** `Measured: <value> · where: <source> · when: <date> · read-only: yes-verified|assumed|idempotent-writes-accepted · moved: <verdict before> -> <verdict after>`.
+- **Decision tags.** `[DECIDED]` · `[CHANGED]` · `[CONFIRM: owner]` (from `references/formats.md` §1) are canonical in markdown; glyphs are renderer decoration only (R3).
+
+## 6 · Governance (binding — every rule carries a test hook)
+
+- **G-1 Additive core.** No 3.0.1 state, event, guard or verb is renamed, removed or changes meaning; `machine-diff` passes against `tests/fixtures/v3/machine.v3.7fcff27.json` and against `tests/fixtures/v2/machine.v2.fc6abc8.json`. (test: C-E7-01, C-E7-02)
+- **G-2 Zero dependencies.** Every script uses `node:` builtins only; no `package.json` dependencies. (test: C-E2-11)
+- **G-3 Closed status vocabulary** stays four terms; dispositions are a separate axis and never replace a status. (test: C-E8-01, C-E8-02)
+- **G-4 No hardcoded model IDs** in any plan artifact or rendered twin; tiers only; `allow_tokens` for non-model names. The regex is intentionally duplicated byte-identical in `planit-guard.mjs` and `build-report.mjs` (lanes may not import each other's files); an amendment that changes one must change both; C-E2-09 asserts identity. (test: C-E2-09)
+- **G-5 Counts computed, never typed** — tallies, mirror-pair counts, disposition counts, glossary coverage. (test: C-E8-03, C-E2-08)
+- **G-6 Markdown is canonical; HTML is a derived twin** with provenance stamps; hand-authored HTML is refused by `mirror`; every family-kind md in a package has a twin at handoff. (test: C-E2-05, C-E2-06, C-E2-07)
+- **G-7 Twins are created locally by default and never published as claude.ai artifacts**; `--open` only at human gates, suppressed when headless. (test: C-E2-10; prose: C-E1-03)
+- **G-8 First-use rule.** Every human-facing surface expands an acronym or per-run ID on first use; a package carries `GLOSSARY.md`; an ID absent from the glossary fails handoff. The static-vocabulary half of `GLOSSARY.md` is a seed table shipped in `references/templates.md` (SQ-C); the skill copies it to the package at `intake`, before `scopeBrief`, so the first rendered twin never shows "not generated yet" in the healthy path; minted IDs are appended as the run creates them. (test: C-E10-01, C-E10-02, C-E10-03)
+- **G-9 Contract cases never move to backlog.** A binding case that fails or cannot run stays IMPLEMENTED-NOT-VERIFIED with a reason; only work beyond the case set may be `backlog-with-reason`. (test: C-E8-02)
+- **G-10 Worktrees-only** for any session editing a repo another session may touch (owner ruling P2-11); every SESSIONS.md squad prompt says so. (test: C-E4-02)
+- **G-11 Poll, never wait.** No launch prompt that may run headless contains "wait for" a notification; it says poll. (test: C-E4-02)
+- **G-12 Facts are probed, never guessed; measurements are read-only or say they are not.** A `measurement` block with `read_only:false` is a render error; an ABSENT probe blacklists only its tool (argv[0]) or its declared `tool`, not every token. `ENV-FACTS.md` gains an optional `tool` column (`| id | check | status | evidence | tool |`), documented in `references/formats.md` §9 (SQ-C). (test: C-E5-02, C-E6-03)
+- **G-13 A draft contract never hands off**, and `freeze` without `--draft` refuses a `-draft` header. (test: C-E7-04, C-E7-05)
+- **G-14 Mirror integrity 11/11** before any release; a release cannot finalize with drift. (test: C-E9-09)
+- **G-15 Description budget.** The SKILL frontmatter description is ≤ 1,024 characters with the trigger phrases inside the first 250. (test: C-E1-02)
+
+## 7 · Definition of SHIPPED (release gates, all computed)
+
+`node tests/run-contract.mjs` 100% (v2 + v3 + v4 cases discovered from this file's `## Cases`) · `tests/v3/fail-closed-sweep.mjs` 100% mechanism-ready · `gate-check mirror-check` 11/11 · `gate-check machine-diff` vs both pinned baselines · `tests/v3/version-triple-match.mjs` = 4.0.0 across six sites + CHANGELOG · `tests/v3/changelog-shape.mjs` · a dogfood run of the 4.0.0 plugin on `tests/fixtures/v4/dogfood-project/` reaches `handoff` in autonomous-draft mode with every twin fresh. IMPLEMENTED-NOT-VERIFIED ships nothing.
+
+## RUN-POLICY (frozen into the package)
+
+Tier table — tiers resolve to concrete models at execution time; hardcoded model IDs anywhere in the package are a guard violation (W3):
+
+| slice class | tier | notes |
+|---|---|---|
+| coordinator / orchestrator | top | owns gates, freeze, merges, amendments, escalation decisions; never edits squad files |
+| mechanical (fixture scaffolds, manifest authoring, mirror copies, version bumps) | low | deterministic, fully spec'd byte-work |
+| spec'd implementation vs a bound Test Contract | mid | default builder tier for SQ-A / SQ-B / SQ-C epics |
+| judgment (statechart + guard semantics, renderer escaping, adversarial verify, cross-cutting) | top | never resolved below coordinator review |
+
+- escalate-on-struggle: a failed or flaky slice re-runs exactly one tier up; every escalation is recorded in the run report.
+- delivery rule: subagents write results to disk at exact absolute paths AND send a content-bearing final message — idle ≠ delivered.
+- reap-on-merge: builders are stopped as soon as their output is merged and captured in durable files.
+- Per-epic Tier Table (C-W3-01/C-W3-03 inherited): every epic carries `| tier | effort | escalation | scaffold-pointer |` with the pointer a build-it path.
+- This run's binding instance: coordinator = top; PRD/epic authoring = mid; fixture scaffolding + manifest authoring = low; guard/statechart/escaping slices = top review.
+
+## Cases
+
+Legend: `C-E<n>-NN` = enforcement case for enhancement n · `@case-*` = the squad's area · `run:` = the command that must exit non-zero against its violating fixture (or pass on the positive fixture where stated) · `manual:` = a human step.
+
+| ID | @tag | Case (expected behavior) | run: |
+|---|---|---|---|
+| C-E1-01 | @case-prose | SKILL.md contains exactly one "Output discipline for humans" section and the scope-brief step precedes the G1 menu in Phase 2 (fixture: SKILL without the section → FAIL) | `node tests/v4/prose/skill-sections.mjs` |
+| C-E1-02 | @case-prose | SKILL frontmatter description ≤ 1,024 characters and the first 250 characters contain "/plan-it" and "plan" (G-15) | `node tests/v4/prose/description-budget.mjs` |
+| C-E1-03 | @case-prose | SKILL.md says twins are created locally, opened only at human gates, never published as artifacts (G-7 prose) | `node tests/v4/prose/local-html-rule.mjs` |
+| C-E1-04 | @case-prose | templates.md carries SCOPE-BRIEF, ANAMNESIS, DECISIONS, GATE, SESSIONS, PLAN-REVIEW, GLOSSARY skeletons each with its required sub-headings (fixture missing GATE "Standing rules" → FAIL) | `node tests/v4/prose/templates-present.mjs` |
+| C-E2-01 | @case-renderer | Renderer determinism: the same manifest rendered twice yields byte-identical HTML | `node tests/v4/renderer/determinism.mjs` |
+| C-E2-02 | @case-renderer | Missing embed → exit 2 (RENDERED_PARTIAL) with `WARNING: embed not found` and a visible placeholder in the page | `node tests/v4/renderer/missing-embed.mjs` |
+| C-E2-03 | @case-renderer | Manifest without `schema`/`kind` → exit 1 (RENDER_FAILED) and no file written under `--strict`; LEGACY conclude-it manifest renders with exit 2 without `--strict` | `node tests/v4/renderer/strict-schema.mjs` |
+| C-E2-04 | @case-renderer | Brand detection order: `.plan-it/brand.json` beats `assets/brand/brand.json`, which beats a markdown-only guideline (exit 2, badge "guideline present, not tokenised"), which beats the bundled default; the `planit-brand` stamp names the winner | `node tests/v4/renderer/brand-detection.mjs` |
+| C-E2-05 | @case-machine | `mirror --dir` exits 2 "missing twin" when a family-kind md has no html under `--require-html`; a non-family md without html does not fail | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror --dir tests/fixtures/v4/mirror-missing-twin/delivery --require-html` |
+| C-E2-06 | @case-machine | `mirror` exits 2 (MIRROR_STALE) naming both hashes when one byte of the source md changed after the stamp; re-render makes it exit 0 (MIRROR_FRESH) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror tests/fixtures/v4/mirror-stale/CONTRACT.md tests/fixtures/v4/mirror-stale/CONTRACT.html` |
+| C-E2-07 | @case-machine | Unstamped (hand-authored) HTML → `mirror` exit 1 (MIRROR_REJECTED, HTML_UNSTAMPED); a still-stale twin after re-render is reported ESCALATED in the handoff output | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror tests/fixtures/v4/mirror-unstamped/X.md tests/fixtures/v4/mirror-unstamped/X.html` |
+| C-E2-08 | @case-renderer | `tally` tiles are counted from the referenced sections: adding a fourth `triage-card` to the fixture changes the tile from 3 to 4 with no manifest change (G-5) | `node tests/v4/renderer/tally-computed.mjs` |
+| C-E2-09 | @case-renderer | A `claude-`-prefixed model ID in any rendered body → exit 2 naming it (regex identical to the guard's); a name listed in `allow_tokens` is not flagged (G-4) | `node tests/v4/renderer/model-id-leak.mjs` |
+| C-E2-10 | @case-renderer | `--open` routes by platform (darwin: `open -a "Google Chrome"` then `open`), is suppressed by `PLANIT_NO_OPEN=1` or non-TTY, and never changes the exit code (G-7) | `node tests/v4/renderer/open-routing.mjs` |
+| C-E2-11 | @case-packaging | No file under `plugins/plan-it/` imports anything outside `node:` builtins; no `package.json` dependencies (G-2) | `node tests/v4/prose/zero-deps.mjs` |
+| C-E2-12 | @case-renderer | Script-escape completeness: an embed containing `<\/SCRIPT>`, `<\/script >`, `<\!--`, `x)` and an attribute-quote breakout renders with exactly one markdown script block closed by the renderer and no `javascript:` href or injected attribute | `node tests/v4/renderer/xss-escape.mjs` |
+| C-E2-13 | @case-renderer | Every `var(--token)` referenced in the rendered `<style>` is defined in the bare `:root` block (both themes resolve in the un-stamped state) | `node tests/v4/renderer/theme-tokens.mjs` |
+| C-E2-14 | @case-renderer | A `flow` block emits the pinned mermaid 10.9.1 cdnjs script, `securityLevel:'strict'`, a `<pre class="mermaid">` with the escaped source and a `<noscript>` note; a manifest with no `flow` emits no mermaid script | `node tests/v4/renderer/mermaid-fallback.mjs` |
+| C-E3-01 | @case-renderer | A `decision-card` with `status:open` and no `why_yours_html` or no `recommendation` → exit 2 naming the card | `node tests/v4/renderer/decision-card-complete.mjs` |
+| C-E3-02 | @case-renderer | A DECISIONS manifest whose `rulings.path` names an earlier DECISIONS.md renders a `rulings-forward` table with every prior item and its State; a dropped prior item → exit 2 | `node tests/v4/renderer/rulings-forward.mjs` |
+| C-E3-03 | @case-renderer | `copy-rulings` renders every open and ruled ID once, in document order, as `ID: value` pairs (D5) | `node tests/v4/renderer/copy-rulings.mjs` |
+| C-E4-01 | @case-prose | GATE.md template: every Answered row has `Type ∈ decision|authorization|owner-action`; the three sections exist; fixture with an untyped row → FAIL | `node tests/v4/prose/gate-shape.mjs` |
+| C-E4-02 | @case-prose | SESSIONS.md launch prompts each contain package path, law, lane, branch pattern, DoD, register-handshake, gotcha, the worktrees-only line (G-10) and no "wait for" a notification (G-11); KICKOFF.md still carries exactly one launch prompt | `node tests/v4/prose/sessions-prompts.mjs` |
+| C-E5-01 | @case-renderer | A `mockup` without `provenance` → exit 2 and the block shows the red chip "provenance missing — not drawn from measured rows" (adversarial-verify: a fabricated mock is never silent) | `node tests/v4/renderer/mockup-provenance.mjs` |
+| C-E5-02 | @case-renderer | A `measurement` with `read_only:false` → exit 1 (RENDER_FAILED), nothing written (G-12) | `node tests/v4/renderer/measurement-readonly.mjs` |
+| C-E5-03 | @case-renderer | A `states` block missing one of good/empty/misconfigured renders a grey "not enumerated" column and exit 2 | `node tests/v4/renderer/states-triptych.mjs` |
+| C-E6-01 | @case-machine | `state` rejects a triage verdict outside {plan, build-instead, owner-decision, skip} and rejects `skip`/`build-instead`/`owner-decision` without `triage.memo` on disk (CLOSED_WITHOUT_PLAN REJECTED) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state --dir tests/fixtures/v4/triage-no-memo --run t1` |
+| C-E6-02 | @case-machine | With the memo present, `state` accepts the transition and prints `CLOSED_WITHOUT_PLAN — (final state)` | `node tests/v4/core/triage-closed.mjs` |
+| C-E6-03 | @case-machine | An ABSENT probe blacklists only argv[0] (or the probe's declared `tool`); a `node …` case is not marked unrunnable because an unrelated `node …` probe failed (G-12; fixes LG-7) | `node tests/v4/core/envfacts-tool-only.mjs` |
+| C-E7-01 | @case-machine | `machine-diff` passes for the 4.0.0 machine against `tests/fixtures/v3/machine.v3.7fcff27.json` and against `tests/fixtures/v2/machine.v2.fc6abc8.json` (G-1) | `node tests/v4/core/machine-additive.mjs` |
+| C-E7-02 | @case-machine | Six negative machine fixtures (initial changed · baseline state dropped · baseline event dropped · guard swapped · retarget onto baseline state · guard removed) each FAIL `machine-diff` with the named reason (G-1) | `node tests/v4/core/machine-negatives.mjs` |
+| C-E7-03 | @case-machine | `state` rejects `gates.G4.approved:true` without `<deliveryRoot>/PLAN-REVIEW.md`, and with the file but no `Reviewed-by: <name> <date>` line | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state --dir tests/fixtures/v4/planreview-no-file --run v4` |
+| C-E7-04 | @case-machine | `state` rejects `state:handoff` with a `-draft` contract version ("draft contract cannot hand off", G-13) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state tests/fixtures/v4/draft-at-handoff/.plan-it/v4.state.json` |
+| C-E7-05 | @case-machine | `freeze` without `--draft` refuses a `v1.0-draft` header; `freeze --draft` passes structure + RUN-POLICY while skipping only casesReviewed, and refuses when `gates.G2.defaults` is empty (G-13) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs freeze tests/fixtures/v4/draft-header/delivery/CONTRACT.md` |
+| C-E7-06 | @case-machine | `state` rejects mode-inconsistent history (autonomous with decisionGate; guided with planReview) and accepts `freeze -> parallelPlanning` (REVIEW_CONTRADICTED) as the recovery edge; a second contradiction of the same default is recorded as ESCALATED (open card), never re-defaulted | `node tests/v4/core/mode-consistency.mjs` |
+| C-E7-07 | @case-machine | `state` requires `gates.G2.defaults[]` non-empty with every row `source:"recommended"` when `defaultsApplied` is in history | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state tests/fixtures/v4/defaults-empty/.plan-it/v4.state.json` |
+| C-E8-01 | @case-machine | `reconcile --dir` fails a STATUS board whose `IMPLEMENTED-NOT-VERIFIED` row has an empty `Disposition` cell, naming the row (G-3; AMD-8) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-missing` |
+| C-E8-02 | @case-machine | A `## Residuals` row whose Item is a contract case (`T-…`/`C-…`) with `backlog-with-reason` → FAIL "contract cases never move to backlog" (G-9) | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-contract-case` |
+| C-E8-03 | @case-machine | A typed `Dispositions:` tally that disagrees with the computed counts → FAIL with both numbers (G-5); `[incidental]` log bullets are never counted into the case tally | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-tally-drift` |
+| C-E9-01 | @case-machine | `state --run v4` reads `.plan-it/v4.state.json`, prints the position and only the mode's next events (resume after crash); extra keys tolerated | `node tests/v4/core/state-run-flag.mjs` |
+| C-E9-02 | @case-machine | `testconv --run v4` writes its receipt into the named state file, never the generic one | `node tests/v4/core/testconv-named.mjs` |
+| C-E9-03 | @case-machine | `contract`, `reconcile`, `adversary`, `freeze --dir` resolve the package dir from `run.deliveryRoot`; a fixture with only `delivery/v4/` and an empty `delivery/v3/` is scanned correctly (fixes F-B14 false greens) | `node tests/v4/core/deliveryroot-resolution.mjs` |
+| C-E9-04 | @case-machine | `archive alpha` moves a `done` run to `.plan-it/done/` and appends `archive{}` | `node tests/v4/core/archive-moves.mjs` |
+| C-E9-05 | @case-machine | `archive beta` on a `discovery` run → exit 1 ARCHIVE_REFUSED and the file is untouched; no `--force` exists | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs archive beta --dir tests/fixtures/v4/portfolio` |
+| C-E9-06 | @case-machine | `runs` lists a two-run portfolio with computed counts and `--json` parses; an empty dir exits 0 with "no plan-it runs" | `node tests/v4/core/runs-list.mjs` |
+| C-E9-07 | @case-guard | Guard resolves a named run by longest `deliveryRoot` prefix on a two-run fixture (frozen v4 + unfrozen generic): a write under `delivery/v4/prds/` is ALLOWED, a write under `delivery/other/prds/` is DENIED naming the generic file — asserted for BOTH the root and the plugin copy | `node tests/v4/core/guard-named-run.mjs` |
+| C-E9-08 | @case-guard | Guard denies a genuinely unfrozen named run (WRITE_DENIED names `v4.state.json`); after recording `contract.version` the same write is ALLOWED (recovery) | `node tests/v4/core/guard-unfrozen-named.mjs` |
+| C-E9-09 | @case-packaging | `mirror-check` reports 11 byte-identical pairs including `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`; run-contract T-E5-02 uses the 11-pair list (G-14, AMD-5) | `node tests/v3/mirror-wired-into-release.mjs` |
+| C-E9-10 | @case-machine | `tests/v3/lib/contract-cases.mjs` discovers `delivery/v4/CONTRACT.md` and accepts `C-E\d+-\d{2}` IDs; run-contract lists the v4 section with computed totals | `node tests/v4/core/contract-cases-v4.mjs` |
+| C-E10-01 | @case-machine | `glossary <delivery-dir>` exits 1 naming an ID used in KICKOFF that has no GLOSSARY.md row, with file:line; a family match (`T-A4-B1` ⇐ `T-*-NN`) passes | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs glossary tests/fixtures/v4/glossary-unknown-id/delivery` |
+| C-E10-02 | @case-machine | `handoff` embeds the glossary check and fails on the same fixture; `state` requires GLOSSARY.md at `handoff` when machineVersion major ≥ 4 | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs handoff tests/fixtures/v4/glossary-unknown-id/delivery` |
+| C-E10-03 | @case-renderer | Every kind renders exactly one `<details class="glossary">` before the first `<h2>`; the first prose occurrence of a glossary ID is wrapped `<abbr class="gl">` with one `.gl-x` expansion, later ones only `<abbr>`, code spans untouched; missing GLOSSARY.md → panel says "not generated yet" and exit 2 | `node tests/v4/renderer/glossary-panel.mjs` |
+| C-E10-04 | @case-prose | GLOSSARY seed in templates.md covers PRD, CDP, ATDD/BDD, DoD, xhigh, D4, G0–G4, [REAL], INV, S/M/L, Shape 1–5, topology values; SKILL.md no longer says "15 states" | `node tests/v4/prose/glossary-seed.mjs` |
+| C-E11-01 | @case-packaging | Version 4.0.0 across plugin.json, marketplace.json, both SKILL.md, both machine.json and the CHANGELOG top heading (`version-triple-match` EXPECTED updated) | `node tests/v3/version-triple-match.mjs` |
+| C-E11-02 | @case-packaging | CHANGELOG 4.0.0 entry has the required section set and a Verification line naming mirror-check 11/11 | `node tests/v3/changelog-shape.mjs` |
+| C-E11-03 | @case-prose | README names anamnesis, topology and autonomous-draft; docs/usage.md documents both modes; docs/methodology.md rule count equals SKILL.md's | `node tests/v4/prose/docs-coherence.mjs` |
+| C-E11-04 | @case-machine | Guided path unchanged: all 17 baseline states, 17 baseline events and 5 baseline guards present with identical guard names; the only differing targets are the three retargets onto new states; a guided fixture run records G2/G3 exactly as 3.0.1 does | `node tests/v4/core/guided-unchanged.mjs` |
+| C-E11-05 | @case-machine | AMD-4: run-contract's gate-count case binds "exactly three gates" to the v2 baseline, requires G1–G3 present in the live machine and `meta.human:true` on every `meta.gate` state | `node tests/v4/core/amd4-gate-count.mjs` |
+| C-E11-06 | @case-packaging | Dogfood: the 4.0.0 plugin planning `tests/fixtures/v4/dogfood-project/` in autonomous-draft mode reaches `handoff` with `mirror --dir --require-html` exit 0 and `glossary` exit 0 (deterministic walk authored by SQ-B; the model-driven half runs in QA W3 under A-3 and is recorded in QA-REPORT.md; SQ-C's prose and versions are its dependency) | `node tests/v4/core/dogfood-run.mjs` |
+| C-E11-07 | @case-packaging | Owner action O-1 performed: the stale `plan-it@plan-it` enablement and the user-level skill copy are removed or point at 4.0.0 (recorded in GATE.md; not a build blocker) | `manual: Fernando confirms O-1 in GATE.md before the 4.0.0 tag` |
+
+## Changelog
+
+- v1.2 — 2026-09-07 — **AMD-8** (orchestrator, during W1; case count unchanged at 60). Found by running the V4B4 lints against this very package: (a) §5 / C-E8-01 / T-V4B4-11 — a disposition is required only for `IMPLEMENTED-NOT-VERIFIED` rows, optional for `NOT-STARTED`/`IN-PROGRESS`, empty for `VERIFIED`; the literal "non-VERIFIED" rule failed every freshly handed-off board (all rows NOT-STARTED) and contradicted §1 ("what happens to a non-green item at close") and the STATUS legend. (b) §4.5 `mirror --dir` skips `<delivery>/resources/**` (run inputs, hand-authored by definition; this package's Notion export and seed HTMLs live there; the analysis report moved there too).
+- v1.1 — 2026-09-07 — **AMD-7** (orchestrator, during W1; case count unchanged at 60): §4.5 `reconcile` orphan scan (C-W5-02) excludes `R<n>` tokens that are recorded defaults (`gates.G2.defaults[].id`). Found when V4B3 made `reconcile` see `delivery/v4/`: `prd-b-core.md` cites defaults R2/R10/R11 as rationale and the 3.0.1 scan reported them as orphan requirements; every v4 run that mints defaults would fail `handoff` the same way. Test hook: epic case T-V4B4-17 (V4B4 Count 16 → 17). Also this round, planning-artifact fixes with no contract change: backticked scaffold pointers in `epics-a-renderer.md`/`epics-c-prose.md` unwrapped to satisfy `POINTER_RE` (AMD-6 covers the two `run:` mechanism fixes).
+- v1.0 — 2026-09-07 — **RATIFIED / FROZEN** at PLAN-REVIEW (gate G4) by Fernando Ott: R1–R12 confirmed, A-1/A-3/A-4 granted, A-2 held until O-2, no contradictions. Content identical to v1.1-draft except this header and this line; 60 cases.
+- v1.1-draft — 2026-09-07 — **AMENDMENT** by the orchestrator after squad planning (sources: `prds/prd-a-renderer.md` §9, `prds/prd-b-core.md` §9, `prds/prd-c-prose.md` §10): ownership table widened (SQ-B: all v4 fixtures except report/, `mirror-wired-into-release.mjs`, `fail-closed-sweep.mjs`; SQ-C: `changelog-shape.mjs`); machine id `closedWithoutPlan` with printed title `CLOSED_WITHOUT_PLAN`; `mirror` recomputes hashes itself; `gates.G2.pendingReview`; model-ID regex duplication rule; GLOSSARY seed copied at intake; interim epic-heading grammar; ENV-FACTS `tool` column; C-E11-06 ownership split; `VERIFIED` mention backticked in §5. No case added or removed (60).
+
+- v1.0-draft — 2026-09-07 — **FROZEN FOR SQUADS** in autonomous-draft mode (ruling D1). Defaults R1–R12 applied and listed in `delivery/v4/DECISIONS.md`; human ratification at PLAN-REVIEW (G4) bumps to v1.0. Amendments before then only via the orchestrator as dated `AMD-` entries in `delivery/decisions.md`.
+
+</script></div></details>
+<h2>Glossary</h2>
+<div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>plan-it</td><td>the planning front-end: fuzzy demand → delivery package</td><td>SKILL.md</td></tr><tr><td>build-it</td><td>the autonomous build engine that consumes the package</td><td>SKILL.md — Composes with</td></tr><tr><td>review-it</td><td>the independent verification leg (runs the Test Contract)</td><td>README — plan-it × build-it</td></tr><tr><td>conclude-it</td><td>the session-close ritual; ships the ancestor of the v4 renderer</td><td>~/.claude/skills/conclude-it</td></tr><tr><td>DoD</td><td>Definition of Done — the numbered, individually verifiable criteria</td><td>SKILL.md Phase 1</td></tr><tr><td>PRD</td><td>Product Requirements Document — one per squad</td><td>templates.md PART B</td></tr><tr><td>epic</td><td>a buildable unit ending in a binding Test Contract</td><td>templates.md PART B</td></tr><tr><td>Test Contract</td><td>up to ~20 cases with expected outputs registered at planning time; DoD = 100% pass</td><td>SKILL.md — The Test Contract</td></tr><tr><td>CONTRACT</td><td>the frozen shared law squads build against (vocabulary, schema, interfaces, ownership)</td><td>SKILL.md Rule 1</td></tr><tr><td>squad</td><td>one build lane with disjoint files, usually one session</td><td>00-program-plan.md</td></tr><tr><td>wave</td><td>a group of epics built together; `Wn`</td><td>00-program-plan.md</td></tr><tr><td><abbr class="gl" title="gate: anamnesis — the up-front questionnaire (new in v4)">G0</abbr><span class="gl-x">(gate: anamnesis — the up-front questionnaire (new in v4))</span></td><td>gate: anamnesis — the up-front questionnaire (new in v4)</td><td>CONTRACT §3.1</td></tr><tr><td><abbr class="gl" title="gate: scope — size, shape, topology, DoD">G1</abbr><span class="gl-x">(gate: scope — size, shape, topology, DoD)</span></td><td>gate: scope — size, shape, topology, DoD</td><td>SKILL.md Phase 2</td></tr><tr><td><abbr class="gl" title="gate: decisions — the batched judgment calls with recommendations">G2</abbr><span class="gl-x">(gate: decisions — the batched judgment calls with recommendations)</span></td><td>gate: decisions — the batched judgment calls with recommendations</td><td>SKILL.md Phase 7</td></tr><tr><td><abbr class="gl" title="gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;">G3</abbr><span class="gl-x">(gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;)</span></td><td>gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;</td><td>SKILL.md Phase 8</td></tr><tr><td><abbr class="gl" title="gate: plan review — the single review-and-contradict round (new in v4)">G4</abbr><span class="gl-x">(gate: plan review — the single review-and-contradict round (new in v4))</span></td><td>gate: plan review — the single review-and-contradict round (new in v4)</td><td>CONTRACT §3.1</td></tr><tr><td>G-n</td><td>a governance rule inside a CONTRACT (dash: rule; no dash: gate)</td><td>CONTRACT §6</td></tr><tr><td>size S/M/L</td><td>how much gets written: single feature / multi-feature / from-scratch program</td><td>SKILL.md Phase 2</td></tr><tr><td>shape 1–5</td><td>the package form: multi-doc + delivery / single-file PRD / research→locked architecture→phase PRDs / numbered PRD-NN / refactor catalog</td><td>templates.md PART D</td></tr><tr><td>topology</td><td>how the build runs: solo · orchestrator+squads · headless</td><td>CONTRACT §1</td></tr><tr><td>mode</td><td>autonomous-draft (default) or guided</td><td>CONTRACT §1</td></tr><tr><td>[REAL]</td><td>a test case needing a live target; never VERIFIED on a mock</td><td>formats.md — Test Contract</td></tr><tr><td>INV / IMPLEMENTED-NOT-VERIFIED</td><td>built, but the proving case could not run</td><td>formats.md §7</td></tr><tr><td>NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED</td><td>the closed status vocabulary</td><td>gate-check <abbr class="gl" title="release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written">W4</abbr><span class="gl-x">(release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written)</span></td></tr><tr><td>disposition</td><td>what happens to a non-green item at close: backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>CONTRACT §5</td></tr><tr><td>FD-1</td><td>founder mandate: test-convention discovery registered in CLAUDE.md</td><td>CHANGELOG 3.0.0</td></tr><tr><td>FD-2</td><td>founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md)</td><td>CHANGELOG 3.0.0</td></tr><tr><td><abbr class="gl" title="three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason">W1</abbr><span class="gl-x">(three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason)</span>–W6 (CHANGELOG)</td><td>the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves</td><td>CHANGELOG 3.0.0</td></tr><tr><td><abbr class="gl" title="topology is the user's choice at G1 with plan-it's recommendation shown">D4</abbr><span class="gl-x">(topology is the user's choice at G1 with plan-it's recommendation shown)</span> (CHANGELOG)</td><td>the v3 adversarial-depth ruling behind the `adversary` verb — not this run's <abbr>D4</abbr> ruling</td><td>CHANGELOG 3.0.0</td></tr><tr><td>AMD-n</td><td>a dated amendment to a frozen contract</td><td>delivery/decisions.md</td></tr><tr><td>xhigh</td><td>Claude Code's highest `/effort` reasoning setting</td><td>SKILL.md — Autonomy posture</td></tr><tr><td>CDP</td><td>Chrome DevTools Protocol — drives UI test cases</td><td>formats.md §4</td></tr><tr><td>ATDD / BDD</td><td>Acceptance-Test-Driven / Behaviour-Driven Development</td><td>SKILL.md — The Test Contract</td></tr><tr><td>SbE / EDD</td><td>Specification by Example / Eval-Driven Development</td><td>SKILL.md — The Test Contract</td></tr><tr><td>twin</td><td>the `&lt;NAME&gt;.html` rendered beside a canonical `&lt;NAME&gt;.md`</td><td>CONTRACT §1</td></tr><tr><td>manifest</td><td>the JSON a low-tier author writes for the renderer (`planit-report/1`)</td><td>CONTRACT §4.2</td></tr><tr><td>stamp</td><td>`&lt;meta name=&quot;planit-*&quot;&gt;` provenance in a twin (`&lt;relpath&gt; sha256=&lt;hash&gt;`)</td><td>CONTRACT §4.3</td></tr><tr><td>deliveryRoot</td><td>the repo-relative folder a run's package lives in</td><td>CONTRACT §1</td></tr><tr><td>tier top/mid/low</td><td>model tiers resolved at execution time; never a model ID</td><td>RUN-POLICY</td></tr><tr><td>mirror pair</td><td>a root file and its byte-identical plugin copy (11 in v4)</td><td>gate-check mirror-check</td></tr><tr><td>machine-diff</td><td>the additive-only check of a live machine against a pinned baseline</td><td>gate-check</td></tr><tr><td>WCAG</td><td>Web Content Accessibility Guidelines — the contrast ratios cited for brand tokens</td><td>01-findings §2.2</td></tr><tr><td>E1</td><td>scope brief: the human-readable explanation of size, shape and topology rendered before gate <abbr>G1</abbr></td><td>delivery/v4/KICKOFF.md</td></tr><tr><td>E2</td><td>HTML report layer: the zero-dependency renderer and report-family kinds with provenance stamps</td><td>delivery/v4/CONTRACT.md §4</td></tr><tr><td>E3</td><td>decision queue: the DECISIONS/PLAN-REVIEW kind with ruled, defaults, authorizations and owner actions</td><td>delivery/v4/CONTRACT.md §2</td></tr><tr><td>E4</td><td>build topology: the user's choice at <abbr>G1</abbr> with plan-it's recommendation; solo · orchestrator+squads · headless</td><td>delivery/v4/KICKOFF.md</td></tr><tr><td>E5</td><td>show-don't-describe: enumerating the honest states of every surface (good, empty, misconfigured)</td><td>delivery/v4/CONTRACT.md §3</td></tr><tr><td>E6</td><td>triage + measurement: the triage verdict determines CLOSED_WITHOUT_PLAN exit; measurements are read-only or say they are not</td><td>delivery/v4/CONTRACT.md §3</td></tr><tr><td>E7</td><td>anamnesis + review round: the up-front questionnaire (<abbr>G0</abbr>) and single review-and-contradict gate (<abbr>G4</abbr>)</td><td>delivery/v4/CONTRACT.md §3</td></tr><tr><td>E8</td><td>residual disposition: every non-green item at close gets one of backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>delivery/v4/DECISIONS.md — Defaults</td></tr><tr><td>E9</td><td>named runs: every plan-it execution has a slug; state lives in `.plan-it/&lt;slug&gt;.state.json`</td><td>delivery/v4/CONTRACT.md §1</td></tr><tr><td>E10</td><td>readable acronyms: the glossary seed copied at intake; every acronym explained on first use</td><td>delivery/v4/GLOSSARY.md</td></tr><tr><td><abbr class="gl" title="autonomous-draft is the default mode; guided selectable at anamnesis">D1</abbr><span class="gl-x">(autonomous-draft is the default mode; guided selectable at anamnesis)</span></td><td>autonomous-draft is the default mode; guided selectable at anamnesis</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`">D2</abbr><span class="gl-x">(brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`)</span></td><td>brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact">D3</abbr><span class="gl-x">(HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact)</span></td><td>HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr>D4</abbr></td><td>topology is the user's choice at <abbr>G1</abbr> with plan-it's recommendation shown</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="the copy-your-rulings block ships in 4.0">D5</abbr><span class="gl-x">(the copy-your-rulings block ships in 4.0)</span></td><td>the copy-your-rulings block ships in 4.0</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="all ten enhancements in 4.0.0">D6</abbr><span class="gl-x">(all ten enhancements in 4.0.0)</span></td><td>all ten enhancements in 4.0.0</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="v4 is built by an orchestrator + three squads + QA">D7</abbr><span class="gl-x">(v4 is built by an orchestrator + three squads + QA)</span></td><td>v4 is built by an orchestrator + three squads + QA</td><td>DECISIONS.md — Ruled</td></tr><tr><td><abbr class="gl" title="CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments">R1</abbr><span class="gl-x">(CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments)</span></td><td>CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records <abbr>G2</abbr> and <abbr>G3</abbr> answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition">R2</abbr><span class="gl-x">(&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition)</span></td><td>&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration">R3</abbr><span class="gl-x">(typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration)</span></td><td>typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report">R4</abbr><span class="gl-x">(optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report)</span></td><td>optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="orchestrator = top tier in RUN-POLICY">R5</abbr><span class="gl-x">(orchestrator = top tier in RUN-POLICY)</span></td><td>orchestrator = top tier in RUN-POLICY</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally">R6</abbr><span class="gl-x">(incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally)</span></td><td>incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast">R7</abbr><span class="gl-x">(brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast)</span></td><td>brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="mirror pairs 8 → 11 (renderer, template, brand JSON)">R8</abbr><span class="gl-x">(mirror pairs 8 → 11 (renderer, template, brand JSON))</span></td><td>mirror pairs 8 → 11 (renderer, template, brand JSON)</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline">R9</abbr><span class="gl-x">(mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline)</span></td><td>mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="the state file names the package folder; every verb derives paths from `run.deliveryRoot`">R10</abbr><span class="gl-x">(the state file names the package folder; every verb derives paths from `run.deliveryRoot`)</span></td><td>the state file names the package folder; every verb derives paths from `run.deliveryRoot`</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2">R11</abbr><span class="gl-x">(harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2)</span></td><td>harness amendments <abbr class="gl" title="harness amendment: gate count bound to the v2 baseline; required for the machine-diff check">AMD-4</abbr><span class="gl-x">(harness amendment: gate count bound to the v2 baseline; required for the machine-diff check)</span> (gate count) and <abbr class="gl" title="harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`">AMD-5</abbr><span class="gl-x">(harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`)</span> (11 pairs), recorded like AMD-1/AMD-2</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb">R12</abbr><span class="gl-x">(renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb)</span></td><td>renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb</td><td>DECISIONS.md — Defaults</td></tr><tr><td><abbr class="gl" title="squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping">A-1</abbr><span class="gl-x">(squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping)</span></td><td>squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr><tr><td><abbr class="gl" title="the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green">A-2</abbr><span class="gl-x">(the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green)</span></td><td>the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr><tr><td><abbr class="gl" title="QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed">A-3</abbr><span class="gl-x">(QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed)</span></td><td>QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr><tr><td><abbr class="gl" title="the orchestrator commits the guard mirror fix applied during planning as its first W0 commit">A-4</abbr><span class="gl-x">(the orchestrator commits the guard mirror fix applied during planning as its first W0 commit)</span></td><td>the orchestrator commits the guard mirror fix applied during planning as its first <abbr class="gl" title="orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY">W0</abbr><span class="gl-x">(orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY)</span> commit</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr><tr><td><abbr class="gl" title="remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0">O-1</abbr><span class="gl-x">(remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0)</span></td><td>remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0</td><td>GATE.md — Still human, but NOT blocking</td></tr><tr><td><abbr class="gl" title="read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)">O-2</abbr><span class="gl-x">(read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2))</span></td><td>read `delivery/v4/QA-REPORT.md` and give the tag/push go (<abbr>A-2</abbr>)</td><td>GATE.md — Still human, but NOT blocking</td></tr><tr><td><abbr class="gl" title="ratify R7 (brand contrast deviation) or send the exact colours you want as text">O-3</abbr><span class="gl-x">(ratify R7 (brand contrast deviation) or send the exact colours you want as text)</span></td><td>ratify <abbr>R7</abbr> (brand contrast deviation) or send the exact colours you want as text</td><td>GATE.md — Still human, but NOT blocking</td></tr><tr><td><abbr class="gl" title="decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence">O-4</abbr><span class="gl-x">(decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence)</span></td><td>decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence</td><td>GATE.md — Still human, but NOT blocking</td></tr><tr><td><abbr>W0</abbr></td><td>orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY</td><td>00-program-plan.md</td></tr><tr><td><abbr>W1</abbr></td><td>three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason</td><td>00-program-plan.md</td></tr><tr><td><abbr class="gl" title="integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0">W2</abbr><span class="gl-x">(integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0)</span></td><td>integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0</td><td>00-program-plan.md</td></tr><tr><td><abbr class="gl" title="QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered">W3</abbr><span class="gl-x">(QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered)</span></td><td>QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered</td><td>00-program-plan.md</td></tr><tr><td><abbr>W4</abbr></td><td>release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written</td><td>00-program-plan.md</td></tr><tr><td><abbr class="gl" title="renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases)">SQ-A</abbr><span class="gl-x">(renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases))</span></td><td>renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases)</td><td>CONTRACT §2</td></tr><tr><td><abbr class="gl" title="deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)">SQ-B</abbr><span class="gl-x">(deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases))</span></td><td>deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)</td><td>CONTRACT §2</td></tr><tr><td><abbr class="gl" title="prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)">SQ-C</abbr><span class="gl-x">(prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases))</span></td><td>prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)</td><td>CONTRACT §2</td></tr><tr><td>LG-1 … LG-18</td><td>live-grounding facts measured by the coordinator</td><td>research/00-main-thread-grounding.md</td></tr><tr><td>F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21</td><td>research findings by stream (A renderer · B core · C prose · D precedents)</td><td>research/stream-*.md</td></tr><tr><td>D-A&lt;n&gt; · D-B&lt;n&gt; · D-C&lt;n&gt;</td><td>PRD-level design decisions per squad (renderer · core · prose), cited by every epic task</td><td>delivery/v4/prds/</td></tr><tr><td>ab0c192</td><td>the <abbr>W0</abbr> commit that landed the v4 planning package and the guard mirror fix (<abbr>A-4</abbr>)</td><td>STATUS.md ## Log</td></tr><tr><td>V4A&lt;n&gt; · V4B&lt;n&gt; · V4C&lt;n&gt;</td><td>epic IDs per squad</td><td>delivery/v4/epics/</td></tr><tr><td>C-E*-NN</td><td>enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)</td><td>CONTRACT ## Cases</td></tr><tr><td>T-*-NN</td><td>per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)</td><td>delivery/v4/epics/</td></tr><tr><td>T-E*-NN</td><td>v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs)</td><td>tests/run-contract.mjs</td></tr><tr><td>C-W*-NN · C-META-NN</td><td>v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-<abbr>W2</abbr>-03 probe blacklist)</td><td>delivery/v3/CONTRACT.md</td></tr><tr><td>SHA-256</td><td>the hash function behind every pin and stamp (`sha256=&lt;64-hex&gt;`)</td><td>CONTRACT §4.3</td></tr><tr><td><abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`">AMD-8</abbr><span class="gl-x">(orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`)</span></td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`</td><td>delivery/decisions.md</td></tr><tr><td><abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17">AMD-7</abbr><span class="gl-x">(orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17)</span></td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17</td><td>delivery/decisions.md</td></tr><tr><td><abbr class="gl" title="orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)">AMD-6</abbr><span class="gl-x">(orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion))</span></td><td>orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)</td><td>delivery/decisions.md</td></tr><tr><td><abbr>AMD-4</abbr></td><td>harness amendment: gate count bound to the v2 baseline; required for the machine-diff check</td><td>delivery/decisions.md</td></tr><tr><td><abbr>AMD-5</abbr></td><td>harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`</td><td>delivery/decisions.md</td></tr><tr><td>CLOSED_WITHOUT_PLAN · REVIEW_CONTRADICTED · RENDERED_PARTIAL · RENDER_FAILED · MIRROR_STALE · MIRROR_REJECTED · HTML_UNSTAMPED · ESCALATED · WRITE_DENIED · ARCHIVE_REFUSED</td><td>failure and recovery states of the v4 core-logic models</td><td>CONTRACT §3</td></tr><tr><td>planit-report/1 · planit-brand/1</td><td>the manifest and brand token schemas</td><td>CONTRACT §4</td></tr><tr><td>7fcff27</td><td>the commit that added named-state resolution to the root guard only</td><td>01-findings §2.9</td></tr><tr><td>P2-11</td><td>the owner ruling (2026-08-26) that made worktrees-only a plan-it/build-it enhancement</td><td>LG-16</td></tr></table></div>
+<p class="footer">html-blocks=0</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var lines=esc(src).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  return out.join("\n");
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>

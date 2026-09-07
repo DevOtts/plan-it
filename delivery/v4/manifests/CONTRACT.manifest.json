@@ -1,0 +1,38 @@
+{
+  "schema": "planit-report/1",
+  "kind": "CONTRACT",
+  "title": "plan-it v4 — CONTRACT",
+  "subtitle_html": "Version: v1.2 — FROZEN 2026-09-07 (ratified by Fernando Ott at PLAN-REVIEW, gate G4)",
+  "source": {
+    "path": "../CONTRACT.md"
+  },
+  "output": "../CONTRACT.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "contract-content",
+      "heading": "CONTRACT",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../CONTRACT.md"
+        }
+      ]
+    },
+    {
+      "id": "glossary",
+      "heading": "Glossary",
+      "blocks": [
+        {
+          "type": "glossary"
+        }
+      ]
+    }
+  ],
+  "allow_tokens": [
+    "claude-plugin",
+    "claude-loudr"
+  ]
+}

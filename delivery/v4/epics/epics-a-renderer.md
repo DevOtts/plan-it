@@ -102,7 +102,7 @@ back-compat path so `kind: LEGACY` renders without a rewrite (PRD D-A2).
 | top | review of stamp/determinism correctness only | — (top does not escalate further) | build-it:launch#slice=V4A1-review |
 
 ### Test Contract — Renderer core (V4A1)  (BINDING: 100% pass or /iterate)
-Types: [unit][integration] · Count: 12 (0 [REAL]) · Surfaces: CLI (node
+Types: [unit][integration] · Count: 14 (0 [REAL]) · Surfaces: CLI (node
 subprocess spawn) + byte/regex assertions on stdout, stderr, and the written
 file. Done = every case below is PASS. No [REAL] case VERIFIED on a mock —
 none of these twelve needs a live target; the network-shaped ones (mermaid,
@@ -122,6 +122,8 @@ fonts) are asserted by presence of a pinned URL string, never by fetching.
 | T-V4A1-10 | Given `--open` and `PLANIT_TEST_PLATFORM=linux` / `win32`, when run, then the stub logs `xdg-open <file>` / `cmd /c start "" <file>` respectively | exit code unchanged | `node tests/v4/renderer/open-routing.mjs` |
 | T-V4A1-11 | Given any successful render, when stdout is captured, then it matches exactly one line `/^built: .+ \(\d+ bytes\) brand=(default|repo:.+) stamp=sha256:[0-9a-f]{12} html-blocks=\d+$/` | regex match on stdout | `node tests/v4/renderer/stdout-format.mjs` |
 | T-V4A1-12 | Given a rendered twin, when its five `<meta name="planit-*">` tags are parsed, then `planit-source` matches SHA-256 of the source md, `planit-renderer` names `build-report.mjs/4.0.0` + the template's own hash, and every relpath is forward-slash with no `./` prefix | all five metas present and hash-correct | `node tests/v4/renderer/stamp-format.mjs` |
+| T-V4A1-13 | AMD-9: Given a manifest stored in a SUBFOLDER of the package (`tests/fixtures/v4/report/manifest-in-subdir/manifests/report.manifest.json` with `source.path: "../REPORT.md"`, `output: "../REPORT.html"`, one embed `../EMBED.md`), when rendered, then `planit-source` reads `REPORT.md sha256=…` and `planit-embeds` reads `EMBED.md sha256=…` — every stamped relpath is relative to the TWIN's directory (CONTRACT §4.3), never the manifest's — and `gate-check mirror REPORT.md REPORT.html` (V4B4 verb) exits 0 | exit ≤ 2; both stamps twin-relative; mirror exit 0 | `node tests/v4/renderer/stamp-relpath-subdir.mjs` |
+| T-V4A1-14 | AMD-9: Given a manifest whose embedded markdown contains the literal text `var(--token)` inside a code span (as `delivery/v4/CONTRACT.md` C-E2-13 does), when rendered, then the CSS-token lint inspects only the rendered `<style>` blocks and emits no "CSS tokens referenced but not declared" warning for content text | no CSS-token WARNING on stderr; exit 0 with a tokenised brand or 2 only for the brand warning | `node tests/v4/renderer/css-token-scan-scope.mjs` |
 
 ---
 
@@ -337,7 +339,7 @@ and the CSS token completeness audit (C-E2-13).
 | top | escaping + adversarial-verify review (never resolved below coordinator, RUN-POLICY "judgment" row) | — | build-it:launch#slice=V4A3-review |
 
 ### Test Contract — Glossary, security, tokens (V4A3)  (BINDING: 100% pass or /iterate)
-Types: [unit][integration] · Count: 11 (0 [REAL]) · Surfaces: CLI + HTML-
+Types: [unit][integration] · Count: 12 (0 [REAL]) · Surfaces: CLI + HTML-
 parser assertions (a tolerant node state-machine parser over `<script>` /
 `<abbr>` / `href` occurrences, per design §4.6 seed 15's method). Done = every
 case below is PASS. No [REAL] case VERIFIED on a mock; adversarial-verify
@@ -357,6 +359,7 @@ re-parsing the renderer's own output rather than trusting its write.
 | T-V4A3-09 | Given a markdown embed containing a `1. foo` / `2. bar` numbered list, when rendered, then the output contains a real `<ol><li>foo</li><li>bar</li></ol>`, not a bold-prefixed `<ul>` | regex confirms `<ol>` presence, `<ul>` absence for that list | `node tests/v4/renderer/ordered-list.mjs` |
 | T-V4A3-10 | Given a body mentioning an ID that matches the union grammar but has no `GLOSSARY.md` row, when rendered, then it is listed as a warning (not silently dropped) | exit 2, stderr names the unknown ID | `node tests/v4/renderer/glossary-unknown-id-warn.mjs` |
 | T-V4A3-11 | Given the xss-embed-probe fixture is rendered twice (write, then re-parse the written file from disk — not the in-memory buffer), when the second parse runs, then the same zero-breakout result holds — proving the assertion checks the actual written bytes, not a pre-write string | adversarial-verify: re-reads the world, does not trust its own write | `node tests/v4/renderer/xss-escape.mjs` |
+| T-V4A3-12 | AMD-10: Given a GLOSSARY.md with the family rows `T-*-NN`, `C-E*-NN`, `G-n`, `AMD-n`, `LG-n`, `F-*n`, `D-B<n>` and a manifest whose body mentions `T-V4B4-17`, `C-E8-01`, `G-7`, `AMD-3`, `LG-16`, `F-A12`, `D-B6` and the unknown `Q-99`, when rendered, then the seven known IDs are expanded on first use with their family row's text and exactly one glossary WARNING is emitted, for `Q-99` — the renderer's `familyMatch` implements the §5 placeholders (`*`=`[A-Za-z0-9.]+`, `NN`=`[A-Z0-9]{2,3}`, `<n>`/trailing `n`=`\d+`) byte-for-byte as `gate-check glossary` does | 7 expansions, 1 warning naming `Q-99`, exit 2 only for that warning | `node tests/v4/renderer/glossary-family-grammar.mjs` |
 
 ---
 

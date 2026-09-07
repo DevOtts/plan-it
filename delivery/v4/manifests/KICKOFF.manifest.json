@@ -1,0 +1,59 @@
+{
+  "schema": "planit-report/1",
+  "kind": "KICKOFF",
+  "title": "KICKOFF — plan-it v4 (orchestrator run)",
+  "subtitle_html": "Machine-checkable resume anchor, first concrete slice, and the orchestrator session's launch prompt",
+  "source": {
+    "path": "../KICKOFF.md"
+  },
+  "output": "../KICKOFF.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "pinning",
+      "heading": "Pinning",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../KICKOFF.md",
+          "label": "Machine-checkable resume anchor"
+        }
+      ]
+    },
+    {
+      "id": "launch-prompt",
+      "heading": "Launch prompt",
+      "blocks": [
+        {
+          "type": "copy",
+          "content": "/session-init then act as the ORCHESTRATOR for plan-it v4 (the plugin release: HTML report layer, anamnesis + one review round, build topology, named runs, glossary).\n\nPackage: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/ — read KICKOFF.md (pinning block first, then re-derive the tally from disk), CONTRACT.md (the law, v1.0 after PLAN-REVIEW), GATE.md (every human input answered; the run is ungated), 00-program-plan.md (your runbook §3), STATUS.md (your board). Design context on demand: docs/v4/01-findings.md, docs/v4/02-v4-design.md.\n\nYour job, to conclusion:\n1. W0 yourself: commit the planning package and the guard mirror fix (authorization A-4); byte-pin tests/fixtures/v3/machine.v3.7fcff27.json from the 3.0.1 machine.json; create the epic/v4a-*, epic/v4b-*, epic/v4c-* worktrees; record AMD-4/AMD-5 in delivery/decisions.md; copy the GLOSSARY seed; run `node tests/run-contract.mjs` and `gate-check mirror-check` and record both tallies in STATUS.md ## Log.\n2. Squad sessions v4-sq-a-renderer, v4-sq-b-core, v4-sq-c-prose are open and polling. Signal W1 via SendMessage; verify their output ON DISK (idle ≠ delivered: branches, commits, files, each epic's local gate); merge per lane after its Test Contract is green (authorization A-1); flip STATUS.md rows with evidence; respect the build orders in KICKOFF.md.\n3. Cross-cutting contradictions → amend CONTRACT.md yourself (dated AMD-n in delivery/decisions.md, version bump) and notify affected squads. New genuinely-human decisions → append to GATE.md, take the conservative reversible path, morning report. Rule yourself only if capped, reversible and covered by an existing answer — otherwise \"your word, not ours\".\n4. W2: MIRROR_PAIRS 11, root mirrors synced, version 4.0.0 across six sites and both harness literals in ONE merge, CHANGELOG 4.0.0, `mv .plan-it/state.json .plan-it/v4.state.json` after V4B3 lands, cross-check SKILL.md posture-table state names against the live machine.json.\n5. W3: signal v4-qa to run every case (166 epic cases + 60 CONTRACT cases) and the dogfood run; IMPLEMENTED-NOT-VERIFIED with reason for anything unreachable — never a fake green.\n6. Usage-limit resilience (MANDATORY): keep a scheduled-wakeup chain alive (≤3600s hops) until W3 closes; persist state to .taskstate/v4/ + STATUS.md before every idle; on a limit, resume after reset — never park on Fernando.\n7. Worktrees-only for every squad (G-10). Any headless fallback session polls STATUS and git; it never waits on a notification (G-11). Reap each squad's agents when its wave closes.\n8. Morning deliverable: honest per-epic report (VERIFIED / IMPLEMENTED-NOT-VERIFIED with reasons), residuals with dispositions, incidental findings, and what Fernando should read first (QA-REPORT.md, then decide A-2). Do NOT tag or push 4.0.0 (A-2 is held until owner action O-2). Close with /conclude-it."
+        }
+      ]
+    },
+    {
+      "id": "sessions",
+      "heading": "Sessions",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../SESSIONS.md"
+        }
+      ]
+    },
+    {
+      "id": "glossary",
+      "heading": "Glossary",
+      "blocks": [
+        {
+          "type": "glossary"
+        }
+      ]
+    }
+  ],
+  "allow_tokens": [
+    "claude-plugin",
+    "claude-loudr"
+  ]
+}
