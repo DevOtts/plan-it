@@ -34,8 +34,13 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | FD-1 | founder mandate: test-convention discovery registered in CLAUDE.md | CHANGELOG 3.0.0 |
 | FD-2 | founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md) | CHANGELOG 3.0.0 |
 | W1–W6 (CHANGELOG) | the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves | CHANGELOG 3.0.0 |
+| W5 | v3 write-time invariant 5 (computed counts) as cited by `gate-check` output — not a wave of this run | CHANGELOG 3.0.0 |
+| W6 | v3 write-time invariant 6 (kickoff pinning) as cited by `gate-check` output — not a wave of this run | CHANGELOG 3.0.0 |
 | D4 (CHANGELOG) | the v3 adversarial-depth ruling behind the `adversary` verb — not this run's D4 ruling | CHANGELOG 3.0.0 |
 | AMD-n | a dated amendment to a frozen contract | delivery/decisions.md |
+| AMD-1 | v3 amendment (2026-07-08): T-E1-05 gate-count precedent | delivery/decisions.md |
+| AMD-2 | v3 amendment: mirror-pair count precedent | delivery/decisions.md |
+| AMD-3 | v3 amendment (3.0.x) | delivery/decisions.md |
 | xhigh | Claude Code's highest `/effort` reasoning setting | SKILL.md — Autonomy posture |
 | CDP | Chrome DevTools Protocol — drives UI test cases | formats.md §4 |
 | ATDD / BDD | Acceptance-Test-Driven / Behaviour-Driven Development | SKILL.md — The Test Contract |
@@ -53,28 +58,68 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 
 | ID | Expansion | Where defined |
 |---|---|---|
-| E1 … E10 | the ten v4 enhancements: scope brief · HTML report layer · decision queue · build topology · show-don't-describe · triage + measurement · anamnesis + review round · residual disposition · named runs · readable acronyms | resources/V3-VS-V4-CORE-ENHANCEMENTS.html |
-| D1 … D7 | Fernando's rulings on the analysis report (mode, brand, local HTML, topology choice, rulings block, release scope, build topology) | DECISIONS.md — Ruled |
-| R1 … R12 | defaults the run applied at G2, to contradict at PLAN-REVIEW | DECISIONS.md — Defaults; 01-findings §6 |
-| A-1 … A-4 | authorizations the build needs (branch commits, release tag, Chrome/headless, guard-fix commit) | DECISIONS.md — Open |
-| O-1 … O-3 | owner actions only Fernando can do (stale installs, QA sign-off, brand ratification) | DECISIONS.md — Open |
-| LG-1 … LG-18 | live-grounding facts measured by the coordinator | research/00-main-thread-grounding.md |
-| F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21 | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
+| E1 | scope brief: the human-readable explanation of size, shape and topology rendered before gate G1 | delivery/v4/KICKOFF.md |
+| E2 | HTML report layer: the zero-dependency renderer and report-family kinds with provenance stamps | delivery/v4/CONTRACT.md §4 |
+| E3 | decision queue: the DECISIONS/PLAN-REVIEW kind with ruled, defaults, authorizations and owner actions | delivery/v4/CONTRACT.md §2 |
+| E4 | build topology: the user's choice at G1 with plan-it's recommendation; solo · orchestrator+squads · headless | delivery/v4/KICKOFF.md |
+| E5 | show-don't-describe: enumerating the honest states of every surface (good, empty, misconfigured) | delivery/v4/CONTRACT.md §3 |
+| E6 | triage + measurement: the triage verdict determines CLOSED_WITHOUT_PLAN exit; measurements are read-only or say they are not | delivery/v4/CONTRACT.md §3 |
+| E7 | anamnesis + review round: the up-front questionnaire (G0) and single review-and-contradict gate (G4) | delivery/v4/CONTRACT.md §3 |
+| E8 | residual disposition: every non-green item at close gets one of backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED | delivery/v4/DECISIONS.md — Defaults |
+| E9 | named runs: every plan-it execution has a slug; state lives in `.plan-it/<slug>.state.json` | delivery/v4/CONTRACT.md §1 |
+| E10 | readable acronyms: the glossary seed copied at intake; every acronym explained on first use | delivery/v4/GLOSSARY.md |
+| D1 | autonomous-draft is the default mode; guided selectable at anamnesis | DECISIONS.md — Ruled |
+| D2 | brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/` | DECISIONS.md — Ruled |
+| D3 | HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact | DECISIONS.md — Ruled |
+| D4 | topology is the user's choice at G1 with plan-it's recommendation shown | DECISIONS.md — Ruled |
+| D5 | the copy-your-rulings block ships in 4.0 | DECISIONS.md — Ruled |
+| D6 | all ten enhancements in 4.0.0 | DECISIONS.md — Ruled |
+| D7 | v4 is built by an orchestrator + three squads + QA | DECISIONS.md — Ruled |
+| R1 | CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments | DECISIONS.md — Defaults |
+| R2 | "Owner decision" triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition | DECISIONS.md — Defaults |
+| R3 | typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration | DECISIONS.md — Defaults |
+| R4 | optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report | DECISIONS.md — Defaults |
+| R5 | orchestrator = top tier in RUN-POLICY | DECISIONS.md — Defaults |
+| R6 | incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally | DECISIONS.md — Defaults |
+| R7 | brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast | DECISIONS.md — Defaults |
+| R8 | mirror pairs 8 → 11 (renderer, template, brand JSON) | DECISIONS.md — Defaults |
+| R9 | mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline | DECISIONS.md — Defaults |
+| R10 | the state file names the package folder; every verb derives paths from `run.deliveryRoot` | DECISIONS.md — Defaults |
+| R11 | harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2 | DECISIONS.md — Defaults |
+| R12 | renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb | DECISIONS.md — Defaults |
+| A-1 | squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping | GATE.md — Answered at PLAN-REVIEW |
+| A-2 | the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green | GATE.md — Answered at PLAN-REVIEW |
+| A-3 | QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed | GATE.md — Answered at PLAN-REVIEW |
+| A-4 | the orchestrator commits the guard mirror fix applied during planning as its first W0 commit | GATE.md — Answered at PLAN-REVIEW |
+| O-1 | remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0 | GATE.md — Still human, but NOT blocking |
+| O-2 | read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2) | GATE.md — Still human, but NOT blocking |
+| O-3 | ratify R7 (brand contrast deviation) or send the exact colours you want as text | GATE.md — Still human, but NOT blocking |
+| O-4 | decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence | GATE.md — Still human, but NOT blocking |
+| W0 | orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY | 00-program-plan.md |
+| W1 | three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason | 00-program-plan.md |
+| W2 | integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0 | 00-program-plan.md |
+| W3 | QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered | 00-program-plan.md |
+| W4 | release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written | 00-program-plan.md |
+| SQ-A | renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases) | CONTRACT §2 |
+| SQ-B | deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases) | CONTRACT §2 |
+| SQ-C | prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases) | CONTRACT §2 |
+| LG-n | live-grounding facts measured by the coordinator | research/00-main-thread-grounding.md |
+| F-*n | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
 | D-A<n> · D-B<n> · D-C<n> | PRD-level design decisions per squad (renderer · core · prose), cited by every epic task | delivery/v4/prds/ |
 | ab0c192 | the W0 commit that landed the v4 planning package and the guard mirror fix (A-4) | STATUS.md ## Log |
-| SQ-A · SQ-B · SQ-C | the three build squads: renderer · deterministic core · prose and packaging | CONTRACT §2 |
 | V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
 | C-E*-NN | enforcement case for enhancement n (`C-E<n>-NN`; 60 in the CONTRACT, computed) | CONTRACT ## Cases |
 | T-*-NN | per-epic Test Contract case (`T-<EID>-NN`, e.g. T-V4B4-17) | delivery/v4/epics/ |
 | T-E*-NN | v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs) | tests/run-contract.mjs |
 | C-W*-NN · C-META-NN | v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist) | delivery/v3/CONTRACT.md |
 | SHA-256 | the hash function behind every pin and stamp (`sha256=<64-hex>`) | CONTRACT §4.3 |
+| AMD-10 | orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12 | delivery/decisions.md |
+| AMD-9 | orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14 | delivery/decisions.md |
 | AMD-8 | orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/` | delivery/decisions.md |
 | AMD-7 | orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17 | delivery/decisions.md |
 | AMD-6 | orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion) | delivery/decisions.md |
-| O-4 | owner action: redact-or-keep the model-ID citations in research records | GATE.md |
-| AMD-4 · AMD-5 | harness amendments: gate count bound to the v2 baseline; mirror pairs 8 → 11 | delivery/decisions.md |
-| W0 … W4 | build waves: orchestrator prep · squads · integration · QA · release | 00-program-plan.md |
+| AMD-4 | harness amendment: gate count bound to the v2 baseline; required for the machine-diff check | delivery/decisions.md |
+| AMD-5 | harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json` | delivery/decisions.md |
 | CLOSED_WITHOUT_PLAN · REVIEW_CONTRADICTED · RENDERED_PARTIAL · RENDER_FAILED · MIRROR_STALE · MIRROR_REJECTED · HTML_UNSTAMPED · ESCALATED · WRITE_DENIED · ARCHIVE_REFUSED | failure and recovery states of the v4 core-logic models | CONTRACT §3 |
 | planit-report/1 · planit-brand/1 | the manifest and brand token schemas | CONTRACT §4 |
 | 7fcff27 | the commit that added named-state resolution to the root guard only | 01-findings §2.9 |
