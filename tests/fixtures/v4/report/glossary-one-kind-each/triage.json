@@ -1,0 +1,10 @@
+{
+  "schema": "planit-report/1",
+  "kind": "TRIAGE",
+  "title": "Kind TRIAGE",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [{"type": "table", "headers": ["A"], "rows": [["1"]]}]}
+  ]
+}

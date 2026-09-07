@@ -1,0 +1,13 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Model ID Allowlisted",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "allow_tokens": ["claude-cli-runner"],
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "cards", "items": [{"id": "E1", "title": "Note", "body_html": "<p>the session is named claude-cli-runner.</p>"}]}
+    ]}
+  ]
+}

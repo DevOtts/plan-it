@@ -1,0 +1,9 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Glossary Missing",
+  "output": "out.html",
+  "sections": [
+    {"heading": "Body", "blocks": [{"type": "table", "headers": ["A"], "rows": [["1"]]}]}
+  ]
+}

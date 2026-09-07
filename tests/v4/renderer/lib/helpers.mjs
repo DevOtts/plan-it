@@ -11,7 +11,11 @@ export const rendererPath = path.join(repoRoot, 'scripts', 'build-report.mjs');
 export const fixturesRoot = path.join(repoRoot, 'tests', 'fixtures', 'v4', 'report');
 
 export function runRenderer(args, opts = {}) {
-  const env = { ...process.env, ...(opts.env || {}) };
+  // Hermetic: strip PLANIT_NO_OPEN inherited from the parent/caller environment so a test
+  // that doesn't explicitly set it never silently inherits someone else's suppression.
+  const baseEnv = { ...process.env };
+  delete baseEnv.PLANIT_NO_OPEN;
+  const env = { ...baseEnv, ...(opts.env || {}) };
   // Unless the caller is specifically testing brand detection, pin --brand default so
   // fixture runs are decoupled from this repo's own assets/brand/*.md guideline (V4A2 concern).
   const finalArgs = args.includes('--brand') || opts.noDefaultBrand ? args : [...args, '--brand', 'default'];
