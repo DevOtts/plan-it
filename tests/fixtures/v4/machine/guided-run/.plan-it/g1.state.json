@@ -12,6 +12,7 @@
     "G3": { "approved": false }
   },
   "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "plan", "measuredAt": "2026-09-07", "measurements": [] },
   "history": [
     { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T14:05:00Z" },
     { "state": "triage", "event": "TRIAGE_PLAN", "at": "2026-09-07T14:06:00Z" },

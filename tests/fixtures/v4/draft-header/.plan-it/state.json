@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "mode": "autonomous-draft", "goal": "fixture: freeze --draft, casesReviewed false, defaults non-empty" },
+  "state": "backboneFreeze",
+  "casesReviewed": false,
+  "gates": {
+    "G1": { "approved": true, "owner": "Fernando", "date": "2026-09-07", "decisions": { "tiering": "top for coordinator, low for mechanical" } },
+    "G2": { "approved": true, "owner": "Fernando", "date": "2026-09-07", "defaults": [
+      { "id": "D1", "question": "Which package shape?", "default": "single", "rationale": "smallest coherent shape", "source": "recommended", "contradicted": false }
+    ] }
+  },
+  "contract": { "version": null, "path": "delivery/CONTRACT.md", "frozenAt": null },
+  "history": []
+}

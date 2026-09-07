@@ -4,9 +4,9 @@
  *
  * Subcommands (exit 0 = pass, exit 1 = fail with named reasons):
  *   verify  <path...>                 every path exists and is non-empty (Rule 3: idle ≠ delivered)
- *   freeze  <CONTRACT.md>             frozen-CONTRACT structural check (Rule 1: no contract → no squads)
+ *   freeze  <CONTRACT.md> [--draft]   frozen-CONTRACT structural check (Rule 1: no contract → no squads)
  *   handoff <delivery-dir>            mechanizable half of the pre-handoff lint (playbooks §F)
- *   state   <state.json> [machine.json]  validate the run state; print current state + allowed events
+ *   state   <state.json|--dir root [--run <slug>]> [machine.json]  validate the run state; print current state + allowed events
  *   preflight <S|M|L> [--dir <target>]   run the shape-tiered env probes, write ENV-FACTS.md (v3 W2)
  *   machine-diff <live.json> <base.json> live machine must be an additive-only superset of baseline (v3 E1)
  *   adversary <delivery-dir|--dir root> failure-mode depth: declared machine models failures+recovery, cascade classes covered-or-waived (v3.2 D4)
@@ -77,9 +77,22 @@ function stripCode(text) {
 }
 
 function cmdFreeze(rawArgs) {
-  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  // v4 D-B4: --draft anywhere in argv opts into the autonomous-draft freeze
+  // (accepted alongside --dir/positional/--run; stripped before the rest of
+  // parsing so it never collides with a --dir path value).
+  const draft = rawArgs.includes("--draft");
+  const rawArgsNoDraft = rawArgs.filter((a) => a !== "--draft");
+  const { dir, rest, dirErr } = parseDirFlag(rawArgsNoDraft);
   if (dirErr) {
     fail(`freeze: ${dirErr}`);
+    return finish("contract frozen");
+  }
+  // v4 D-B6 (accepted here per task; full deliveryRoot-aware resolution for
+  // --run is V4B3's job) — parsed and validated, not yet used to pick a
+  // non-default CONTRACT path.
+  const { rest: rest2, runErr } = parseRunFlag(rest);
+  if (runErr) {
+    fail(`freeze: ${runErr}`);
     return finish("contract frozen");
   }
   let path;
@@ -90,10 +103,10 @@ function cmdFreeze(rawArgs) {
     const cands = [join(dir, "delivery", "CONTRACT.md"), join(dir, "delivery", "v3", "CONTRACT.md")];
     path = cands.find(existsSync) || cands[1];
   } else {
-    path = rest[0];
+    path = rest2[0];
   }
   if (!path) {
-    fail("freeze: usage: gate-check freeze <CONTRACT.md> | gate-check freeze --dir <repo-root>");
+    fail("freeze: usage: gate-check freeze <CONTRACT.md> [--draft] | gate-check freeze --dir <repo-root> [--draft] [--run <slug>]");
     return finish("contract frozen");
   }
   let text;
@@ -104,7 +117,17 @@ function cmdFreeze(rawArgs) {
     return finish("contract frozen");
   }
   if (text.trim().length === 0) fail(`empty: ${path}`);
-  if (!/\bv\d+\.\d+\b/.test(text)) fail(`no version header (vN.N) found in ${path}`);
+  if (!/\bv\d+\.\d+(?:-draft)?\b/.test(text)) fail(`no version header (vN.N or vN.N-draft) found in ${path}`);
+  // v4 D-B4 (G-13): a draft header only ever ratifies via --draft, and
+  // --draft only ever targets a draft header — each direction its own case.
+  const headerMatch = text.match(/\bv(\d+\.\d+)(-draft)?\b/);
+  const headerIsDraft = !!headerMatch?.[2];
+  if (draft && headerMatch && !headerIsDraft) {
+    fail(`C-E7-05 (G-13): freeze --draft given but ${path}'s header is already final (v${headerMatch[1]}) — nothing to draft-freeze`);
+  }
+  if (!draft && headerIsDraft) {
+    fail(`C-E7-05 (G-13): draft cannot be final — header v${headerMatch[1]}-draft; run freeze --draft or bump to v${headerMatch[1]}`);
+  }
   const sections = (text.match(/^##\s+/gm) || []).length;
   if (sections < 3) fail(`only ${sections} "##" sections — a frozen CONTRACT needs ≥3 (vocabulary, schema/interface, definition of shipped)`);
   if (!/changelog/i.test(text)) fail(`no changelog line — amendments need somewhere to land (v1.0 → v1.1 …)`);
@@ -117,11 +140,18 @@ function cmdFreeze(rawArgs) {
   // way, a freestanding v2 contract stays byte-identical (runRoot === null).
   const runRoot = dir || resolveRunRoot(path);
   const isV3Run = runRoot !== null;
-  // C-W1-03 (Epic A4) — additive: no freeze before the FD-2 case review has
-  // landed in the run state.
   if (runRoot) {
     const st = readState(runRoot);
-    if (st?.casesReviewed !== true) {
+    if (draft) {
+      // v4 D-B4 (C-E7-05): --draft skips casesReviewed (nothing to review yet)
+      // but refuses when nothing was actually defaulted.
+      const defaults = st?.gates?.G2?.defaults;
+      if (!Array.isArray(defaults) || defaults.length === 0) {
+        fail(`C-E7-05: freeze --draft refused — gates.G2.defaults is empty (nothing defaulted, nothing to review)`);
+      }
+    } else if (st?.casesReviewed !== true) {
+      // C-W1-03 (Epic A4) — additive: no freeze before the FD-2 case review
+      // has landed in the run state.
       fail(`C-W1-03: casesReviewed !== true in ${join(runRoot, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
     }
   }
@@ -159,7 +189,9 @@ function cmdFreeze(rawArgs) {
       }
     }
   }
-  if (failures.length === 0) ok(`${path}: version header, ${sections} sections, changelog, RUN-POLICY, no placeholders`);
+  if (failures.length === 0) {
+    ok(`${path}: version header, ${sections} sections, changelog, RUN-POLICY, no placeholders${draft ? " (--draft: casesReviewed skipped)" : ""}`);
+  }
   finish("contract frozen");
 }
 
@@ -930,16 +962,37 @@ function findMachine(explicit, requested) {
   return null;
 }
 
+const TRIAGE_VERDICTS = ["plan", "build-instead", "owner-decision", "skip"];
+
 function cmdState(rawArgs) {
   const { dir: rootFlag, rest, dirErr } = parseDirFlag(rawArgs);
   if (dirErr) {
     fail(`state: ${dirErr}`);
     return finish("run state valid");
   }
-  const statePath = rootFlag ? join(rootFlag, ".plan-it", "state.json") : rest[0];
-  const machinePath = rootFlag ? rest[0] : rest[1];
+  const { run: runSlug, rest: rest2, runErr } = parseRunFlag(rest);
+  if (runErr) {
+    fail(`state: ${runErr}`);
+    return finish("run state valid");
+  }
+  let statePath, machinePath;
+  if (rootFlag) {
+    if (runSlug) {
+      statePath = join(rootFlag, ".plan-it", `${runSlug}.state.json`);
+      if (!existsSync(statePath)) {
+        fail(`state: --run "${runSlug}" — no such state file: ${statePath}`);
+        return finish("run state valid");
+      }
+    } else {
+      statePath = join(rootFlag, ".plan-it", "state.json");
+    }
+    machinePath = rest2[0];
+  } else {
+    statePath = rest2[0];
+    machinePath = rest2[1];
+  }
   if (!statePath) {
-    fail("state: usage: gate-check state <state.json> [machine.json] | gate-check state --dir <repo-root> [machine.json]");
+    fail("state: usage: gate-check state <state.json> [machine.json] | gate-check state --dir <repo-root> [--run <slug>] [machine.json]");
     return finish("run state valid");
   }
   let state;
@@ -954,10 +1007,87 @@ function cmdState(rawArgs) {
   }
 
   // v3 root-aware payload checks (Epics A3/A4) run only when a repo root is
-  // derivable — a --dir call or a canonical <root>/.plan-it/state.json path.
-  // Bare state.json paths (v2 fixtures, T-E2-*) skip them: additive, zero
-  // regression for existing callers (PRD prd-1-gatecheck-fd §2 D5).
-  const root = rootFlag ?? (resolve(statePath).endsWith(join(".plan-it", "state.json")) ? dirname(dirname(resolve(statePath))) : null);
+  // derivable — a --dir call or a canonical <root>/.plan-it/[<slug>.]state.json
+  // path (v4 D-B3 widens this from the bare generic name to any named run so a
+  // named path is no longer "bare"). Bare state.json paths outside .plan-it/
+  // (v2 fixtures, T-E2-*) skip them: additive, zero regression for existing
+  // callers (PRD prd-1-gatecheck-fd §2 D5).
+  const root = rootFlag ?? (NAMED_STATE_FILE_RE.test(resolve(statePath)) ? dirname(dirname(resolve(statePath))) : null);
+  const historyStates = new Set((state.history ?? []).map((h) => h.state));
+  const runMode = state.run?.mode;
+  const deliveryDirFor = (r) => join(r, state.run?.deliveryRoot || "delivery/");
+
+  // v4 D-B3 check 4 — draft cannot hand off (C-E7-04, G-13).
+  if (["handoff", "done"].includes(state.state) && /-draft$/.test(state.contract?.version ?? "")) {
+    fail(`C-E7-04 (G-13): draft contract cannot hand off — contract.version "${state.contract.version}" is not final (state "${state.state}")`);
+  }
+
+  // v4 D-B3 check 1 — triage payload (C-E6-01).
+  if (historyStates.has("triage")) {
+    const triage = state.triage ?? {};
+    if (!TRIAGE_VERDICTS.includes(triage.verdict)) {
+      fail(`C-E6-01: triage.verdict ${triage.verdict ? `"${triage.verdict}"` : "(missing)"} is not one of ${TRIAGE_VERDICTS.join(", ")}`);
+    } else {
+      if (!/^\d{4}-\d{2}-\d{2}/.test(triage.measuredAt ?? "")) {
+        fail(`C-E6-01: triage.measuredAt "${triage.measuredAt}" is not a YYYY-MM-DD date`);
+      }
+      if (!Array.isArray(triage.measurements)) {
+        fail(`C-E6-01: triage.measurements must be an array`);
+      }
+      if (triage.verdict !== "plan" && root) {
+        const memoPath = triage.memo ? join(root, triage.memo) : null;
+        if (!memoPath || !existsSync(memoPath)) {
+          fail(`C-E6-01: CLOSED_WITHOUT_PLAN REJECTED: verdict "${triage.verdict}" requires triage.memo on disk (${memoPath ?? "triage.memo not set"})`);
+        }
+      }
+    }
+  }
+
+  // v4 D-B3 check 2 — defaults recorded (C-E7-07).
+  if (historyStates.has("defaultsApplied")) {
+    const defaults = state.gates?.G2?.defaults;
+    if (!Array.isArray(defaults) || defaults.length === 0) {
+      fail(`C-E7-07: gates.G2.defaults must be a non-empty array when "defaultsApplied" is in history`);
+    } else {
+      defaults.forEach((row, i) => {
+        const label = row?.id ?? `#${i}`;
+        if (row?.source !== "recommended") fail(`C-E7-07: default "${label}" has source ${row?.source ? `"${row.source}"` : "(missing)"}, expected "recommended"`);
+        if (typeof row?.contradicted !== "boolean") fail(`C-E7-07: default "${label}" missing boolean "contradicted"`);
+      });
+    }
+  }
+
+  // v4 D-B3 check 6 — mode consistency + contradiction escalation (C-E7-06).
+  {
+    const AUTONOMOUS_BANNED = ["decisionGate", "freezeGate"];
+    const GUIDED_BANNED = ["defaultsApplied", "planReview", "freeze"];
+    if (runMode === "autonomous-draft") {
+      for (const s of AUTONOMOUS_BANNED) {
+        if (historyStates.has(s)) fail(`C-E7-06: mode-inconsistent history — run.mode is "autonomous-draft" but history visited guided-only state "${s}"`);
+      }
+    } else if (runMode === "guided") {
+      for (const s of GUIDED_BANNED) {
+        if (historyStates.has(s)) fail(`C-E7-06: mode-inconsistent history — run.mode is "guided" but history visited autonomous-only state "${s}"`);
+      }
+    }
+    const groups = new Map();
+    for (const c of state.gates?.G4?.contradictions ?? []) {
+      if (!c?.id) continue;
+      if (!groups.has(c.id)) groups.set(c.id, []);
+      groups.get(c.id).push(c);
+    }
+    for (const [id, entries] of groups) {
+      if (entries.length < 2) continue;
+      const esc = entries.find((e) => e.escalated === true);
+      const cardPath = esc?.card && root ? join(root, esc.card) : null;
+      if (esc && cardPath && existsSync(cardPath)) {
+        console.log(`ESCALATED: ${id} → ${esc.card}`);
+      } else {
+        fail(`C-E7-06: default ${id} contradicted twice without ESCALATED card — never re-default`);
+      }
+    }
+  }
+
   if (root && state.testConventions?.registered === true) {
     // Case A3 (FD-1) — stale test-convention receipt.
     const claudePath = join(root, "CLAUDE.md");
@@ -967,13 +1097,24 @@ function cmdState(rawArgs) {
     }
   }
   if (root && state.gates?.G2?.approved === true) {
-    // Cases B1/B2 (FD-2) — G2_ANSWERED requires the review artifact on disk,
-    // carrying the user-ack grammar frozen at delivery/TEST-CONTRACT-REVIEW.md:49.
-    const reviewPath = join(root, "delivery", "TEST-CONTRACT-REVIEW.md");
-    if (!existsSync(reviewPath)) {
-      fail(`B1 (FD-2): gates.G2.approved is true but ${reviewPath} is not on disk — G2_ANSWERED without the review artifact is rejected`);
-    } else if (!/^Reviewed-by:\s+\S.*\b\d{4}-\d{2}-\d{2}\b/m.test(readFileSync(reviewPath, "utf8"))) {
-      fail(`B2 (FD-2): ${reviewPath} lacks the "Reviewed-by: <name> <date>" acknowledgment line — review file without user ack is rejected`);
+    // v4 D-B3 check 5 — mode-aware FD-2 artifact. Guided (or mode unset —
+    // byte-identical to 3.0.1) keeps cases B1/B2 pointed at
+    // TEST-CONTRACT-REVIEW.md; autonomous-draft's provisional G2 record ahead
+    // of plan review is accepted only with gates.G2.pendingReview === true (the
+    // real PLAN-REVIEW.md file check lives in check 3, gated on gates.G4).
+    if (runMode === "autonomous-draft") {
+      if (state.gates.G2.pendingReview !== true && !historyStates.has("planReview")) {
+        fail(`C-E7-06: gates.G2.approved is true in autonomous-draft mode ahead of plan review, but gates.G2.pendingReview is not true — mode-inconsistent provisional record`);
+      }
+    } else {
+      // Cases B1/B2 (FD-2) — G2_ANSWERED requires the review artifact on disk,
+      // carrying the user-ack grammar frozen at delivery/TEST-CONTRACT-REVIEW.md:49.
+      const reviewPath = join(deliveryDirFor(root), "TEST-CONTRACT-REVIEW.md");
+      if (!existsSync(reviewPath)) {
+        fail(`B1 (FD-2): gates.G2.approved is true but ${reviewPath} is not on disk — G2_ANSWERED without the review artifact is rejected`);
+      } else if (!/^Reviewed-by:\s+\S.*\b\d{4}-\d{2}-\d{2}\b/m.test(readFileSync(reviewPath, "utf8"))) {
+        fail(`B2 (FD-2): ${reviewPath} lacks the "Reviewed-by: <name> <date>" acknowledgment line — review file without user ack is rejected`);
+      }
     }
   }
   // v3 D6 (E2, additive on the canon line): state.json may select its machine
@@ -993,7 +1134,7 @@ function cmdState(rawArgs) {
     fail(`invalid state "${state.state}" — not a state in ${mp}. Valid: ${Object.keys(states).join(", ")}`);
   }
   // Gates that the machine has already passed must carry owner + date.
-  const visited = new Set((state.history ?? []).map((h) => h.state));
+  const visited = historyStates;
   for (const [name, node] of Object.entries(states)) {
     const gate = node.meta?.gate;
     if (gate && visited.has(name)) {
@@ -1004,6 +1145,30 @@ function cmdState(rawArgs) {
     }
   }
   const gateState = (g) => Object.entries(states).find(([, n]) => n.meta?.gate === g)?.[0];
+
+  // v4 D-B3 check 3 — plan review artifact (C-E7-03). Needs the machine loaded
+  // (planReview.meta.records names which gates it also records).
+  if (state.gates?.G4?.approved === true) {
+    const reviewPath = root ? join(deliveryDirFor(root), "PLAN-REVIEW.md") : null;
+    if (!reviewPath || !existsSync(reviewPath)) {
+      fail(`C-E7-03: gates.G4.approved is true but ${reviewPath ?? "<no root>/PLAN-REVIEW.md"} is not on disk`);
+    } else if (!/^Reviewed-by:\s+\S.*\b\d{4}-\d{2}-\d{2}\b/m.test(readFileSync(reviewPath, "utf8"))) {
+      fail(`C-E7-03: ${reviewPath} lacks the "Reviewed-by: <name> <date>" acknowledgment line`);
+    }
+    for (const g of machine.states?.planReview?.meta?.records ?? []) {
+      const rec = state.gates?.[g];
+      if (!rec?.approved || !rec?.owner || !rec?.date) {
+        fail(`C-E7-03: gate ${g} (recorded via planReview.meta.records) is not recorded with approved+owner+date`);
+      }
+    }
+    const contradictions = state.gates?.G4?.contradictions ?? [];
+    for (const row of state.gates?.G2?.defaults ?? []) {
+      if (row?.contradicted !== true) continue;
+      if (!contradictions.some((c) => c?.id === row.id)) {
+        fail(`C-E7-03: default "${row?.id}" is contradicted:true but has no matching entry in gates.G4.contradictions[]`);
+      }
+    }
+  }
   // v3 D7 (E4): once the G3 gate state is in history, every recorded known-gap
   // row must carry a disposition ∈ {fix, waive, case-ify} — EC-B7.
   const g3state = gateState("G3");
@@ -1058,7 +1223,19 @@ function cmdState(rawArgs) {
   }
   if (failures.length === 0 && state.state) {
     const node = states[state.state];
-    const events = Object.keys(node?.on ?? {});
+    // v4 D-B3 check 7 — printout filter: an event whose transition carries a
+    // meta.mode is only "next" when it matches this run's mode; untagged
+    // transitions (both modes) always show. A run with no run.mode at all
+    // predates the mode fork (a v3.0.1-era state file) — defaulting the
+    // PRINTOUT ONLY to "guided" keeps its next-events line byte-identical
+    // (R6); this default is local to the printout and never leaks into the
+    // payload checks above, which key strictly on an explicit run.mode.
+    const printMode = runMode ?? "guided";
+    const events = Object.keys(node?.on ?? {}).filter((ev) => {
+      const t = node.on[ev];
+      const m = (Array.isArray(t) ? t[0] : t)?.meta?.mode;
+      return !m || m === printMode;
+    });
     console.log(`state: ${state.state}${node?.meta?.title ? ` — ${node.meta.title}` : ""}`);
     console.log(`next events: ${events.length ? events.join(", ") : "(final state)"}`);
     for (const ev of events) {
@@ -1082,6 +1259,18 @@ function parseDirFlag(args) {
   if (!args[1]) return { dir: null, rest: args.slice(1), dirErr: "--dir requires a path" };
   return { dir: resolve(args[1]), rest: args.slice(2) };
 }
+
+// v4 D-B5: --run <slug> (sibling of --dir): named runs resolve to
+// <root>/.plan-it/<slug>.state.json instead of the generic file.
+function parseRunFlag(args) {
+  if (args[0] !== "--run") return { run: null, rest: args };
+  if (!args[1]) return { run: null, rest: args.slice(1), runErr: "--run requires a slug" };
+  return { run: args[1], rest: args.slice(2) };
+}
+
+// v4 D-B3: a state-file path is no longer "bare" when it names a slug
+// (<root>/.plan-it/<slug>.state.json), not just the generic file.
+const NAMED_STATE_FILE_RE = /[\\/]\.plan-it[\\/](?:[a-z0-9][a-z0-9-]*\.)?state\.json$/;
 
 function readState(root) {
   try {
@@ -1636,9 +1825,9 @@ if (isMain) {
   if (!cmd || !(cmd in commands)) {
     console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
-    console.error("  freeze  <CONTRACT.md|--dir repo-root>  frozen-contract structural check (+ casesReviewed in --dir mode; incl. RUN-POLICY)");
+    console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
-    console.error("  state   <state.json> [machine.json]  validate run state, print next events");
+    console.error("  state   <state.json|--dir root [--run <slug>]> [machine.json]  validate run state, print next events");
     console.error("  contract <--dir repo-root|CONTRACT.md>  W1 hygiene lint + computed tally (W5)");
     console.error("  testconv --dir <repo-root> [--register [text] | --decline]  FD-1 conventions discovery (exit 2 = needs registration)");
     console.error("  reconcile --dir <repo-root>          W5 orphan scan + FD-2 draft→binding case map");
