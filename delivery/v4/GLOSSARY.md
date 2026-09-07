@@ -94,6 +94,7 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | O-1 | remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0 | GATE.md — Still human, but NOT blocking |
 | O-2 | read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2) | GATE.md — Still human, but NOT blocking |
 | O-3 | ratify R7 (brand contrast deviation) or send the exact colours you want as text | GATE.md — Still human, but NOT blocking |
+| O-5 | owner action: confirm the recorded run.mode relabel (autonomous-draft → guided) in .plan-it/v4.state.json | GATE.md |
 | O-4 | decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence | GATE.md — Still human, but NOT blocking |
 | W0 | orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY | 00-program-plan.md |
 | W1 | three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason | 00-program-plan.md |
