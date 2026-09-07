@@ -59,4 +59,24 @@ import { runRenderer, fixturesRoot, tmpDir, assert, report } from './lib/helpers
   assert(html.includes('<abbr>V4A1</abbr>'), 'a later occurrence is a bare <abbr>');
 }
 
+// AMD-11: a `glossary` block's own rendered table (escaped family-pattern cells like
+// "V4A&lt;n&gt;") must never be re-scanned by the first-use pass as if it were prose.
+{
+  const dir = tmpDir('glossary-block-noscan');
+  fs.writeFileSync(path.join(dir, 'GLOSSARY.md'), '| ID | Expansion | Where defined |\n|---|---|---|\n| V4A<n> | SQ-A epic ID | delivery/v4/epics/epics-a-renderer.md |\n');
+  const manifestPath = path.join(dir, 'manifest.json');
+  const manifest = {
+    schema: 'planit-report/1', kind: 'GLOSSARY', title: 'Glossary Block No-Scan', output: 'out.html',
+    glossary: { path: 'GLOSSARY.md' },
+    sections: [{ heading: 'Vocabulary', blocks: [{ type: 'glossary' }] }],
+  };
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  const out = path.join(dir, 'out.html');
+  const r = runRenderer([manifestPath, '--out', out]);
+  assert(r.status <= 2, `renders, got ${r.status} ${r.stderr}`);
+  const html = fs.readFileSync(out, 'utf-8');
+  assert(html.includes('V4A&lt;n&gt;'), 'the glossary block displays the escaped family-pattern cell verbatim');
+  assert(!/glossary: ID "V4A" used but not in GLOSSARY\.md/.test(r.stderr), `no bogus "V4A" warning from the block's own table: ${r.stderr}`);
+}
+
 report('T-V4A3-01/02/03 glossary-panel');

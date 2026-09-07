@@ -14,7 +14,9 @@ const out = path.join(dir, 'out.html');
 const r = runRenderer([manifest, '--out', out]);
 assert(r.status === 2, `exit 2 (exactly one warning, for Q-99), got ${r.status}: ${r.stderr}`);
 
-const knownIds = ['T-V4B4-17', 'C-E8-01', 'G-7', 'AMD-3', 'LG-16', 'F-A12', 'D-B6'];
+// P2-11 (AMD-11) is a literal GLOSSARY.md row — must resolve literal-first, never be
+// misread as a numeric range ("P2"..."P11"), and produce zero warnings of its own.
+const knownIds = ['T-V4B4-17', 'C-E8-01', 'G-7', 'AMD-3', 'LG-16', 'F-A12', 'D-B6', 'P2-11'];
 const html = fs.readFileSync(out, 'utf-8');
 for (const id of knownIds) {
   assert(html.includes(`<abbr class="gl" title=`) && html.includes(`>${id}</abbr>`), `${id} is expanded on first use (matched by its family row)`);

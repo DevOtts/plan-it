@@ -341,21 +341,14 @@ export function emitFontLink(brand) {
 // Glossary (G-8, D-A11)
 // ---------------------------------------------------------------------------
 
-// Family-pattern grammar (CONTRACT §5, AMD-10) — ONE grammar shared in *semantics* (not
-// code — lanes do not import each other's files, CONTRACT §2) with gate-check.mjs's
-// `familyItemToRegex`/`expandGlossaryRange` (SQ-B, .claude/worktrees/v4b-lints at the time
-// of writing): `*` -> `[A-Za-z0-9.]+`, word-bounded `NN` -> `[A-Z0-9]{2,3}`, `<n>` or a
-// trailing bare `n` -> `\d+`; a numeric range ("F-A1 … F-A20") expands to literal ids.
-function expandGlossaryRange(item) {
-  const m = item.match(/^([A-Za-z]+-?)(\d+)\s*(?:…|\.\.\.|-{1,2}|–)\s*(?:[A-Za-z-]+)?(\d+)$/);
-  if (!m) return null;
-  const [, prefix, loStr, hiStr] = m;
-  const lo = Number(loStr), hi = Number(hiStr);
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo || hi - lo > 500) return null;
-  const ids = [];
-  for (let i = lo; i <= hi; i++) ids.push(`${prefix}${i}`);
-  return ids;
-}
+// Family-pattern grammar (CONTRACT §5, AMD-10/AMD-11) — ONE grammar shared in *semantics*
+// (not code — lanes do not import each other's files, CONTRACT §2) with gate-check.mjs's
+// `familyItemToRegex` (SQ-B, .claude/worktrees/v4b-lints at the time of writing): `*` ->
+// `[A-Za-z0-9.]+`, word-bounded `NN` -> `[A-Z0-9]{2,3}`, `<n>` or a trailing bare `n` ->
+// `\d+`. AMD-11: NO range expansion — v1.3 already said range cells are not rows, and a
+// numeric-range reading of a literal ID shaped `<letters><digit>-<digits>` (e.g. `P2-11`)
+// silently swallowed it into a bogus range instead of registering it as a literal; lookups
+// are literal-first, then family patterns, full stop.
 function familyItemToRegex(item) {
   if (!/(\*|<n>|\bNN\b|n$)/.test(item)) return null;
   const hasTrailingBareN = /n$/.test(item) && !/NN$/.test(item) && !item.endsWith('<n>');
@@ -387,8 +380,6 @@ export function buildGlossaryIndex(text) {
     rows.push({ id: idCell, expansion, where });
     for (let item of idCell.split(/[·,]/).map((s) => s.trim()).filter(Boolean)) {
       item = item.replace(/^`|`$/g, '');
-      const range = expandGlossaryRange(item);
-      if (range) { range.forEach((id) => literals.set(id, expansion)); continue; }
       const re = familyItemToRegex(item);
       if (re) { families.push({ re, expansion }); continue; }
       literals.set(item, expansion);
@@ -433,11 +424,15 @@ export function buildGlossaryPanel(glossaryPath) {
   return { html, index, warning: null };
 }
 
-// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content.
+// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content
+// and a rendered `glossary` block's own table (AMD-11 — its escaped family-pattern cells,
+// e.g. "V4A&lt;n&gt;", are not prose to scan). The collapsed {{GLOSSARY}} panel is never in
+// bodyHtml at all (a separate template slot), so it is excluded structurally, not by pattern.
 export function expandFirstUse(bodyHtml, glossaryIndex) {
   const seen = new Set();
   const warnings = [];
-  const segments = bodyHtml.split(/(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>)/i);
+  const PROTECTED_RE = /(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>|<div class="glossary-table-block">[\s\S]*?<\/div>\s*<\/div>)/i;
+  const segments = bodyHtml.split(PROTECTED_RE);
   for (let s = 0; s < segments.length; s++) {
     if (s % 2 === 1) continue; // inside a protected tag — untouched
     segments[s] = segments[s].replace(ID_TOKEN_RE, (id) => {
@@ -698,7 +693,11 @@ function renderGlossaryBlock(b, ctx) {
   if (!p || !fs.existsSync(p)) return { fatal: false, html: '<p>GLOSSARY.md not generated yet</p>', warnings: ['glossary block: file not found'] };
   const { rows } = buildGlossaryIndex(fs.readFileSync(p, 'utf-8'));
   const trs = rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.expansion)}</td><td>${esc(r.where)}</td></tr>`).join('');
-  return { fatal: false, html: `<div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${trs}</table></div>`, warnings: [] };
+  // AMD-11: this table's own escaped family-pattern cells (e.g. "V4A&lt;n&gt;") must never
+  // be re-scanned as prose by the first-use pass — wrapped so expandFirstUse can skip it,
+  // exactly like <code>/<pre> (its own visible rendering — a plain, non-collapsed table per
+  // D-A11 — is unchanged; this is a scan boundary marker, not a display change).
+  return { fatal: false, html: `<div class="glossary-table-block"><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${trs}</table></div></div>`, warnings: [] };
 }
 
 function renderLockbox(b) {
