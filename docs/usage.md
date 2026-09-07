@@ -14,6 +14,12 @@ ground truth itself.
 
 ## What a run feels like
 
+plan-it runs in one of two postures, picked (or recommended and confirmed) at
+the up-front **anamnesis** questionnaire (gate G0): the default
+**autonomous-draft** mode, or **guided** mode.
+
+### Guided mode
+
 You interact exactly **three times** (the gates); everything between them runs
 autonomously:
 
@@ -22,6 +28,22 @@ autonomously:
 | ⏸ **G1 — Scope** | "This looks like size M, shape 3 (research → locked architecture → phase PRDs). Here's the numbered DoD. Correct?" | "Yes" / "It's actually two repos, size L" |
 | ⏸ **G2 — Decisions** | A numbered list of every judgment call, each with a recommendation: hosting, repo topology, naming, build-vs-buy… | Answer by number. Add your own vision — this is the designed injection point. |
 | ⏸ **G3 — Delivery** | "Specs are aligned — proceed to the delivery package?" | "Go" |
+
+### Autonomous-draft mode
+
+The default. One up-front questionnaire, then every judgment call plan-it
+would otherwise stop for is applied as a marked, contradictable default and
+reviewed together in a single round at the end — not three separate
+G1/G2/G3 stops:
+
+| Gate | You're asked | Typical answer |
+|------|--------------|----------------|
+| ⏸ **G0 — Anamnesis** | one batched questionnaire, up front: access & credentials the run may probe, fences, naming conventions, topology preference, live-probe authorization, decisions already known | Answer once, before any research starts |
+| ⏸ **G4 — Plan review** (`PLAN-REVIEW`) | "Here's the frozen backbone plus every `[default — contradict if wrong]` decision, together — anything to contradict?" | "Go" / "No — change decision 3, everything else stands" |
+
+A contradiction at G4 that changes the CONTRACT re-enters squad planning as an
+amendment and runs the verify → adversary → render → plan-review loop again
+before landing back at you.
 
 Tip: run at maximum reasoning effort (`/effort xhigh` on Claude Code) — the
 skill will remind you.
@@ -45,6 +67,13 @@ delivery/
 
 For a small feature the same content folds into fewer files (a design note +
 one PRD + one epic set) — the shape governor at G1 decides.
+
+For topology **orchestrator+squads** — one orchestrator + a squad per repo
+lane — the package also gains `SESSIONS.md` (each squad's session name and
+launch prompt, so the orchestrator can find and message it again),
+`GATE.md` (the answered decision/authorization/owner-action log), and
+`GLOSSARY.md` (static plan-it vocabulary plus every per-run ID this run
+minted, one row each).
 
 ## Handing off to the build
 
