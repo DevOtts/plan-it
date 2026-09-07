@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Mockup No Provenance",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Mock", "blocks": [
+      {"type": "mockup", "id": "m1", "label": "Board mock", "html": "<p>fake board</p>"}
+    ]}
+  ]
+}

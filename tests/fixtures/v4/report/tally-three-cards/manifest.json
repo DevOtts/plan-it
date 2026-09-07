@@ -1,0 +1,17 @@
+{
+  "schema": "planit-report/1",
+  "kind": "TRIAGE",
+  "title": "Tally Three Cards",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"id": "cards-section", "heading": "Cards", "blocks": [
+      {"type": "triage-card", "what": "a", "why": "b", "need": "c", "decide": "d", "depends": "e", "verdict": "plan"},
+      {"type": "triage-card", "what": "a", "why": "b", "need": "c", "decide": "d", "depends": "e", "verdict": "build"},
+      {"type": "triage-card", "what": "a", "why": "b", "need": "c", "decide": "d", "depends": "e", "verdict": "skip"}
+    ]},
+    {"heading": "Tally", "blocks": [
+      {"type": "tally", "groups": [{"label": "Cards", "rows_from": "cards-section", "type": "triage-card"}]}
+    ]}
+  ]
+}

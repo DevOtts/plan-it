@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "One Flow Block",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Flow", "blocks": [
+      {"type": "flow", "source": "graph TD;\nA-->B;"}
+    ]}
+  ]
+}

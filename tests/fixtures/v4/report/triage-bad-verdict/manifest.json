@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "TRIAGE",
+  "title": "Triage Bad Verdict",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Cards", "blocks": [
+      {"type": "triage-card", "what": "a", "why": "b", "need": "c", "decide": "d", "depends": "e", "verdict": "maybe"}
+    ]}
+  ]
+}
