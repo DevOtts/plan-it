@@ -102,7 +102,7 @@ back-compat path so `kind: LEGACY` renders without a rewrite (PRD D-A2).
 | top | review of stamp/determinism correctness only | — (top does not escalate further) | build-it:launch#slice=V4A1-review |
 
 ### Test Contract — Renderer core (V4A1)  (BINDING: 100% pass or /iterate)
-Types: [unit][integration] · Count: 12 (0 [REAL]) · Surfaces: CLI (node
+Types: [unit][integration] · Count: 14 (0 [REAL]) · Surfaces: CLI (node
 subprocess spawn) + byte/regex assertions on stdout, stderr, and the written
 file. Done = every case below is PASS. No [REAL] case VERIFIED on a mock —
 none of these twelve needs a live target; the network-shaped ones (mermaid,
@@ -122,6 +122,8 @@ fonts) are asserted by presence of a pinned URL string, never by fetching.
 | T-V4A1-10 | Given `--open` and `PLANIT_TEST_PLATFORM=linux` / `win32`, when run, then the stub logs `xdg-open <file>` / `cmd /c start "" <file>` respectively | exit code unchanged | `node tests/v4/renderer/open-routing.mjs` |
 | T-V4A1-11 | Given any successful render, when stdout is captured, then it matches exactly one line `/^built: .+ \(\d+ bytes\) brand=(default|repo:.+) stamp=sha256:[0-9a-f]{12} html-blocks=\d+$/` | regex match on stdout | `node tests/v4/renderer/stdout-format.mjs` |
 | T-V4A1-12 | Given a rendered twin, when its five `<meta name="planit-*">` tags are parsed, then `planit-source` matches SHA-256 of the source md, `planit-renderer` names `build-report.mjs/4.0.0` + the template's own hash, and every relpath is forward-slash with no `./` prefix | all five metas present and hash-correct | `node tests/v4/renderer/stamp-format.mjs` |
+| T-V4A1-13 | AMD-9: Given a manifest stored in a SUBFOLDER of the package (`tests/fixtures/v4/report/manifest-in-subdir/manifests/report.manifest.json` with `source.path: "../REPORT.md"`, `output: "../REPORT.html"`, one embed `../EMBED.md`), when rendered, then `planit-source` reads `REPORT.md sha256=…` and `planit-embeds` reads `EMBED.md sha256=…` — every stamped relpath is relative to the TWIN's directory (CONTRACT §4.3), never the manifest's — and `gate-check mirror REPORT.md REPORT.html` (V4B4 verb) exits 0 | exit ≤ 2; both stamps twin-relative; mirror exit 0 | `node tests/v4/renderer/stamp-relpath-subdir.mjs` |
+| T-V4A1-14 | AMD-9: Given a manifest whose embedded markdown contains the literal text `var(--token)` inside a code span (as `delivery/v4/CONTRACT.md` C-E2-13 does), when rendered, then the CSS-token lint inspects only the rendered `<style>` blocks and emits no "CSS tokens referenced but not declared" warning for content text | no CSS-token WARNING on stderr; exit 0 with a tokenised brand or 2 only for the brand warning | `node tests/v4/renderer/css-token-scan-scope.mjs` |
 
 ---
 
