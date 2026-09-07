@@ -34,8 +34,13 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | FD-1 | founder mandate: test-convention discovery registered in CLAUDE.md | CHANGELOG 3.0.0 |
 | FD-2 | founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md) | CHANGELOG 3.0.0 |
 | W1–W6 (CHANGELOG) | the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves | CHANGELOG 3.0.0 |
+| W5 | v3 write-time invariant 5 (computed counts) as cited by `gate-check` output — not a wave of this run | CHANGELOG 3.0.0 |
+| W6 | v3 write-time invariant 6 (kickoff pinning) as cited by `gate-check` output — not a wave of this run | CHANGELOG 3.0.0 |
 | D4 (CHANGELOG) | the v3 adversarial-depth ruling behind the `adversary` verb — not this run's D4 ruling | CHANGELOG 3.0.0 |
 | AMD-n | a dated amendment to a frozen contract | delivery/decisions.md |
+| AMD-1 | v3 amendment (2026-07-08): T-E1-05 gate-count precedent | delivery/decisions.md |
+| AMD-2 | v3 amendment: mirror-pair count precedent | delivery/decisions.md |
+| AMD-3 | v3 amendment (3.0.x) | delivery/decisions.md |
 | xhigh | Claude Code's highest `/effort` reasoning setting | SKILL.md — Autonomy posture |
 | CDP | Chrome DevTools Protocol — drives UI test cases | formats.md §4 |
 | ATDD / BDD | Acceptance-Test-Driven / Behaviour-Driven Development | SKILL.md — The Test Contract |
@@ -98,8 +103,8 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | SQ-A | renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases) | CONTRACT §2 |
 | SQ-B | deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases) | CONTRACT §2 |
 | SQ-C | prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases) | CONTRACT §2 |
-| LG-1 … LG-18 | live-grounding facts measured by the coordinator | research/00-main-thread-grounding.md |
-| F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21 | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
+| LG-n | live-grounding facts measured by the coordinator | research/00-main-thread-grounding.md |
+| F-*n | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
 | D-A<n> · D-B<n> · D-C<n> | PRD-level design decisions per squad (renderer · core · prose), cited by every epic task | delivery/v4/prds/ |
 | ab0c192 | the W0 commit that landed the v4 planning package and the guard mirror fix (A-4) | STATUS.md ## Log |
 | V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
@@ -108,6 +113,8 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | T-E*-NN | v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs) | tests/run-contract.mjs |
 | C-W*-NN · C-META-NN | v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist) | delivery/v3/CONTRACT.md |
 | SHA-256 | the hash function behind every pin and stamp (`sha256=<64-hex>`) | CONTRACT §4.3 |
+| AMD-10 | orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12 | delivery/decisions.md |
+| AMD-9 | orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14 | delivery/decisions.md |
 | AMD-8 | orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/` | delivery/decisions.md |
 | AMD-7 | orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17 | delivery/decisions.md |
 | AMD-6 | orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion) | delivery/decisions.md |

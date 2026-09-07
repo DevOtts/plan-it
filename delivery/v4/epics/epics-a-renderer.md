@@ -339,7 +339,7 @@ and the CSS token completeness audit (C-E2-13).
 | top | escaping + adversarial-verify review (never resolved below coordinator, RUN-POLICY "judgment" row) | — | build-it:launch#slice=V4A3-review |
 
 ### Test Contract — Glossary, security, tokens (V4A3)  (BINDING: 100% pass or /iterate)
-Types: [unit][integration] · Count: 11 (0 [REAL]) · Surfaces: CLI + HTML-
+Types: [unit][integration] · Count: 12 (0 [REAL]) · Surfaces: CLI + HTML-
 parser assertions (a tolerant node state-machine parser over `<script>` /
 `<abbr>` / `href` occurrences, per design §4.6 seed 15's method). Done = every
 case below is PASS. No [REAL] case VERIFIED on a mock; adversarial-verify
@@ -359,6 +359,7 @@ re-parsing the renderer's own output rather than trusting its write.
 | T-V4A3-09 | Given a markdown embed containing a `1. foo` / `2. bar` numbered list, when rendered, then the output contains a real `<ol><li>foo</li><li>bar</li></ol>`, not a bold-prefixed `<ul>` | regex confirms `<ol>` presence, `<ul>` absence for that list | `node tests/v4/renderer/ordered-list.mjs` |
 | T-V4A3-10 | Given a body mentioning an ID that matches the union grammar but has no `GLOSSARY.md` row, when rendered, then it is listed as a warning (not silently dropped) | exit 2, stderr names the unknown ID | `node tests/v4/renderer/glossary-unknown-id-warn.mjs` |
 | T-V4A3-11 | Given the xss-embed-probe fixture is rendered twice (write, then re-parse the written file from disk — not the in-memory buffer), when the second parse runs, then the same zero-breakout result holds — proving the assertion checks the actual written bytes, not a pre-write string | adversarial-verify: re-reads the world, does not trust its own write | `node tests/v4/renderer/xss-escape.mjs` |
+| T-V4A3-12 | AMD-10: Given a GLOSSARY.md with the family rows `T-*-NN`, `C-E*-NN`, `G-n`, `AMD-n`, `LG-n`, `F-*n`, `D-B<n>` and a manifest whose body mentions `T-V4B4-17`, `C-E8-01`, `G-7`, `AMD-3`, `LG-16`, `F-A12`, `D-B6` and the unknown `Q-99`, when rendered, then the seven known IDs are expanded on first use with their family row's text and exactly one glossary WARNING is emitted, for `Q-99` — the renderer's `familyMatch` implements the §5 placeholders (`*`=`[A-Za-z0-9.]+`, `NN`=`[A-Z0-9]{2,3}`, `<n>`/trailing `n`=`\d+`) byte-for-byte as `gate-check glossary` does | 7 expansions, 1 warning naming `Q-99`, exit 2 only for that warning | `node tests/v4/renderer/glossary-family-grammar.mjs` |
 
 ---
 
