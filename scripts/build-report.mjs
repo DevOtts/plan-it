@@ -341,69 +341,110 @@ export function emitFontLink(brand) {
 // Glossary (G-8, D-A11)
 // ---------------------------------------------------------------------------
 
-export function parseGlossaryTable(text) {
-  const map = new Map();
+// Family-pattern grammar (CONTRACT §5, AMD-10/AMD-11) — ONE grammar shared in *semantics*
+// (not code — lanes do not import each other's files, CONTRACT §2) with gate-check.mjs's
+// `familyItemToRegex` (SQ-B, .claude/worktrees/v4b-lints at the time of writing): `*` ->
+// `[A-Za-z0-9.]+`, word-bounded `NN` -> `[A-Z0-9]{2,3}`, `<n>` or a trailing bare `n` ->
+// `\d+`. AMD-11: NO range expansion — v1.3 already said range cells are not rows, and a
+// numeric-range reading of a literal ID shaped `<letters><digit>-<digits>` (e.g. `P2-11`)
+// silently swallowed it into a bogus range instead of registering it as a literal; lookups
+// are literal-first, then family patterns, full stop.
+function familyItemToRegex(item) {
+  if (!/(\*|<n>|\bNN\b|n$)/.test(item)) return null;
+  const hasTrailingBareN = /n$/.test(item) && !/NN$/.test(item) && !item.endsWith('<n>');
+  let s = item.split('<n>').join('@@NUM@@');
+  s = s.replace(/\bNN\b/g, '@@NN@@');
+  s = s.split('*').join('@@STAR@@');
+  if (hasTrailingBareN) s = s.replace(/n$/, '@@NUM@@');
+  if (!/@@/.test(s)) return null; // no placeholder actually substituted -> not a family pattern
+  s = s.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  s = s.split('@@NUM@@').join('\\d+');
+  s = s.split('@@NN@@').join('[A-Z0-9]{2,3}');
+  s = s.split('@@STAR@@').join('[A-Za-z0-9.]+');
+  return new RegExp(`^${s}$`);
+}
+
+// Parses a GLOSSARY.md table into a display row list plus a literal/family lookup index —
+// the same shape gate-check.mjs's `parseGlossaryEntries` builds (id cells may carry several
+// `·`/`,`-separated items, each a literal, a numeric range, or a family pattern).
+export function buildGlossaryIndex(text) {
+  const literals = new Map();
+  const families = [];
   const rows = [];
   const lines = text.split('\n');
   for (const line of lines) {
     const m = line.match(/^\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$/);
     if (!m) continue;
-    const [, id, expansion, where] = m;
-    if (/^-+$/.test(id.replace(/[:\s]/g, '')) || id === 'ID') continue;
-    map.set(id, expansion);
-    rows.push({ id, expansion, where });
+    const [, idCell, expansion, where] = m;
+    if (/^-+$/.test(idCell.replace(/[:\s]/g, '')) || /^id$/i.test(idCell)) continue;
+    rows.push({ id: idCell, expansion, where });
+    for (let item of idCell.split(/[·,]/).map((s) => s.trim()).filter(Boolean)) {
+      item = item.replace(/^`|`$/g, '');
+      const re = familyItemToRegex(item);
+      if (re) { families.push({ re, expansion }); continue; }
+      literals.set(item, expansion);
+    }
   }
-  return { map, rows };
+  return { literals, families, rows };
 }
 
-// Union ID grammar (design §4.8): epic/squad ids, T-case ids, G0-4, G-n, Wn, D-?n, Rn,
-// plus a few literal status-vocabulary words.
-const ID_GRAMMAR = /\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b|\bC-E\d+-\d{2}\b|\bV4[A-Z]\d+\b|\bG[0-4]\b|\bG-\d+\b|\bW\d+\b|\bD-?\d+\b|\bR\d+\b|\bAMD-\d+\b|\bA-\d+\b|\bO-\d+\b|\bLG-\d+\b|\bF-[A-Z]\d+\b|\bSQ-[A-Z]\b/g;
+export function isKnownGlossaryId(id, index) {
+  if (index.literals.has(id)) return true;
+  return index.families.some((f) => f.re.test(id));
+}
+
+export function glossaryExpansionFor(id, index) {
+  if (index.literals.has(id)) return index.literals.get(id);
+  const fam = index.families.find((f) => f.re.test(id));
+  return fam ? fam.expansion : '';
+}
+
+// ID-shaped token discovery (design §4.8, widened under AMD-10 to the same shape
+// gate-check.mjs's own glossary lint scans prose with — an uppercase-led run of
+// dash-joined alphanumeric segments, filtered to those carrying a digit somewhere, so
+// arbitrary family shapes like `D-B<n>` are found in prose without a bespoke alternative
+// per shape; a stoplist excludes acronyms that happen to contain a digit-like run).
+const ID_TOKEN_RE = /\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
+const ID_STOPLIST = new Set(['UTF8', 'SHA256', 'ISO8601', 'HTTP2', 'X11', 'MD5', 'I18N', 'E2E']);
 
 export function buildGlossaryPanel(glossaryPath) {
   if (!glossaryPath || !fs.existsSync(glossaryPath)) {
     return {
       html: '<details class="glossary"><summary>Glossary</summary><p>GLOSSARY.md not generated yet — IDs on this page are unexpanded.</p></details>',
-      map: new Map(),
+      index: { literals: new Map(), families: [], rows: [] },
       warning: 'GLOSSARY.md not generated yet',
     };
   }
   const text = fs.readFileSync(glossaryPath, 'utf-8');
-  const { map, rows } = parseGlossaryTable(text);
-  const tableRows = rows
+  const index = buildGlossaryIndex(text);
+  const tableRows = index.rows
     .map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.expansion)}</td><td>${esc(r.where)}</td></tr>`)
     .join('\n');
   const html = `<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${tableRows}</table></div></details>`;
-  return { html, map, warning: null };
+  return { html, index, warning: null };
 }
 
-function familyMatch(id, map) {
-  if (map.has(id)) return true;
-  for (const key of map.keys()) {
-    if (key.includes('*')) {
-      const re = new RegExp('^' + key.split('*').map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
-      if (re.test(id)) return true;
-    }
-  }
-  return false;
-}
-
-// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content.
-export function expandFirstUse(bodyHtml, glossaryMap) {
+// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content
+// and a rendered `glossary` block's own table (AMD-11 — its escaped family-pattern cells,
+// e.g. "V4A&lt;n&gt;", are not prose to scan). The collapsed {{GLOSSARY}} panel is never in
+// bodyHtml at all (a separate template slot), so it is excluded structurally, not by pattern.
+export function expandFirstUse(bodyHtml, glossaryIndex) {
   const seen = new Set();
   const warnings = [];
-  const segments = bodyHtml.split(/(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>)/i);
+  const PROTECTED_RE = /(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>|<div class="glossary-table-block">[\s\S]*?<\/div>\s*<\/div>)/i;
+  const segments = bodyHtml.split(PROTECTED_RE);
   for (let s = 0; s < segments.length; s++) {
     if (s % 2 === 1) continue; // inside a protected tag — untouched
-    segments[s] = segments[s].replace(ID_GRAMMAR, (id) => {
-      const known = familyMatch(id, glossaryMap);
+    segments[s] = segments[s].replace(ID_TOKEN_RE, (id) => {
+      if (!/\d/.test(id) || ID_STOPLIST.has(id)) return id; // not ID-shaped — leave untouched, no warning
+      const known = isKnownGlossaryId(id, glossaryIndex);
       if (!known) {
         if (!warnings.includes(id)) warnings.push(id);
         return id;
       }
       if (!seen.has(id)) {
         seen.add(id);
-        const expansion = glossaryMap.get(id) || [...glossaryMap.entries()].find(([k]) => familyMatch(id, new Map([[k, '']])))?.[1] || '';
+        const expansion = glossaryExpansionFor(id, glossaryIndex);
         return `<abbr class="gl" title="${esc(expansion)}">${id}</abbr><span class="gl-x">(${esc(expansion)})</span>`;
       }
       return `<abbr>${id}</abbr>`;
@@ -650,9 +691,13 @@ function renderCopyRulings(b, ctx) {
 function renderGlossaryBlock(b, ctx) {
   const p = b.path ? path.join(ctx.bases[0], b.path) : ctx.glossaryPath;
   if (!p || !fs.existsSync(p)) return { fatal: false, html: '<p>GLOSSARY.md not generated yet</p>', warnings: ['glossary block: file not found'] };
-  const { rows } = parseGlossaryTable(fs.readFileSync(p, 'utf-8'));
+  const { rows } = buildGlossaryIndex(fs.readFileSync(p, 'utf-8'));
   const trs = rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.expansion)}</td><td>${esc(r.where)}</td></tr>`).join('');
-  return { fatal: false, html: `<div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${trs}</table></div>`, warnings: [] };
+  // AMD-11: this table's own escaped family-pattern cells (e.g. "V4A&lt;n&gt;") must never
+  // be re-scanned as prose by the first-use pass — wrapped so expandFirstUse can skip it,
+  // exactly like <code>/<pre> (its own visible rendering — a plain, non-collapsed table per
+  // D-A11 — is unchanged; this is a scan boundary marker, not a display change).
+  return { fatal: false, html: `<div class="glossary-table-block"><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${trs}</table></div></div>`, warnings: [] };
 }
 
 function renderLockbox(b) {
@@ -729,7 +774,7 @@ export function renderBody(manifest, { bases, glossaryPath }) {
   const sectionsById = new Map();
   for (const s of manifest.sections || []) if (s.id) sectionsById.set(s.id, s);
 
-  const { html: glossaryPanelHtml, map: glossaryMap, warning: glossaryWarn } = buildGlossaryPanel(glossaryPath);
+  const { html: glossaryPanelHtml, index: glossaryIndex, warning: glossaryWarn } = buildGlossaryPanel(glossaryPath);
 
   const ctx = {
     bases,
@@ -756,7 +801,7 @@ export function renderBody(manifest, { bases, glossaryPath }) {
   }
   let bodyHtml = parts.join('\n');
 
-  const { html: expandedHtml, warnings: idWarnings } = expandFirstUse(bodyHtml, glossaryMap);
+  const { html: expandedHtml, warnings: idWarnings } = expandFirstUse(bodyHtml, glossaryIndex);
   bodyHtml = expandedHtml;
   for (const id of idWarnings) ctx.warnings.push(`glossary: ID "${id}" used but not in GLOSSARY.md`);
 
@@ -789,13 +834,13 @@ const MERMAID_SCRIPT_TAG =
   '<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>\n' +
   '<script>mermaid.initialize({securityLevel:\'strict\',startOnLoad:true,theme:document.documentElement.getAttribute(\'data-theme\')===\'dark\'?\'dark\':\'default\'});</script>';
 
-export function assembleHtml({ manifest, kind, template, brandInfo, glossaryPanelHtml, bodyHtml, needsMermaid, sourceHash, embedHashes, templateHash, htmlBlocks }) {
+export function assembleHtml({ manifest, kind, template, brandInfo, glossaryPanelHtml, bodyHtml, needsMermaid, sourceHash, sourceRel, embedHashes, templateHash, htmlBlocks }) {
   const brandCss = emitBrandCss(brandInfo.brand);
   const fontLink = emitFontLink(brandInfo.brand);
   const badge = `<p class="brand-badge">brand: ${brandInfo.source === 'default' ? 'Her0 default' : brandInfo.source}</p>`;
   const embedsStr = Object.entries(embedHashes || {}).map(([p, h]) => `${p} sha256=${h}`).join(';');
   const metaStamps = [
-    `<meta name="planit-source" content="${esc(manifest.source ? manifest.source.path : '')} sha256=${sourceHash}">`,
+    `<meta name="planit-source" content="${esc(sourceRel !== undefined ? sourceRel : (manifest.source ? manifest.source.path : ''))} sha256=${sourceHash}">`,
     `<meta name="planit-embeds" content="${esc(embedsStr)}">`,
     `<meta name="planit-brand" content="${brandInfo.source === 'default' ? `default sha256=${brandInfo.hash}` : `${brandInfo.source} sha256=${brandInfo.hash}`}">`,
     `<meta name="planit-renderer" content="build-report.mjs/${RENDERER_VERSION} template sha256=${templateHash}">`,
@@ -871,11 +916,15 @@ export function renderToBuffer(manifestPath, cliFlags) {
   const template = loadTemplate();
   const templateHash = sha256(template);
 
+  const outDir = path.dirname(resolveOutPath(manifest, manifestDir, cliFlags.out));
+
+  // AMD-9 / T-V4A1-13: every stamped relpath is relative to the TWIN's own directory
+  // (CONTRACT §4.3), never the manifest's — same rule embeds already followed below.
   const sourcePath = manifest.source && manifest.source.path ? path.join(manifestDir, manifest.source.path) : null;
   const sourceHash = sourcePath && fs.existsSync(sourcePath) ? sha256(fs.readFileSync(sourcePath)) : sha256('');
+  const sourceRel = sourcePath && fs.existsSync(sourcePath) ? toRelForward(outDir, sourcePath) : (manifest.source ? manifest.source.path : '');
 
   const embedHashes = {};
-  const outDir = path.dirname(resolveOutPath(manifest, manifestDir, cliFlags.out));
   for (const s of manifest.sections || []) {
     for (const b of s.blocks || []) {
       const p = b.path || (b.embed && b.embed.path);
@@ -896,12 +945,17 @@ export function renderToBuffer(manifestPath, cliFlags) {
     bodyHtml: bodyResult.html,
     needsMermaid: bodyResult.needsMermaid,
     sourceHash,
+    sourceRel,
     embedHashes,
     templateHash,
     htmlBlocks: bodyResult.htmlBlocks,
   });
 
-  const cssAudit = auditCssTokens(html);
+  // AMD-9 / T-V4A1-14: scan only the rendered <style> blocks — embedded content (e.g. a
+  // CONTRACT.md excerpt whose prose literally contains "var(--token)") must never trigger
+  // this build-time authoring lint.
+  const styleBlocks = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+  const cssAudit = auditCssTokens(styleBlocks);
   if (cssAudit.missing.length) {
     process.stderr.write(`WARNING: CSS tokens referenced but not declared in :root: ${cssAudit.missing.join(', ')}\n`);
   }

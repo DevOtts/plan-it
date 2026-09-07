@@ -20,7 +20,7 @@ const manifest = {
   ],
 };
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-fs.writeFileSync(path.join(dir, 'GLOSSARY.md'), '| ID | Expansion | Where defined |\n|---|---|---|\n');
+fs.writeFileSync(path.join(dir, 'GLOSSARY.md'), '| ID | Expansion | Where defined |\n|---|---|---|\n| E1 | test card id | fixture |\n');
 
 const out = path.join(dir, 'out.html');
 const r = runRenderer([manifestPath, '--out', out]);

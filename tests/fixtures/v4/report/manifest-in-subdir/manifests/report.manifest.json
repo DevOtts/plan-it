@@ -1,0 +1,13 @@
+{
+  "schema": "planit-report/1",
+  "kind": "RESEARCH-REPORT",
+  "title": "Manifest In Subdir",
+  "output": "../REPORT.html",
+  "source": {"path": "../REPORT.md"},
+  "glossary": {"path": "../GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "embed", "path": "../EMBED.md", "label": "Embed"}
+    ]}
+  ]
+}
