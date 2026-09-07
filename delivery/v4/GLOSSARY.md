@@ -107,12 +107,15 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | F-*n | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
 | D-A<n> · D-B<n> · D-C<n> | PRD-level design decisions per squad (renderer · core · prose), cited by every epic task | delivery/v4/prds/ |
 | ab0c192 | the W0 commit that landed the v4 planning package and the guard mirror fix (A-4) | STATUS.md ## Log |
-| V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
+| V4A<n> | SQ-A (renderer) epic ID | delivery/v4/epics/epics-a-renderer.md |
+| V4B<n> | SQ-B (deterministic core) epic ID | delivery/v4/epics/epics-b-core.md |
+| V4C<n> | SQ-C (prose and packaging) epic ID | delivery/v4/epics/epics-c-prose.md |
 | C-E*-NN | enforcement case for enhancement n (`C-E<n>-NN`; 60 in the CONTRACT, computed) | CONTRACT ## Cases |
 | T-*-NN | per-epic Test Contract case (`T-<EID>-NN`, e.g. T-V4B4-17) | delivery/v4/epics/ |
 | T-E*-NN | v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs) | tests/run-contract.mjs |
 | C-W*-NN · C-META-NN | v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist) | delivery/v3/CONTRACT.md |
 | SHA-256 | the hash function behind every pin and stamp (`sha256=<64-hex>`) | CONTRACT §4.3 |
+| AMD-11 | orchestrator amendment 2026-09-07 (CONTRACT v1.4): literal-first glossary lookup, no range expansion; glossary table excluded from first-use scan | delivery/decisions.md |
 | AMD-10 | orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12 | delivery/decisions.md |
 | AMD-9 | orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14 | delivery/decisions.md |
 | AMD-8 | orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/` | delivery/decisions.md |
