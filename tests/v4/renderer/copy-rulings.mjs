@@ -12,10 +12,10 @@ const manifest = {
   glossary: { path: 'GLOSSARY.md' },
   sections: [
     { heading: 'Decisions', blocks: [
-      { type: 'decision-card', id: 'D1', status: 'ruled', question_html: '<p>Q1</p>', ruling: 'granted' },
-      { type: 'decision-card', id: 'D2', status: 'open', question_html: '<p>Q2</p>', recommendation: 'do X', why_yours_html: '<p>because</p>' },
-      { type: 'decision-card', id: 'D3', status: 'ruled', question_html: '<p>Q3</p>', ruling: 'denied' },
-      { type: 'decision-card', id: 'D4', status: 'open', question_html: '<p>Q4</p>', recommendation: 'do Y', why_yours_html: '<p>because too</p>' },
+      { type: 'decision-card', id: 'D1', status: 'ruled', question_html: '<p>Question one?</p>', ruling: 'granted' },
+      { type: 'decision-card', id: 'D2', status: 'open', question_html: '<p>Question two?</p>', recommendation: 'do X', why_yours_html: '<p>because</p>' },
+      { type: 'decision-card', id: 'D3', status: 'ruled', question_html: '<p>Question three?</p>', ruling: 'denied' },
+      { type: 'decision-card', id: 'D4', status: 'open', question_html: '<p>Question four?</p>', recommendation: 'do Y', why_yours_html: '<p>because too</p>' },
     ] },
     { heading: 'Copy', blocks: [{ type: 'copy-rulings' }] },
   ],

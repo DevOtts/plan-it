@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "RESEARCH-REPORT",
+  "title": "Glossary Family Grammar",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "html", "content": "<p>Bound in T-V4B4-17 (case C-E8-01), per G-7. Amended by AMD-3. Grounded by LG-16. Sourced from F-A12. Designed in D-B6. Unknown: Q-99.</p>"}
+    ]}
+  ]
+}

@@ -341,69 +341,115 @@ export function emitFontLink(brand) {
 // Glossary (G-8, D-A11)
 // ---------------------------------------------------------------------------
 
-export function parseGlossaryTable(text) {
-  const map = new Map();
+// Family-pattern grammar (CONTRACT §5, AMD-10) — ONE grammar shared in *semantics* (not
+// code — lanes do not import each other's files, CONTRACT §2) with gate-check.mjs's
+// `familyItemToRegex`/`expandGlossaryRange` (SQ-B, .claude/worktrees/v4b-lints at the time
+// of writing): `*` -> `[A-Za-z0-9.]+`, word-bounded `NN` -> `[A-Z0-9]{2,3}`, `<n>` or a
+// trailing bare `n` -> `\d+`; a numeric range ("F-A1 … F-A20") expands to literal ids.
+function expandGlossaryRange(item) {
+  const m = item.match(/^([A-Za-z]+-?)(\d+)\s*(?:…|\.\.\.|-{1,2}|–)\s*(?:[A-Za-z-]+)?(\d+)$/);
+  if (!m) return null;
+  const [, prefix, loStr, hiStr] = m;
+  const lo = Number(loStr), hi = Number(hiStr);
+  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo || hi - lo > 500) return null;
+  const ids = [];
+  for (let i = lo; i <= hi; i++) ids.push(`${prefix}${i}`);
+  return ids;
+}
+function familyItemToRegex(item) {
+  if (!/(\*|<n>|\bNN\b|n$)/.test(item)) return null;
+  const hasTrailingBareN = /n$/.test(item) && !/NN$/.test(item) && !item.endsWith('<n>');
+  let s = item.split('<n>').join('@@NUM@@');
+  s = s.replace(/\bNN\b/g, '@@NN@@');
+  s = s.split('*').join('@@STAR@@');
+  if (hasTrailingBareN) s = s.replace(/n$/, '@@NUM@@');
+  if (!/@@/.test(s)) return null; // no placeholder actually substituted -> not a family pattern
+  s = s.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+  s = s.split('@@NUM@@').join('\\d+');
+  s = s.split('@@NN@@').join('[A-Z0-9]{2,3}');
+  s = s.split('@@STAR@@').join('[A-Za-z0-9.]+');
+  return new RegExp(`^${s}$`);
+}
+
+// Parses a GLOSSARY.md table into a display row list plus a literal/family lookup index —
+// the same shape gate-check.mjs's `parseGlossaryEntries` builds (id cells may carry several
+// `·`/`,`-separated items, each a literal, a numeric range, or a family pattern).
+export function buildGlossaryIndex(text) {
+  const literals = new Map();
+  const families = [];
   const rows = [];
   const lines = text.split('\n');
   for (const line of lines) {
     const m = line.match(/^\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$/);
     if (!m) continue;
-    const [, id, expansion, where] = m;
-    if (/^-+$/.test(id.replace(/[:\s]/g, '')) || id === 'ID') continue;
-    map.set(id, expansion);
-    rows.push({ id, expansion, where });
+    const [, idCell, expansion, where] = m;
+    if (/^-+$/.test(idCell.replace(/[:\s]/g, '')) || /^id$/i.test(idCell)) continue;
+    rows.push({ id: idCell, expansion, where });
+    for (let item of idCell.split(/[·,]/).map((s) => s.trim()).filter(Boolean)) {
+      item = item.replace(/^`|`$/g, '');
+      const range = expandGlossaryRange(item);
+      if (range) { range.forEach((id) => literals.set(id, expansion)); continue; }
+      const re = familyItemToRegex(item);
+      if (re) { families.push({ re, expansion }); continue; }
+      literals.set(item, expansion);
+    }
   }
-  return { map, rows };
+  return { literals, families, rows };
 }
 
-// Union ID grammar (design §4.8): epic/squad ids, T-case ids, G0-4, G-n, Wn, D-?n, Rn,
-// plus a few literal status-vocabulary words.
-const ID_GRAMMAR = /\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b|\bC-E\d+-\d{2}\b|\bV4[A-Z]\d+\b|\bG[0-4]\b|\bG-\d+\b|\bW\d+\b|\bD-?\d+\b|\bR\d+\b|\bAMD-\d+\b|\bA-\d+\b|\bO-\d+\b|\bLG-\d+\b|\bF-[A-Z]\d+\b|\bSQ-[A-Z]\b/g;
+export function isKnownGlossaryId(id, index) {
+  if (index.literals.has(id)) return true;
+  return index.families.some((f) => f.re.test(id));
+}
+
+export function glossaryExpansionFor(id, index) {
+  if (index.literals.has(id)) return index.literals.get(id);
+  const fam = index.families.find((f) => f.re.test(id));
+  return fam ? fam.expansion : '';
+}
+
+// ID-shaped token discovery (design §4.8, widened under AMD-10 to the same shape
+// gate-check.mjs's own glossary lint scans prose with — an uppercase-led run of
+// dash-joined alphanumeric segments, filtered to those carrying a digit somewhere, so
+// arbitrary family shapes like `D-B<n>` are found in prose without a bespoke alternative
+// per shape; a stoplist excludes acronyms that happen to contain a digit-like run).
+const ID_TOKEN_RE = /\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
+const ID_STOPLIST = new Set(['UTF8', 'SHA256', 'ISO8601', 'HTTP2', 'X11', 'MD5', 'I18N', 'E2E']);
 
 export function buildGlossaryPanel(glossaryPath) {
   if (!glossaryPath || !fs.existsSync(glossaryPath)) {
     return {
       html: '<details class="glossary"><summary>Glossary</summary><p>GLOSSARY.md not generated yet — IDs on this page are unexpanded.</p></details>',
-      map: new Map(),
+      index: { literals: new Map(), families: [], rows: [] },
       warning: 'GLOSSARY.md not generated yet',
     };
   }
   const text = fs.readFileSync(glossaryPath, 'utf-8');
-  const { map, rows } = parseGlossaryTable(text);
-  const tableRows = rows
+  const index = buildGlossaryIndex(text);
+  const tableRows = index.rows
     .map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.expansion)}</td><td>${esc(r.where)}</td></tr>`)
     .join('\n');
   const html = `<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${tableRows}</table></div></details>`;
-  return { html, map, warning: null };
-}
-
-function familyMatch(id, map) {
-  if (map.has(id)) return true;
-  for (const key of map.keys()) {
-    if (key.includes('*')) {
-      const re = new RegExp('^' + key.split('*').map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$');
-      if (re.test(id)) return true;
-    }
-  }
-  return false;
+  return { html, index, warning: null };
 }
 
 // First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content.
-export function expandFirstUse(bodyHtml, glossaryMap) {
+export function expandFirstUse(bodyHtml, glossaryIndex) {
   const seen = new Set();
   const warnings = [];
   const segments = bodyHtml.split(/(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>)/i);
   for (let s = 0; s < segments.length; s++) {
     if (s % 2 === 1) continue; // inside a protected tag — untouched
-    segments[s] = segments[s].replace(ID_GRAMMAR, (id) => {
-      const known = familyMatch(id, glossaryMap);
+    segments[s] = segments[s].replace(ID_TOKEN_RE, (id) => {
+      if (!/\d/.test(id) || ID_STOPLIST.has(id)) return id; // not ID-shaped — leave untouched, no warning
+      const known = isKnownGlossaryId(id, glossaryIndex);
       if (!known) {
         if (!warnings.includes(id)) warnings.push(id);
         return id;
       }
       if (!seen.has(id)) {
         seen.add(id);
-        const expansion = glossaryMap.get(id) || [...glossaryMap.entries()].find(([k]) => familyMatch(id, new Map([[k, '']])))?.[1] || '';
+        const expansion = glossaryExpansionFor(id, glossaryIndex);
         return `<abbr class="gl" title="${esc(expansion)}">${id}</abbr><span class="gl-x">(${esc(expansion)})</span>`;
       }
       return `<abbr>${id}</abbr>`;
@@ -650,7 +696,7 @@ function renderCopyRulings(b, ctx) {
 function renderGlossaryBlock(b, ctx) {
   const p = b.path ? path.join(ctx.bases[0], b.path) : ctx.glossaryPath;
   if (!p || !fs.existsSync(p)) return { fatal: false, html: '<p>GLOSSARY.md not generated yet</p>', warnings: ['glossary block: file not found'] };
-  const { rows } = parseGlossaryTable(fs.readFileSync(p, 'utf-8'));
+  const { rows } = buildGlossaryIndex(fs.readFileSync(p, 'utf-8'));
   const trs = rows.map((r) => `<tr><td>${esc(r.id)}</td><td>${esc(r.expansion)}</td><td>${esc(r.where)}</td></tr>`).join('');
   return { fatal: false, html: `<div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr>${trs}</table></div>`, warnings: [] };
 }
@@ -729,7 +775,7 @@ export function renderBody(manifest, { bases, glossaryPath }) {
   const sectionsById = new Map();
   for (const s of manifest.sections || []) if (s.id) sectionsById.set(s.id, s);
 
-  const { html: glossaryPanelHtml, map: glossaryMap, warning: glossaryWarn } = buildGlossaryPanel(glossaryPath);
+  const { html: glossaryPanelHtml, index: glossaryIndex, warning: glossaryWarn } = buildGlossaryPanel(glossaryPath);
 
   const ctx = {
     bases,
@@ -756,7 +802,7 @@ export function renderBody(manifest, { bases, glossaryPath }) {
   }
   let bodyHtml = parts.join('\n');
 
-  const { html: expandedHtml, warnings: idWarnings } = expandFirstUse(bodyHtml, glossaryMap);
+  const { html: expandedHtml, warnings: idWarnings } = expandFirstUse(bodyHtml, glossaryIndex);
   bodyHtml = expandedHtml;
   for (const id of idWarnings) ctx.warnings.push(`glossary: ID "${id}" used but not in GLOSSARY.md`);
 

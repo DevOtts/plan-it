@@ -24,20 +24,31 @@ assert(embeds.startsWith('EMBED.md sha256='), `planit-embeds is twin-relative ("
 // gate-check mirror (V4B4 verb) must also see them as a fresh pair. That verb lives on
 // epic/v4b-lints, not yet on main — try main first (future-proof once it merges), else the
 // worktree, else mark this one sub-assertion INV rather than hard-failing the whole case.
+// Black-box probe: does this gate-check.mjs copy's own usage line list "mirror" as a known
+// verb? (Its enumerated verb list is piped: "<verify|freeze|...|mirror|...>" — "mirror-check"
+// is a different, always-present verb and never matches this bounded pattern.)
+function knowsMirrorVerb(gateCheckPath) {
+  const r = spawnSync(process.execPath, [gateCheckPath], { encoding: 'utf-8' });
+  const combined = `${r.stdout || ''}${r.stderr || ''}`;
+  return /[|<]mirror[|>]/.test(combined);
+}
+
 function findGateCheck() {
+  // In-tree first (true post-W2-merge, and in any fresh worktree cut from main after that) —
+  // probed black-box by behavior, not by reading source, so a rename/refactor can't fool it.
   const onMain = path.join(repoRoot, 'plugins', 'plan-it', 'skills', 'plan-it', 'scripts', 'gate-check.mjs');
-  if (fs.existsSync(onMain)) {
-    const src = fs.readFileSync(onMain, 'utf-8');
-    if (/function cmdMirror\(/.test(src)) return onMain;
-  }
-  // v4b-lints (V4B4's mirror verb) is a sibling worktree, not nested under this one — ask
-  // git for the shared checkout's worktree list rather than assuming a fixed absolute path.
+  if (fs.existsSync(onMain) && knowsMirrorVerb(onMain)) return onMain;
+
+  // Fallback only while V4B4 hasn't merged yet: v4b-lints is a sibling worktree, not nested
+  // under this one — ask git for the shared checkout's worktree list rather than assuming a
+  // fixed absolute path (this branch also naturally stops matching anything once that
+  // worktree is pruned post-merge, at which point the in-tree copy above already covers it).
   const wt = spawnSync('git', ['worktree', 'list', '--porcelain'], { encoding: 'utf-8', cwd: repoRoot });
   const worktreePaths = (wt.stdout || '').split('\n').filter((l) => l.startsWith('worktree ')).map((l) => l.slice('worktree '.length));
   const v4bLints = worktreePaths.find((p) => p.endsWith('v4b-lints'));
   if (v4bLints) {
     const onWorktree = path.join(v4bLints, 'plugins', 'plan-it', 'skills', 'plan-it', 'scripts', 'gate-check.mjs');
-    if (fs.existsSync(onWorktree)) return onWorktree;
+    if (fs.existsSync(onWorktree) && knowsMirrorVerb(onWorktree)) return onWorktree;
   }
   return null;
 }
