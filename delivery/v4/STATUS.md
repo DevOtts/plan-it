@@ -1,0 +1,40 @@
+# STATUS — plan-it v4 · live board
+
+Current wave: **W0 ready** (handed off 2026-09-07; PLAN-REVIEW ratified, A-1/A-3/A-4 granted, A-2 held until O-2; opens when Fernando pastes the five prompts from SESSIONS.md).
+Legend: status is one of NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED (closed vocabulary). Disposition is empty until an epic closes with a non-green residual; then exactly one of `backlog-with-reason: <path>` · `owner-gated: <owner>` · `IMPLEMENTED-NOT-VERIFIED: <case> <target>`. IDs: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTRACT case · `Wn` wave — see `GLOSSARY.md`.
+Program totals (computed by `gate-check handoff delivery/v4/`): 13 epics · 166 epic cases (SQ-A 48 · SQ-B 74 · SQ-C 44) + 60 CONTRACT cases · 0 `[REAL]`. The orchestrator recomputes this line from the epics files; it never hand-edits it.
+
+| EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch | Disposition |
+|---|---|---|---|---|---|---|---|
+| V4A1 | Renderer core: CLI, determinism, exit codes, `--open` routing, legacy manifest compat | SQ-A | W1 | NOT-STARTED | 0/12 | `epic/v4a-renderer-core` | |
+| V4A2 | Block catalogue (17 types) + brand tokens + detection + badge/stamps | SQ-A | W1 | NOT-STARTED | 0/15 | `epic/v4a-block-catalogue` | |
+| V4A3 | Glossary panel + first-use expansion + model-ID leak lint + escape hardening + theme tokens | SQ-A | W1 | NOT-STARTED | 0/11 | `epic/v4a-glossary-security` | |
+| V4A4 | `references/report-family.md`, fixture completeness, renderer test-harness wiring | SQ-A | W1 | NOT-STARTED | 0/10 | `epic/v4a-fixtures-docs` | |
+| V4B1 | `machine.json` additive superset + byte-pinned 3.0.1 baseline + negative machine fixtures | SQ-B | W1 | NOT-STARTED | 0/14 | `epic/v4b-machine-superset` | |
+| V4B2 | `state` verb additions (triage · defaults · plan review · draft-cannot-hand-off · mode · `--run`) + `freeze --draft` | SQ-B | W1 | NOT-STARTED | 0/15 | `epic/v4b-state-draft` | |
+| V4B3 | Named runs: state-file resolution, deliveryRoot-aware verbs, `archive`, `runs`, guard resolution in both copies, grammar widening | SQ-B | W1 | NOT-STARTED | 0/17 | `epic/v4b-named-runs` | |
+| V4B4 | `mirror`, `glossary`, disposition counting in `reconcile`, ENV-FACTS tool-only fix, embedded in `handoff` | SQ-B | W1 | NOT-STARTED | 0/16 | `epic/v4b-lints` | |
+| V4B5 | Harness: AMD-4, AMD-5, exit polarity, `tests/v4/core/*` wiring, fixture index, dogfood fixture | SQ-B | W1→W2 | NOT-STARTED | 0/12 | `epic/v4b-harness` | |
+| V4C1 | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | W1 | NOT-STARTED | 0/12 | `epic/v4c-skill-prose` | |
+| V4C2 | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | W1 | NOT-STARTED | 0/12 | `epic/v4c-references` | |
+| V4C3 | docs + README + CHANGELOG 4.0.0 + installation note on stale installs | SQ-C | W1 | NOT-STARTED | 0/10 | `epic/v4c-docs-release` | |
+| V4C4 | Versions 4.0.0 across six sites + harness literals + `kickoff-pinning`/`changelog-shape` updates + `tests/v4/prose/*` | SQ-C | W1→W2 | NOT-STARTED | 0/10 | `epic/v4c-versions` | |
+
+Build order inside lanes: SQ-B V4B1 → V4B2 → V4B3 → V4B4 → V4B5 (V4B3 before QA runs the v4 cases). SQ-A V4A1 → V4A2 → V4A3 → V4A4. SQ-C V4C1 ∥ V4C2 → V4C3 → V4C4 (V4C4's six-site version check goes green only after SQ-B's `machine.json` bump lands in the same W2 merge).
+
+## Residuals
+
+No residuals at handoff. Rows appear here only when an epic closes with a non-green item; each carries a disposition from the closed set and, for `backlog-with-reason`, the filed note's path.
+
+| Item | Disposition | Reason / exit criterion | Evidence |
+|---|---|---|---|
+
+## Log
+
+- 2026-09-07 20:30 — PLAN-REVIEW ratified as recommended by Fernando Ott (no contradictions); CONTRACT v1.0 frozen; package handed off (state `done`). Next: Fernando opens the five sessions in SESSIONS.md.
+- 2026-09-07 20:20 — `[incidental]` the 3.0.1 handoff lint scans forward from a `Count:` line to the next heading; a count line placed BELOW its table counts zero rows and is silently skipped (no failure, no ok line). SQ-C's four epics were affected and re-headed; disposition: backlog-with-reason for V4B5 (harness) — a `Count:` with zero rows in its block should be a lint finding, not silence.
+- 2026-09-07 19:55 — handoff reached: `gate-check handoff delivery/v4/` PASS (173 distinct case IDs across 13 files, every epic declared == counted); `gate-check adversary delivery/v4/` PASS (5/5 cascade classes). CONTRACT v1.1-draft frozen for squads; PLAN-REVIEW pending.
+- 2026-09-07 19:40 — AMENDMENT v1.0-draft → v1.1-draft folding 21 squad corrections; 0 cases added or removed (60).
+- 2026-09-07 19:10 — CONTRACT v1.0-draft frozen (freeze + contract verbs green, 60 cases). Squads SQ-A/SQ-B/SQ-C dispatched for PRDs + epics.
+- 2026-09-07 18:30 — discovery complete: four research streams verified on disk; preflight L 9/9 after the guard mirror fix.
+- 2026-09-07 — `[incidental]` the plugin's guard hook lacked the named-state fix from commit 7fcff27 (mirror drift, T-E5-02 red); copied root → plugin during planning, uncommitted, pending A-4. `[incidental]` an ABSENT preflight probe blacklists every token of its argv (C-W2-03), fixed by case C-E6-03. `[incidental]` `formats.md §9` cited by `gate-check preflight` does not exist (LG-6), closed by V4C2.

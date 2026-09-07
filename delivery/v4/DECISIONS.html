@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-it v4 Decision Queue</title>
+<meta name="planit-source" content="DECISIONS.md sha256=deeec278bb7519bc5b87d12953a0a4f1665f479bee3b189fb8b0e0c2021cddbe">
+<meta name="planit-brand" content="default sha256=8a978f97b922096a3b1fda438a0000ace20765a81104ee2baf11be61f87a8773">
+<meta name="planit-renderer" content="hand-render/coordinator-2026-09-07 (v4 build-report.mjs pending)">
+<meta name="planit-kind" content="DECISIONS">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#FFFFFF; --card:#F6F8FA; --line:#E6EDF3; --ink:#0D1117; --muted:#484F58;
+    --accent:#00B37D; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent);
+    --ok:#2EA043; --warn:#D29922; --bad:#F85149; --info:#58A6FF; --chip:#E6EDF3; --hold:#484F58;
+    --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+    --font-body:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D1117; --card:#161B22; --line:#21262D; --ink:#C9D1D9; --muted:#8B949E;
+      --accent:#00E5A0; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent); --chip:#21262D; --hold:#8B949E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1117; --card:#161B22; --line:#21262D; --ink:#C9D1D9; --muted:#8B949E;
+    --accent:#00E5A0; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent); --chip:#21262D; --hold:#8B949E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+  body::before{content:"";display:block;height:3px;background:var(--accent);position:fixed;top:0;left:0;right:0}
+  main{max-width:920px;margin:0 auto;position:relative}
+  h1,h2,h3,.eyebrow,.badge,.pill,#theme-toggle,.brand-badge,th{font-family:var(--font-display)}
+  .eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:1.7rem;margin:.2rem 0 .3rem;letter-spacing:-.01em;text-wrap:balance;padding-right:7rem}
+  .sub{color:var(--muted);margin:0 0 1.6rem;max-width:70ch}
+  h2{font-size:1rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2.4rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  #theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:.3rem .8rem;font-size:.78rem;cursor:pointer}
+  #theme-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .brand-badge{display:inline-block;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.1rem .6rem;margin-right:.5rem}
+  code{font-family:var(--font-mono);background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-word}
+  pre{font-family:var(--font-mono);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font-size:.82rem}
+  .overflow{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td.id{font-family:var(--font-mono);font-weight:600;color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tag{display:inline-block;font-family:var(--font-mono);font-size:.72rem;background:var(--chip);border-radius:5px;padding:.05rem .4rem;color:var(--muted)}
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:.12rem .55rem}
+  .b-ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .b-hold{background:color-mix(in srgb,var(--hold) 16%,transparent);color:var(--hold)}
+  .b-act{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+  .b-default{background:var(--accent-bg);color:var(--accent)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem;margin-bottom:.75rem}
+  .card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+  .card h3 .cid{font-family:var(--font-mono);font-weight:700;color:var(--accent)}
+  .card p{margin:.3rem 0;max-width:none}
+  .card .why{border-left:3px solid var(--warn);padding:.3rem .8rem;margin:.6rem 0;background:color-mix(in srgb,var(--warn) 8%,transparent);border-radius:0 6px 6px 0}
+  .card .why b{font-family:var(--font-display);font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;color:var(--warn);display:block;margin-bottom:.15rem}
+  .unblocks{font-size:.85rem;color:var(--muted);margin-top:.5rem}
+  .unblocks b{color:var(--accent)}
+  details.glossary,details.more{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.6rem .9rem;margin:.8rem 0}
+  details summary{cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:.88rem;color:var(--accent);list-style:none;display:inline-flex;gap:.4rem;align-items:center}
+  details summary::before{content:"▸";transition:transform .15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  details table{font-size:.82rem;margin-top:.6rem}
+  .copy{position:relative}
+  .copy button{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:.2rem .6rem;cursor:pointer}
+  .copy button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .legend{font-size:.8rem;color:var(--muted);margin:.3rem 0 1rem}
+  .note{border:1px solid var(--line);border-left:3px solid var(--info);background:var(--card);padding:.6rem 1rem;border-radius:0 8px 8px 0;font-size:.9rem;margin:1rem 0}
+  footer{margin-top:3rem;color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:1rem}
+  @media (prefers-reduced-motion: reduce){details summary::before{transition:none}}
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<div class="eyebrow">plan-it v4 · delivery/v4 · decision queue · round 2 · ratified 2026-09-07</div>
+<h1>plan-it v4 Decision Queue</h1>
+<p class="sub"><span class="brand-badge" data-brand="default">brand: Her0 default</span> Markdown twin: <code>DECISIONS.md</code> (canonical). <b>Ratified at PLAN-REVIEW on 2026-09-07:</b> the twelve defaults stand; A-1, A-3, A-4 granted; A-2 held until you have read QA-REPORT.md (O-2). Owner actions O-1 and O-2 remain yours; O-3 closed with R7.</p>
+<p class="legend">Legend: <b>Dn</b> ruling you gave · <b>Rn</b> default the run applied (contradict if wrong) · <b>A-n</b> authorization the build needs · <b>O-n</b> owner action only you can do · <b>G-n</b> governance rule in the CONTRACT — full list in the glossary panel.</p>
+
+<details class="glossary"><summary>Glossary — every ID and acronym on this page</summary>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Means</th><th>Where defined</th></tr>
+<tr><td class="id">D1…D7</td><td>your rulings on the analysis report (mode, brand, local HTML, topology choice, rulings block, release scope, build topology)</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td class="id">R1…R12</td><td>defaults the run applied at the decisions gate (G2), to contradict at the plan review (G4)</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td class="id">A-1…A-4</td><td>authorizations: branch commits and merges, release tag, Chrome and headless sessions, the guard-fix commit</td><td>DECISIONS.md — Open</td></tr>
+<tr><td class="id">O-1…O-3</td><td>owner actions: stale installs cleanup, QA sign-off, brand ratification</td><td>DECISIONS.md — Open</td></tr>
+<tr><td class="id">G0…G4</td><td>human gates: anamnesis (questionnaire), scope, decisions, freeze, plan review</td><td>CONTRACT §3.1</td></tr>
+<tr><td class="id">G-n</td><td>a governance rule inside the CONTRACT (dash = rule; no dash = gate)</td><td>CONTRACT §6</td></tr>
+<tr><td class="id">CONTRACT</td><td>the frozen shared law squads build against; now <code>v1.0-draft</code>, becomes v1.0 when you ratify</td><td>delivery/v4/CONTRACT.md</td></tr>
+<tr><td class="id">PLAN-REVIEW</td><td>the single review-and-contradict round on the complete draft package (gate G4)</td><td>CONTRACT §1</td></tr>
+<tr><td class="id">SQ-A · SQ-B · SQ-C</td><td>the three build squads: renderer · deterministic core · prose and packaging</td><td>CONTRACT §2</td></tr>
+<tr><td class="id">W0…W4</td><td>build waves: orchestrator prep · squads · integration · QA · release</td><td>00-program-plan.md</td></tr>
+<tr><td class="id">AMD-4 · AMD-5</td><td>amendments to the test harness: gate count bound to the v2 baseline; mirror pairs 8 → 11</td><td>delivery/decisions.md</td></tr>
+<tr><td class="id">WCAG</td><td>Web Content Accessibility Guidelines — the contrast ratios behind R7</td><td>docs/v4/01-findings.md §2.2</td></tr>
+<tr><td class="id">QA</td><td>the session that runs every test case against the merged tree and writes QA-REPORT.md</td><td>00-program-plan.md</td></tr>
+<tr><td class="id">INV</td><td>IMPLEMENTED-NOT-VERIFIED: built, but the proving case could not run</td><td>GLOSSARY.md</td></tr>
+</table></div></details>
+
+<h2>Ruled — carried forward from your rulings on the analysis report</h2>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Ruling</th><th>Effect / where it lands</th></tr>
+<tr><td class="id">D1</td><td><span class="badge b-ok">decided</span> autonomous-draft is the default mode; guided selectable at anamnesis</td><td>this run itself runs in that mode; the statechart records <code>run.mode</code> at G0</td></tr>
+<tr><td class="id">D2</td><td><span class="badge b-ok">decided</span> brand = the target repository's guideline if present, else DevOtts' default at <code>assets/brand/</code></td><td>renderer brand detection; <code>default.brand.json</code> ships in the plugin</td></tr>
+<tr><td class="id">D3</td><td><span class="badge b-ok">decided</span> HTML twin beside its markdown, created locally by default, opened in Chrome only at human gates, never a claude.ai artifact</td><td>governance rule G-7; renderer <code>--open</code> semantics</td></tr>
+<tr><td class="id">D4</td><td><span class="badge b-ok">decided</span> topology is your choice at G1 with plan-it's recommendation shown</td><td>scope brief + G1 prompt; SESSIONS.md</td></tr>
+<tr><td class="id">D5</td><td><span class="badge b-ok">decided</span> the copy-your-rulings block ships in 4.0</td><td>the block at the bottom of this page (case C-E3-03)</td></tr>
+<tr><td class="id">D6</td><td><span class="badge b-ok">decided</span> all ten enhancements in 4.0.0</td><td>three squads, one release</td></tr>
+<tr><td class="id">D7</td><td><span class="badge b-ok">decided</span> v4 built by an orchestrator + three squads + QA</td><td>SESSIONS.md; this run is the first dogfood of that topology</td></tr>
+<tr><td class="id">G1</td><td><span class="badge b-ok">decided</span> Size L, shape 3, package <code>delivery/v4/</code>, design docs <code>docs/v4/</code></td><td><code>.plan-it/state.json</code></td></tr>
+<tr><td class="id">—</td><td><span class="badge b-ok">decided</span> KICKOFF.md and its single launch prompt stay; markdown stays canonical for the AI; every acronym explained on first use, plus GLOSSARY.md</td><td>E4 scope; rules G-6 and G-8</td></tr>
+</table></div>
+
+<h2>Defaults the run applied — read, then contradict what is wrong</h2>
+<p class="note">Each row is a decision the run took from its own recommendation so the draft package could be completed without stopping (your ruling D1). Nothing irreversible has executed. Squads are writing their PRDs and epics against the draft CONTRACT while you read. Answer <code>Rn: ok</code> or <code>Rn: &lt;alternative&gt;</code>.</p>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Question</th><th>Default applied</th><th>Alternative not taken</th><th>Why this default</th></tr>
+<tr><td class="id">R1</td><td>How does autonomous-draft keep "no frozen CONTRACT → no squads"?</td><td><span class="badge b-default">default</span> CONTRACT frozen as <code>v1.0-draft</code> for the squads; the plan review records your decisions and the freeze approval in one stop; a contradiction that changes the CONTRACT re-enters the squads as an amendment</td><td>Review before squads write (the praxya order)</td><td>You asked for "entire plan end-to-end, then contradict". The draft is frozen for the squads, so they cannot drift from each other; the amendment loop already exists.</td></tr>
+<tr><td class="id">R2</td><td>Where does an "owner decision, not a build" triage verdict go?</td><td><span class="badge b-default">default</span> to a closed-without-plan exit with a decision memo and a reopen condition</td><td>back into the questionnaire if you rule in the same sitting</td><td>one exit for every non-plan verdict; reopening is a new run</td></tr>
+<tr><td class="id">R3</td><td>Ruling tags: typed or glyphs?</td><td><span class="badge b-default">default</span> typed tags canonical in markdown; glyphs only as page decoration</td><td>glyphs as source of truth</td><td>machine-checkable; one vocabulary</td></tr>
+<tr><td class="id">R4</td><td>A deadline column on decisions?</td><td><span class="badge b-default">default</span> optional, default none; owner actions with a deadline surface in the close-out report</td><td>no column</td><td>the field's only deadline nearly got lost</td></tr>
+<tr><td class="id">R5</td><td>Orchestrator tier?</td><td><span class="badge b-default">default</span> top tier, in the run policy</td><td>unspecified</td><td>never violated in either precedent run</td></tr>
+<tr><td class="id">R6</td><td>Where do incidental findings go?</td><td><span class="badge b-default">default</span> the STATUS log, tagged incidental, never in the case tally</td><td>a separate file</td><td>one chronicle</td></tr>
+<tr><td class="id">R7</td><td>Brand contrast</td><td><span class="badge b-default">default</span> Signal, Flare, Info and Warn are chip backgrounds in light mode; muted text is Steel</td><td>the guideline's colours as text</td><td>measured WCAG: Signal on white 1.65, Slate on white 3.08 — unreadable; readability is what the guideline wants</td></tr>
+<tr><td class="id">R8</td><td>Mirror pairs</td><td><span class="badge b-default">default</span> 8 → 11 (renderer, template, brand tokens)</td><td>9</td><td>every shipped file mirrors</td></tr>
+<tr><td class="id">R9</td><td>Diagram library</td><td><span class="badge b-default">default</span> mermaid 10.9.1 pinned on cdnjs, strict mode, source shown as text when offline</td><td>11.x</td><td>10.9.1 is present on cdnjs and proven by 12 diagrams in your reference page</td></tr>
+<tr><td class="id">R10</td><td>Package path resolution</td><td><span class="badge b-default">default</span> the state file names the package folder; every verb derives paths from it</td><td>keep the <code>delivery/v3/</code> literals</td><td>literals produced false greens on this very run</td></tr>
+<tr><td class="id">R11</td><td>Test-harness amendments</td><td><span class="badge b-default">default</span> AMD-4 and AMD-5, recorded like the v3 amendments</td><td>fork the gate concept into a second key</td><td>same precedent, no new concept</td></tr>
+<tr><td class="id">R12</td><td>Where does the renderer live?</td><td><span class="badge b-default">default</span> a separate script, not a gate-check verb</td><td>a gate-check verb</td><td>different failure model; a browser spawn does not belong in the file the harness runs hundreds of times</td></tr>
+</table></div>
+
+<h2>Open — authorizations the build needs from you</h2>
+
+<div class="card"><h3><span class="cid">A-1</span> May squads commit to <code>epic/v4*</code> branches and the orchestrator merge to <code>main</code> overnight without a per-merge ping? <span class="badge b-ok">granted</span> <span class="tag">authorization</span></h3>
+<p>Every wave needs this. Merges are reviewed by the orchestrator against each epic's test contract before they land.</p>
+<div class="why"><b>Why nobody should pick for you</b>Merging to <code>main</code> of a published plugin is your repository's history: it can be reverted, not un-happened.</div>
+<p><b>Recommended:</b> grant, with the release tag excluded (see A-2).</p>
+<p class="unblocks"><b>Unblocks</b> W0 through W3.</p></div>
+
+<div class="card"><h3><span class="cid">A-2</span> May the orchestrator tag and push <code>4.0.0</code> and update the marketplace entry once the definition of shipped is green? <span class="badge b-hold">held until O-2</span> <span class="tag">authorization</span></h3>
+<p>The tag is the moment the release reaches every installer.</p>
+<div class="why"><b>Why nobody should pick for you</b>A published version is visible to users; reverting a marketplace version is a public event.</div>
+<p><b>Recommended:</b> do NOT grant now; tag after you have read the QA report (owner action O-2).</p>
+<p class="unblocks"><b>Unblocks</b> W4 only.</p></div>
+
+<div class="card"><h3><span class="cid">A-3</span> May the QA session open Chrome on this Mac to look at rendered pages, and run headless fallback sessions if a terminal sticks? <span class="badge b-ok">granted</span> <span class="tag">authorization</span></h3>
+<p>Rendered pages are checked in a real browser at the gates; the headless fallback is the closeout night's lesson when a terminal stopped responding.</p>
+<div class="why"><b>Why nobody should pick for you</b>It drives your browser and spawns processes on your machine while you sleep.</div>
+<p><b>Recommended:</b> grant.</p>
+<p class="unblocks"><b>Unblocks</b> W3 QA.</p></div>
+
+<div class="card"><h3><span class="cid">A-4</span> May the orchestrator commit the guard mirror fix applied during planning as its first W0 commit? <span class="badge b-ok">granted</span> <span class="tag">authorization</span></h3>
+<p>During planning the coordinator copied the root guard hook over the plugin copy (one file). The copy is uncommitted. It restores the 3.0.1 release invariant that all mirror pairs are byte-identical, and it is what makes the named-run fix from commit 7fcff27 actually run.</p>
+<div class="why"><b>Why nobody should pick for you</b>It is the first code change of 4.0.0 to land on <code>main</code>.</div>
+<p><b>Recommended:</b> grant.</p>
+<p class="unblocks"><b>Unblocks</b> W0.</p>
+<details class="more"><summary>Read more — what the copy changed</summary><p>The plugin copy lacked the 14-line block that resolves <code>.plan-it/&lt;name&gt;.state.json</code> from the written path. The mirror check now passes 8 of 8, the preflight probe passes 9 of 9, and the contract runner passes 51 of 51 plus 25 of 25 (the one previously failing case, T-E5-02, asserted exactly this pair).</p></details></div>
+
+<h2>Open — owner actions (only you; none blocks the build)</h2>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Item</th><th>Recommendation</th><th>Deadline</th></tr>
+<tr><td class="id">O-1</td><td>Remove the stale installs: the <code>plan-it@plan-it</code> enablement in settings, the <code>plan-it/</code> marketplace folder, and the user-level 2.1.0 skill copy; then install <code>plan-it@devotts</code> 4.0.0</td><td><span class="badge b-act">act</span> before the 4.0.0 tag, so the dogfood runs on the release copy</td><td>before A-2</td></tr>
+<tr><td class="id">O-2</td><td>Read <code>delivery/v4/QA-REPORT.md</code>, then give the tag/push go (A-2)</td><td><span class="badge b-act">act</span> after W3</td><td>none</td></tr>
+<tr><td class="id">O-3</td><td>Ratify R7 (brand contrast deviation) or send the exact colours you want as text</td><td><span class="badge b-act">act</span> at the plan review</td><td>none</td></tr>
+</table></div>
+
+<h2>Wave gates after round 1</h2>
+<div class="overflow"><table>
+<tr><th>Wave</th><th>Status</th></tr>
+<tr><td>W0 — orchestrator prep</td><td><span class="badge b-hold">held</span> until A-1 and A-4 are granted</td></tr>
+<tr><td>W1 — three squads in parallel</td><td><span class="badge b-ok">unblocked</span> by the draft CONTRACT; runs against v1.0-draft</td></tr>
+<tr><td>W2 — integration</td><td><span class="badge b-hold">held</span> by W1</td></tr>
+<tr><td>W3 — QA + dogfood</td><td><span class="badge b-hold">held</span> needs A-3</td></tr>
+<tr><td>W4 — release</td><td><span class="badge b-hold">held</span> needs A-2 after O-2; O-1 before the tag</td></tr>
+</table></div>
+
+<h2>Rulings as given (2026-09-07)</h2>
+<p>Recorded in <code>DECISIONS.md</code>, <code>GATE.md</code> and the run state.</p>
+<div class="copy"><button type="button" id="copy-btn">Copy</button><pre id="rulings">R1: ok · R2: ok · R3: ok · R4: ok · R5: ok · R6: ok · R7: ok · R8: ok · R9: ok · R10: ok · R11: ok · R12: ok
+A-1: grant · A-2: hold until O-2 · A-3: grant · A-4: grant</pre></div>
+
+<footer>Rendered by hand by the coordinator on 2026-09-07 following the v4 renderer's contract (stamps in the page head, brand badge, glossary panel, decision cards). The v4 <code>build-report.mjs</code> replaces this hand render; the markdown twin <code>DECISIONS.md</code> is canonical.</footer>
+</main>
+<script>
+(function(){
+  var btn=document.getElementById("theme-toggle"),lab=document.getElementById("theme-label");
+  var order=["auto","light","dark"],cur="auto";
+  try{cur=localStorage.getItem("planit-v4-theme")||"auto"}catch(e){}
+  function apply(v){cur=v;lab.textContent=v;if(v==="auto"){document.documentElement.removeAttribute("data-theme")}else{document.documentElement.setAttribute("data-theme",v)}try{localStorage.setItem("planit-v4-theme",v)}catch(e){}}
+  apply(cur);btn.addEventListener("click",function(){apply(order[(order.indexOf(cur)+1)%order.length])});
+  var cb=document.getElementById("copy-btn");
+  cb.addEventListener("click",function(){var t=document.getElementById("rulings").textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){cb.textContent="Copied";setTimeout(function(){cb.textContent="Copy"},1500)})}});
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-it v4 Kickoff</title>
+<meta name="planit-source" content="KICKOFF.md sha256=aa16eb639f87d406ba1ee33357d8c30ae0627a53c2d1c1a2335062bbda2d28c1">
+<meta name="planit-embeds" content="SESSIONS.md sha256=14c79f24ca4f6e89b46a8fbaab337a4f3d32d455fc1364c135061f03c3da760d">
+<meta name="planit-brand" content="default sha256=8a978f97b922096a3b1fda438a0000ace20765a81104ee2baf11be61f87a8773">
+<meta name="planit-renderer" content="hand-render/coordinator-2026-09-07 (v4 build-report.mjs pending)">
+<meta name="planit-kind" content="KICKOFF">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#00B37D;--accent-bg:color-mix(in srgb,#00E5A0 15%,transparent);--ok:#2EA043;--warn:#D29922;--bad:#F85149;--chip:#E6EDF3;
+    --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;--font-body:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;--font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--chip:#21262D}}
+  :root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--chip:#21262D}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+  body::before{content:"";display:block;height:3px;background:var(--accent);position:fixed;top:0;left:0;right:0}
+  main{max-width:940px;margin:0 auto;position:relative}
+  h1,h2,h3,.eyebrow,#theme-toggle,.brand-badge,th{font-family:var(--font-display)}
+  .eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:1.7rem;margin:.2rem 0 .3rem;letter-spacing:-.01em;text-wrap:balance;padding-right:7rem}
+  .sub{color:var(--muted);margin:0 0 1.4rem;max-width:72ch}
+  h2{font-size:1rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  h3{font-size:1rem;margin:1rem 0 .3rem}
+  #theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:.3rem .8rem;font-size:.78rem;cursor:pointer}
+  .brand-badge{display:inline-block;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.1rem .6rem;margin-right:.5rem}
+  code{font-family:var(--font-mono);background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-word}
+  pre{font-family:var(--font-mono);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font-size:.79rem;line-height:1.5;white-space:pre-wrap}
+  .overflow{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td.id{font-family:var(--font-mono);font-weight:600;color:var(--accent);white-space:nowrap}
+  .pins{border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--card);border-radius:0 8px 8px 0;padding:.7rem 1rem;font-family:var(--font-mono);font-size:.8rem;word-break:break-all}
+  .pins b{font-family:var(--font-display);color:var(--muted);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;display:inline-block;width:5.5rem}
+  ol li{margin:.3rem 0}
+  details{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.6rem .9rem;margin:.6rem 0}
+  details summary{cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:.88rem;color:var(--accent);list-style:none;display:inline-flex;gap:.4rem;align-items:center}
+  details summary::before{content:"▸";transition:transform .15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  .copy{position:relative}
+  .copy button{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:.2rem .6rem;cursor:pointer}
+  .legend{font-size:.8rem;color:var(--muted);margin:.3rem 0 1rem}
+  footer{margin-top:3rem;color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:1rem}
+  @media (prefers-reduced-motion: reduce){details summary::before{transition:none}}
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<div class="eyebrow">plan-it v4 · delivery/v4 · kickoff · orchestrator + 3 squads + QA</div>
+<h1>plan-it v4 Kickoff</h1>
+<p class="sub"><span class="brand-badge" data-brand="default">brand: Her0 default</span> Ship plan-it 4.0.0: the release that makes a planning run legible to the human and autonomous end to end, built overnight by three squad sessions and a QA session under one orchestrator, additive over the v2/v3 core. Markdown twins: <code>KICKOFF.md</code> and <code>SESSIONS.md</code> (canonical).</p>
+<p class="legend">Legend: <b>V4An…V4Cn</b> epics · <b>Wn</b> wave · <b>A-n</b> authorization · <b>SQ-A/B/C</b> squads — see <code>GLOSSARY.md</code>.</p>
+
+<details><summary>Glossary — the IDs on this page</summary>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Means</th></tr>
+<tr><td class="id">SQ-A · SQ-B · SQ-C</td><td>the three build squads: renderer · deterministic core · prose and packaging</td></tr>
+<tr><td class="id">V4A1…V4C4</td><td>the 13 epics, one branch each (see the sessions table)</td></tr>
+<tr><td class="id">W0…W4</td><td>orchestrator prep · squads in parallel · integration · QA · release</td></tr>
+<tr><td class="id">A-1…A-4</td><td>authorizations: branch commits and merges · release tag · Chrome and headless · guard-fix commit</td></tr>
+<tr><td class="id">CONTRACT</td><td>the frozen law under <code>delivery/v4/CONTRACT.md</code></td></tr>
+<tr><td class="id">GATE.md</td><td>the autonomy contract: every human input, answered</td></tr>
+<tr><td class="id">gate-check</td><td>the plugin's zero-dependency verifier; exit codes decide whether the pipeline advances</td></tr>
+</table></div></details>
+
+<h2>0 · Pinning (always first)</h2>
+<div class="pins">
+<div><b>repo</b> /Users/macbook/Workspace/Devotts/plan-it @ 7fcff27a03e886b2f29137b9dd89d01d1040b601</div>
+<div><b>state</b> /Users/macbook/Workspace/Devotts/plan-it/.plan-it/state.json (run "v4"; legacy name until V4B3 lands)</div>
+<div><b>contract</b> /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/CONTRACT.md sha256=a7f28d034b789907e4f1dbabe26786a66ac7ed01073c3fa7b4af8171aca865f3 (v1.0 — ratified at PLAN-REVIEW 2026-09-07)</div>
+</div>
+<p class="legend">The pinned commit is the last one on <code>main</code>; the package itself is uncommitted at handoff and W0 commits it, then re-pins this block with the commit SHA. First instruction for the orchestrator: re-derive the tally from disk (<code>gate-check contract</code> → 60 cases; <code>gate-check handoff</code> → 13 epics declared = counted, 173 case IDs) and stop on any mismatch.</p>
+
+<h2>Sessions to open (exact names for <code>/rename</code>)</h2>
+<div class="overflow"><table>
+<tr><th>#</th><th>Session</th><th>Role</th><th>Opens when</th></tr>
+<tr><td>1</td><td class="id">v4-orchestrator</td><td>conductor: W0, dispatch, verify on disk, merge per lane, amendments, wakeup chain, QA signal, morning report</td><td>first</td></tr>
+<tr><td>2</td><td class="id">v4-sq-a-renderer</td><td>SQ-A: renderer, template, brand tokens, report-family reference (4 epics, 48 cases)</td><td>with #1; polls for W1</td></tr>
+<tr><td>3</td><td class="id">v4-sq-b-core</td><td>SQ-B: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)</td><td>with #1; polls for W1</td></tr>
+<tr><td>4</td><td class="id">v4-sq-c-prose</td><td>SQ-C: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)</td><td>with #1; polls for W1</td></tr>
+<tr><td>5</td><td class="id">v4-qa</td><td>every case against the merged tree + the dogfood run; writes QA-REPORT.md</td><td>when W3 is announced</td></tr>
+</table></div>
+<p>The four squad and QA prompts are in <code>SESSIONS.md</code>, one copy block each. The orchestrator's prompt is below.</p>
+
+<h2>First slice (W0, orchestrator alone)</h2>
+<ol>
+<li>Commit the planning package and the guard mirror copy (A-4); re-pin block 0.</li>
+<li>Byte-pin the 3.0.1 machine as <code>tests/fixtures/v3/machine.v3.7fcff27.json</code>.</li>
+<li>Create the <code>epic/v4a-*</code>, <code>epic/v4b-*</code>, <code>epic/v4c-*</code> worktrees; squads edit only there.</li>
+<li>Record AMD-4 and AMD-5 in <code>delivery/decisions.md</code> when they land.</li>
+<li>Keep <code>GLOSSARY.md</code> current as IDs are minted.</li>
+<li>Run the contract runner and the mirror check; log both tallies in <code>STATUS.md</code>. Expect 51/51 + 25/25 and 8/8 before any v4 code.</li>
+</ol>
+
+<h2>Gotchas (each already seen once)</h2>
+<ul>
+<li>The 3.0.1 lints cannot see an epic heading without the word "Epic" until V4B3 widens the grammar; every heading stays <code>## Epic V4&lt;letter&gt;&lt;n&gt; — …</code>.</li>
+<li>The 3.0.1 <code>reconcile</code>, <code>contract --dir</code> and <code>adversary --dir</code> scan the v3 folder by literal; run them positionally on the v4 paths until V4B3 lands.</li>
+<li>An absent preflight probe blacklists every token of its command, including <code>node</code>; do not probe expected-absent facts with node.</li>
+<li>The guard fix must land in both the plugin copy and the root mirror or the release gate fails — that is exactly how the previous fix stayed uninstalled.</li>
+<li>The SKILL description truncates silently past 1,024 characters and shows 250 in listings; cut before adding.</li>
+<li>Version literals live in six sites plus two harness constants; flip all in one W2 merge.</li>
+<li>The model-ID regex is duplicated in the guard and the renderer by design; change both.</li>
+<li>Headless sessions die on "wait for a notification"; every prompt says poll.</li>
+</ul>
+
+<h2>Launch prompt — <code>v4-orchestrator</code> (open first)</h2>
+<div class="copy"><button type="button" id="copy-btn">Copy</button><pre id="prompt">/session-init then act as the ORCHESTRATOR for plan-it v4 (the plugin release: HTML report layer, anamnesis + one review round, build topology, named runs, glossary).
+
+Package: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/ — read KICKOFF.md (pinning block first, then re-derive the tally from disk), CONTRACT.md (the law, v1.0 after PLAN-REVIEW), GATE.md (every human input answered; the run is ungated), 00-program-plan.md (your runbook §3), STATUS.md (your board). Design context on demand: docs/v4/01-findings.md, docs/v4/02-v4-design.md.
+
+Your job, to conclusion:
+1. W0 yourself: commit the planning package and the guard mirror fix (authorization A-4); byte-pin tests/fixtures/v3/machine.v3.7fcff27.json from the 3.0.1 machine.json; create the epic/v4a-*, epic/v4b-*, epic/v4c-* worktrees; record AMD-4/AMD-5 in delivery/decisions.md; copy the GLOSSARY seed; run `node tests/run-contract.mjs` and `gate-check mirror-check` and record both tallies in STATUS.md ## Log.
+2. Squad sessions v4-sq-a-renderer, v4-sq-b-core, v4-sq-c-prose are open and polling. Signal W1 via SendMessage; verify their output ON DISK (idle ≠ delivered: branches, commits, files, each epic's local gate); merge per lane after its Test Contract is green (authorization A-1); flip STATUS.md rows with evidence; respect the build orders in KICKOFF.md.
+3. Cross-cutting contradictions → amend CONTRACT.md yourself (dated AMD-n in delivery/decisions.md, version bump) and notify affected squads. New genuinely-human decisions → append to GATE.md, take the conservative reversible path, morning report. Rule yourself only if capped, reversible and covered by an existing answer — otherwise "your word, not ours".
+4. W2: MIRROR_PAIRS 11, root mirrors synced, version 4.0.0 across six sites and both harness literals in ONE merge, CHANGELOG 4.0.0, `mv .plan-it/state.json .plan-it/v4.state.json` after V4B3 lands, cross-check SKILL.md posture-table state names against the live machine.json.
+5. W3: signal v4-qa to run every case (166 epic cases + 60 CONTRACT cases) and the dogfood run; IMPLEMENTED-NOT-VERIFIED with reason for anything unreachable — never a fake green.
+6. Usage-limit resilience (MANDATORY): keep a scheduled-wakeup chain alive (≤3600s hops) until W3 closes; persist state to .taskstate/v4/ + STATUS.md before every idle; on a limit, resume after reset — never park on Fernando.
+7. Worktrees-only for every squad (G-10). Any headless fallback session polls STATUS and git; it never waits on a notification (G-11). Reap each squad's agents when its wave closes.
+8. Morning deliverable: honest per-epic report (VERIFIED / IMPLEMENTED-NOT-VERIFIED with reasons), residuals with dispositions, incidental findings, and what Fernando should read first (QA-REPORT.md, then decide A-2). Do NOT tag or push 4.0.0 (A-2 is held until owner action O-2). Close with /conclude-it.</pre></div>
+
+<footer>Hand-rendered by the coordinator on 2026-09-07 following the v4 renderer's contract. Sources: <code>KICKOFF.md</code>, <code>SESSIONS.md</code> (canonical).</footer>
+</main>
+<script>
+(function(){
+  var btn=document.getElementById("theme-toggle"),lab=document.getElementById("theme-label");
+  var order=["auto","light","dark"],cur="auto";
+  try{cur=localStorage.getItem("planit-v4-theme")||"auto"}catch(e){}
+  function apply(v){cur=v;lab.textContent=v;if(v==="auto"){document.documentElement.removeAttribute("data-theme")}else{document.documentElement.setAttribute("data-theme",v)}try{localStorage.setItem("planit-v4-theme",v)}catch(e){}}
+  apply(cur);btn.addEventListener("click",function(){apply(order[(order.indexOf(cur)+1)%order.length])});
+  var cb=document.getElementById("copy-btn");
+  cb.addEventListener("click",function(){var t=document.getElementById("prompt").textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){cb.textContent="Copied";setTimeout(function(){cb.textContent="Copy"},1500)})}});
+})();
+</script>
+</body>
+</html>

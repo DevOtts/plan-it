@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-it v4 Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#f2f5f7; --card:#ffffff; --card2:#eaeff3; --ink:#16212b; --muted:#5a6a78; --line:#d7dee5;
+    --v3:#7a6a4a; --v3-bg:#f4efe4; --v4:#0d6b78; --v4-bg:#e3f2f4; --v4-ink:#0a4f59;
+    --ok:#1f7a3f; --warn:#a2640f; --bad:#b3362d; --chip:#e6ecf1; --code:#eef2f5;
+    --shadow:0 1px 2px rgba(22,33,43,.06),0 8px 24px -12px rgba(22,33,43,.12);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0e1418; --card:#161d23; --card2:#1c252d; --ink:#e4eaef; --muted:#93a1ad; --line:#26313b;
+      --v3:#c8b183; --v3-bg:#2a251a; --v4:#4fc4cf; --v4-bg:#10333a; --v4-ink:#9fe1e7;
+      --ok:#5cc985; --warn:#e0a24d; --bad:#ef7a70; --chip:#222c35; --code:#1b242c;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e1418; --card:#161d23; --card2:#1c252d; --ink:#e4eaef; --muted:#93a1ad; --line:#26313b;
+    --v3:#c8b183; --v3-bg:#2a251a; --v4:#4fc4cf; --v4-bg:#10333a; --v4-ink:#9fe1e7;
+    --ok:#5cc985; --warn:#e0a24d; --bad:#ef7a70; --chip:#222c35; --code:#1b242c;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html{color-scheme:light dark}
+  body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Source Serif 4",Georgia,"Times New Roman",serif;
+       -webkit-font-smoothing:antialiased}
+  main{max-width:960px;margin:0 auto;padding:3rem 1.25rem 5rem}
+  h1,h2,h3,h4,.eyebrow,.tile b,.matrix th,.col-h,.badge,.pill,.tag,.toggle,.stat b{font-family:Manrope,"Segoe UI",system-ui,sans-serif}
+  h1{font-size:2.4rem;line-height:1.1;margin:.2rem 0 .6rem;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  h2{font-size:1.5rem;margin:3.2rem 0 1rem;font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+  h3{font-size:1.15rem;margin:0 0 .5rem;font-weight:700;text-wrap:balance}
+  h4{font-size:.95rem;margin:1.2rem 0 .4rem;font-weight:700}
+  p{margin:.5rem 0;max-width:68ch}
+  li{max-width:68ch}
+  .lede{font-size:1.15rem;color:var(--ink);max-width:62ch}
+  .eyebrow{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .sub{color:var(--muted);font-size:.95rem}
+  code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+  code{background:var(--code);border-radius:4px;padding:.05rem .35rem;font-size:.84em;word-break:break-word}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.9rem 1rem;overflow-x:auto;font-size:.82rem;line-height:1.5}
+  a{color:var(--v4)}
+  .hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+  .toggle{border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:99px;padding:.3rem .8rem;font-size:.78rem;cursor:pointer;font-weight:600}
+  .toggle:focus-visible{outline:2px solid var(--v4);outline-offset:2px}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.6rem 1.4rem;margin:1.6rem 0 0;padding:1rem 1.1rem;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:.9rem}
+  .meta div b{display:block;font-family:Manrope,sans-serif;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.2rem 0}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.1rem}
+  .tile b{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--v4);margin-bottom:.35rem}
+  .tile p{font-size:.95rem;margin:0}
+  @media (max-width:720px){.tiles{grid-template-columns:1fr}}
+
+  .overflow{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:var(--shadow)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:.65rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;background:var(--card2)}
+  tr:last-child td{border-bottom:none}
+  td.dim{font-family:Manrope,sans-serif;font-weight:700;font-size:.88rem;white-space:nowrap}
+  .matrix td:nth-child(2){color:var(--v3)}
+  .matrix td:nth-child(3){color:var(--v4-ink)}
+  .matrix th:nth-child(2){color:var(--v3)} .matrix th:nth-child(3){color:var(--v4)}
+  .matrix table{min-width:860px}
+  .num{font-variant-numeric:tabular-nums}
+
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-radius:99px;padding:.12rem .6rem;vertical-align:middle}
+  .b-v3{background:var(--v3-bg);color:var(--v3)} .b-v4{background:var(--v4-bg);color:var(--v4-ink)}
+  .b-ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .b-warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+  .b-bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .tag{display:inline-block;font-size:.72rem;font-weight:600;color:var(--muted);background:var(--chip);border-radius:5px;padding:.05rem .45rem;margin-right:.3rem}
+
+  .enh{margin:2.2rem 0 0;padding-top:1.6rem;border-top:1px solid var(--line)}
+  .enh-head{display:flex;gap:.9rem;align-items:baseline;flex-wrap:wrap}
+  .enh-id{font-family:Manrope,sans-serif;font-weight:800;color:var(--v4);font-size:1.4rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .quote{border-left:3px solid var(--v3);background:var(--card);padding:.75rem 1rem;margin:1rem 0;border-radius:0 8px 8px 0;font-style:italic;max-width:none}
+  .quote .src{display:block;font-style:normal;font-family:Manrope,sans-serif;font-size:.78rem;color:var(--muted);margin-top:.4rem}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;margin:1rem 0}
+  @media (max-width:760px){.cols{grid-template-columns:1fr}}
+  .col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.05rem;font-size:.95rem}
+  .col.v4{border-color:color-mix(in srgb,var(--v4) 45%,var(--line));background:color-mix(in srgb,var(--v4-bg) 40%,var(--card))}
+  .col-h{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;margin-bottom:.4rem}
+  .col.v3 .col-h{color:var(--v3)} .col.v4 .col-h{color:var(--v4)}
+  .col ul{margin:.3rem 0 0;padding-left:1.1rem} .col li{margin:.2rem 0}
+  .col p{margin:.3rem 0}
+  .why{font-size:.92rem;color:var(--muted);margin:.4rem 0 0}
+  .why b{color:var(--ink)}
+
+  .flow{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin:.6rem 0}
+  .st{font-family:"JetBrains Mono",monospace;font-size:.76rem;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:.2rem .5rem;white-space:nowrap}
+  .st.gate{border-color:var(--v3);color:var(--v3);font-weight:600}
+  .st.new{border-color:var(--v4);background:var(--v4-bg);color:var(--v4-ink);font-weight:600}
+  .st.human{border-style:dashed}
+  .arr{color:var(--muted);font-size:.8rem}
+  .legend{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin:.4rem 0 1rem}
+
+  details{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.6rem .9rem;margin:.6rem 0}
+  summary{cursor:pointer;font-family:Manrope,sans-serif;font-weight:600;font-size:.9rem;color:var(--v4)}
+  summary:focus-visible{outline:2px solid var(--v4);outline-offset:2px}
+
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin:1rem 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem}
+  .stat b{display:block;font-size:1.5rem;font-weight:800;letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums}
+  .stat span{font-size:.8rem;color:var(--muted)}
+
+  .decision{display:grid;grid-template-columns:3.2rem 1fr;gap:.6rem;padding:.9rem 0;border-bottom:1px solid var(--line)}
+  .decision:last-child{border-bottom:none}
+  .decision .id{font-family:Manrope,sans-serif;font-weight:800;color:var(--v4);font-variant-numeric:tabular-nums}
+  .decision p{margin:.2rem 0;font-size:.95rem}
+  .rec{font-family:Manrope,sans-serif;font-size:.85rem;font-weight:600;color:var(--v4-ink)}
+  .rec::before{content:"Recommended · ";color:var(--muted);font-weight:700;letter-spacing:.04em;font-size:.72rem;text-transform:uppercase}
+
+  .note{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--card);padding:.7rem 1rem;border-radius:0 8px 8px 0;font-size:.92rem;margin:1rem 0;max-width:none}
+  footer{margin-top:4rem;color:var(--muted);font-size:.85rem;border-top:1px solid var(--line);padding-top:1rem}
+  @media (prefers-reduced-motion: no-preference){details[open] summary{transition:color .15s}}
+</style>
+</head>
+<body>
+<main>
+
+<div class="hdr">
+  <div>
+    <div class="eyebrow">plan-it · plugin v3.0.1 → v4 · analysis before /plan-it</div>
+    <h1>plan-it v4 Blueprint</h1>
+    <p class="sub">Nine core enhancements distilled from two months of runs, read against the v3 plugin as it ships today. Written for Fernando Ott, 2026-09-07. Every "v3 today" claim was checked against <code>plugins/plan-it/</code>; every "v4" item names the feedback that drove it.</p>
+  </div>
+  <button class="toggle" id="theme" type="button" aria-label="Toggle light and dark theme">◐ theme</button>
+</div>
+
+<p class="lede">v2 made the pipeline deterministic. v3 made the package hard to fake. What the field asked for next is different in kind: <strong>make the run legible to the human, and make it run end to end without them.</strong> Every note in <code>delivery/v4</code> reduces to one of three shifts: from chat gates to HTML surfaces, from three interleaved gates to one up-front anamnesis plus one review-and-contradict round, and from "hand the package to one build session" to a planned build topology with named sessions and an autonomy contract.</p>
+
+<div class="meta">
+  <div><b>Inputs read</b>Notion note "Enhance plan-it", 4 reference HTMLs it attached, 5 more it pointed to in Engine-Core, 4 session ledger cards, the praxya KICKOFF / GATE / program-plan, the orchestrator state file</div>
+  <div><b>Baseline</b>plugins/plan-it @ 3.0.1 — SKILL.md, machine.json (17 states), gate-check.mjs (11 verbs), planit-guard.mjs, 4 references</div>
+  <div><b>Not read</b>Full transcripts of the three named sessions (cards + <code>ORCHESTRATOR-STATE.md</code> were enough for this pass; <code>/read-chat</code> is the escalation if a detail below is disputed)</div>
+  <div><b>Stance</b>Additive over the v2/v3 core — freeze, <code>[REAL]</code>, gate-check verbs, the guard hook and the byte-pinned statechart stay untouched</div>
+</div>
+
+<h2>The three shifts, at a glance</h2>
+<div class="tiles">
+  <div class="tile"><b>Shift 1 · surface</b><p>v3 speaks only markdown and chat. v4 keeps the markdown bundle as the AI-facing package and adds a human-facing report family (scope brief, decision queue, contract mirror, kickoff, handoff) rendered to local HTML by a deterministic renderer, the way <code>conclude-it</code> already builds its report.</p></div>
+  <div class="tile"><b>Shift 2 · interaction</b><p>v3 interrupts three times (G1, G2, G3). v4 asks everything it will need up front (anamnesis), runs to a complete draft with recommended defaults applied, then presents one review-and-contradict round. Guided mode stays available.</p></div>
+  <div class="tile"><b>Shift 3 · handoff</b><p>v3 ends in one KICKOFF and one launch prompt. v4 keeps both and adds: the build topology decided at G1 (solo, orchestrator + squads, headless), a session manifest with names and prompts, and a GATE autonomy contract so the build never wakes anyone.</p></div>
+</div>
+
+<h2>What the evidence says</h2>
+<p>The Notion note is short, but each pointer it carries is a worked example of a standard Fernando already accepted in practice. The table records what each source taught, so the enhancements below trace to something real rather than to taste.</p>
+<div class="overflow"><table>
+<thead><tr><th>Source</th><th>What it is</th><th>What it taught v4</th></tr></thead>
+<tbody>
+<tr><td><code>image.png</code> (G1 screenshot, Lvis permissions run)</td><td>The chat gate as it renders today: "Size L, Shape 1 (Recommended)" with no explanation of what a size or shape is</td><td>E1 — the gate must explain before it asks</td></tr>
+<tr><td><code>DECISIONS-bkp-case.html</code></td><td>A decision queue: 12 ruled rows with effect, 6 open cards each with recommendation, "Read more" embedding the source note, and a wave-unblock table</td><td>E3 — the decision artifact is a queue with effects, not a list in a roadmap doc</td></tr>
+<tr><td><code>SEED-TRIAGE-2026-09-04.html</code></td><td>7 seeds triaged: 3 plan now, 2 build instead, 1 owner decision, 1 skip. Three read-only live measurements moved three verdicts</td><td>E6 — triage before planning; measure before asserting</td></tr>
+<tr><td><code>SEED-DECISIONS-v2.html</code> (240 KB, 12 mermaid flows, 29 tables)</td><td>The rebuilt version after Fernando asked for mockups and real use cases: mockups drawn with measured rows, three honest states per pane, projected weekly volume loose vs strict, "what changed since v1", a rulings table</td><td>E5 — show it, don't describe it; enumerate honest states; carry rulings forward</td></tr>
+<tr><td><code>anatomia-de-uma-decisao.html</code></td><td>Design proposal: five questions a card must answer, before/after on a real card, the three honest states (good, not-yet-run, misconfigured), and an affordance removed when the system cannot answer</td><td>E5 — the mockup pattern v4 should emit for any UI-shaped decision</td></tr>
+<tr><td><code>praxya-sprint1-ads-rules/delivery/</code> (CONTRACT.html, KICKOFF.md, GATE.md, 00-program-plan.md)</td><td>The "AMAZING STANDARD" run: CONTRACT mirrored to HTML with the G2 locks banner; 6 named sessions with launch prompts; GATE.md answered up front so the run is ungated; a sessions table and an orchestrator runbook</td><td>E2, E4, E7 — build topology, session manifest, autonomy contract, contract mirror</td></tr>
+<tr><td>Session <code>done-open-sessions-closeout-aug26-orchestrator</code> + <code>ORCHESTRATOR-STATE.md</code></td><td>7 waves conducted overnight: 5 shipped, 1 plan frozen, 1 honest hold. Backlog 33 → 19 → 3 by filing residuals with reasons and exact exit criteria so epics could close</td><td>E8 — residual disposition; E4 — what an orchestrator needs from the plan (wakeup chain, headless fallback, collision awareness)</td></tr>
+<tr><td>Session <code>s1-ads-orchestrator</code></td><td>13 epics shipped through the frozen contract, 93/96 cases, 7 prod bugs fixed in-run, one fleet outage found</td><td>Confirms the topology works when the plan hands it the sessions and the law</td></tr>
+<tr><td><code>conclude-it/build-report.py</code> + <code>report-template.html</code></td><td>An existing manifest → HTML renderer (haiku writes the JSON, Python renders deterministically, embedded markdown as collapsed toggles, light/dark)</td><td>E2 — the renderer pattern to reuse rather than reinvent</td></tr>
+</tbody></table></div>
+
+<h2>v3 versus v4, one row per dimension</h2>
+<p class="sub">Left column is what ships in 3.0.1, cited. Right column is the v4 proposal. The last column names the driver.</p>
+<div class="overflow matrix"><table>
+<thead><tr><th>Dimension</th><th>v3 today</th><th>v4</th><th>Driver</th></tr></thead>
+<tbody>
+<tr><td class="dim">Gate clarity</td><td>Phase 2 says "present the chosen size + shape + the numbered DoD and get a yes". Sizes and shapes are defined only in <code>references/templates.md</code> PART D. The chat option reads "Size L, Shape 1".</td><td>A SCOPE-BRIEF renders first: each size and shape option explained in plain words, with the artifacts it produces, the sessions it will open, the gates the human will face, and rough effort. The chat prompt then offers the numbered choice and links the brief.</td><td>Lack of clarity</td></tr>
+<tr><td class="dim">Report surface</td><td>Markdown only. No occurrence of "html" anywhere in SKILL.md or the four references. Usage doc: "Everything is plain markdown".</td><td>A report family rendered to local HTML by a deterministic renderer (<code>gate-check render</code> or a sibling script), opened in Chrome, with the markdown file canonical and a mirror check that fails on drift.</td><td>Human UI summary · Contract HTML</td></tr>
+<tr><td class="dim">Interaction model</td><td>Three human gates interleaved with the work: G1 scope → G2 decisions → G3 freeze. Each stops the run mid-flight.</td><td>Anamnesis up front collects everything the run will need (access, fences, preferences, topology, decisions only the human can make). The run then completes a full draft with recommended defaults applied and stops once for review-and-contradict. Guided three-gate mode kept as an option.</td><td>New extra behaviour</td></tr>
+<tr><td class="dim">Decision artifact</td><td>A "Decisions only you can make" section in <code>06 §4</code>, answered by number in chat, locked with owner + date.</td><td>DECISIONS.html + DECISIONS.md: a queue of ruled rows (ruling, effect) and open cards (recommendation, why nobody should pick for you, Read more with the source note embedded, what it unblocks). Answers carry forward as a rulings table across rounds.</td><td>Great example on HTML</td></tr>
+<tr><td class="dim">Build topology</td><td>Assumes one fresh <code>/build-it</code> session. KICKOFF carries one launch prompt; a per-PRD KICKOFFS.md is an optional enrichment. "Orchestrator" appears once, in a playbook.</td><td>Topology is a G1 decision: solo build-it, orchestrator + N squad sessions, or headless overnight. The package emits SESSIONS.md (exact names for <code>/rename</code>, role, opens-when), one launch prompt per session, and the orchestrator runbook.</td><td>A new way of planning</td></tr>
+<tr><td class="dim">Autonomy contract</td><td>None. praxya's GATE.md was written by hand for that run; the string "GATE.md" does not exist in the plugin.</td><td>GATE.md is a first-class deliverable: every human decision and authorization answered before handoff, a "still human but not blocking" table, and the standing rule for decisions discovered mid-run (append, take the conservative reversible path, morning report).</td><td>A new way of planning</td></tr>
+<tr><td class="dim">Explanation depth</td><td>Prose and tables. Findings cite <code>path:line</code>. No mockup or diagram requirement.</td><td>Show, don't describe: any UI-shaped item gets a mockup drawn with real measured rows; any flow-shaped item gets a mermaid diagram; every enhancement carries at least one real use case; every surface enumerates its honest states (good, empty, misconfigured).</td><td>Great report explaining why · asked for more</td></tr>
+<tr><td class="dim">Pre-plan triage</td><td>Every invocation is a plan. The DoD lock (Phase 1) assumes the thing should be planned.</td><td>A triage verdict before any run: Plan now · Build instead (already planned) · Owner decision, not a build · Skip (measured zero). Multi-seed intake presents all G1s together so the human answers once.</td><td>SEED-TRIAGE pattern</td></tr>
+<tr><td class="dim">Epic closure</td><td>DoD = 100% of the Test Contract; unreachable <code>[REAL]</code> → IMPLEMENTED-NOT-VERIFIED. Nothing says what happens to small residuals that are not contract cases.</td><td>Residual disposition rule in CONTRACT and STATUS: every non-green item gets one of backlog-with-reason, owner-gated, or INV; the epic closes honestly with exact exit criteria for what was filed. Contract cases stay binding.</td><td>Orchestrator adaptation</td></tr>
+<tr><td class="dim">Grounding</td><td>Rule 4: ground against the live system before freeze (config reachability, live identifiers, credential validity).</td><td>Unchanged, plus: read-only live measurements are first-class report content (numbers that moved a verdict are shown next to it), and any finding an agent could not re-verify is flagged in place rather than silently kept.</td><td>SEED-DECISIONS-v2 · "one agent fabricated a finding"</td></tr>
+<tr><td class="dim">Run identity</td><td>Named state files exist (<code>.plan-it/&lt;name&gt;.state.json</code>) since the guard fix in 7fcff27, but the skill prose still says <code>.plan-it/state.json</code> and the screenshot shows a manual <code>mv</code> to <code>.done.json</code>.</td><td>Named runs are the default; a portfolio of runs in one repo is normal; archiving a finished run is a verb, not a manual rename.</td><td>Screenshot · triage "three runs"</td></tr>
+</tbody></table></div>
+
+<h2>The ten enhancements</h2>
+<p>Ordered by how much of the feedback each one absorbs. E1 to E4, E7 and E10 are the core of the release; E5, E6, E8 and E9 are the disciplines that make the core trustworthy. Each carries the words that asked for it.</p>
+
+<!-- E1 -->
+<section class="enh" id="e1">
+  <div class="enh-head"><span class="enh-id">E1</span><h3>Explain before you ask: the scope brief</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"once it starts it doesn't clarify what is everything in the output of the chat (only in the documentation, but I don't want to read all the documentation). The ideal is that before it prompt me with the decisions of the sizes for me to choose, it first explain what are the sizes what it involves and so on."<span class="src">Notion · Enhance plan-it · Lack of Clarity · with the G1 screenshot</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>The G1 prompt offers "Size L, Shape 1 (Recommended)" and "Size M, leaner package" with one line each. What a shape is, how many documents it produces, how many sessions the build will need and how many times the human will be interrupted live only in <code>references/templates.md</code>.</p>
+      <p>The screenshot also shows plan-it narrating internals ("Rule 5 first", state file moves) that mean nothing to the person reading.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>Before the G1 question, render <code>SCOPE-BRIEF.html</code>: for each candidate size and shape, what it produces (file tree), what the build will look like (sessions, waves), what it costs the human (gates and the questions each will ask), and a plain sentence on when it is the wrong choice.</li>
+        <li>The chat prompt keeps the numbered options but each option's description is written for the reader, not the machine, and links the brief.</li>
+        <li>A legend rule for the whole run: every chat message that introduces a term (G1, shape, <code>[REAL]</code>, INV, freeze) explains it once in that message.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> you choose a size knowing what you are buying, in the chat, without opening the reference docs.</p>
+</section>
+
+<!-- E2 -->
+<section class="enh" id="e2">
+  <div class="enh-head"><span class="enh-id">E2</span><h3>The HTML report layer, rendered deterministically</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"We need a human UI summary." · "Great example on HTML." · "A few other htmls." · "Contract HTML."<span class="src">Notion · four headings, nine pointers, all of them local HTML files in Engine-Core</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>Everything is markdown, and the final report is a chat message: "per-doc + per-epic status, total test count, the locked decisions, and the launch prompt". Reading a 158-case package means opening a dozen files.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>A report family, each with a markdown twin as the canonical source: <code>SCOPE-BRIEF</code> (E1), <code>RESEARCH-REPORT</code> (findings with measurements), <code>DECISIONS</code> (E3), <code>CONTRACT</code> mirror with the G2-locks banner, <code>KICKOFF</code> with the session manifest (E4), and <code>PLAN-REVIEW</code> (E7).</li>
+        <li>Rendering is a script, not the model: a JSON manifest authored by a low-tier model, rendered by <code>scripts/build-report.mjs</code> in the same manifest → template pattern as <code>conclude-it/build-report.py</code>. Zero npm dependencies, light/dark tokens, embedded markdown as collapsed toggles, mermaid where a flow is declared.</li>
+        <li>A <code>gate-check mirror</code> extension asserts the HTML was rendered from the current markdown; drift fails the handoff.</li>
+        <li>Standing rule carried from the orchestrator session: reports are local files opened in Chrome, never published artifacts.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> one page per gate, readable on a phone, with the evidence one click away. The determinism the pipeline has at the core reaches the surface you read.</p>
+</section>
+
+<!-- E3 -->
+<section class="enh" id="e3">
+  <div class="enh-head"><span class="enh-id">E3</span><h3>The decision queue replaces the decision list</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"If the plan identify other decisions, actions blockers that depend on me, it should be in the plan html report so I can answer and the build-it can run autonomously until the conclude of it."<span class="src">Notion · A new way of planning · quoted /plan-it request</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>Phase 7 collects judgment calls into "<code>06 §4</code> Decisions only you can make", numbered, each with a recommendation, answered in chat. Locked answers are written back into the docs with owner and date. Actions and blockers that depend on the human have no home of their own.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li><code>DECISIONS.md</code> + <code>.html</code> modelled on <code>DECISIONS-bkp-case.html</code>: a ruled table (ID, ruling, effect on the waves), open cards each with the question, the recommendation, why nobody should pick for you, and a Read more that embeds the source note.</li>
+        <li>Three item kinds, because they are answered differently: <b>decisions</b> (pick an option), <b>authorizations</b> (grant or refuse a class of action, like praxya's dummy-Meta-writes grant), and <b>owner actions</b> (things only you can do: enter a key, approve a console). Owner actions carry a deadline relative to the waves they block.</li>
+        <li>Answers persist as a rulings table that every later report opens with ("Your rulings" in SEED-DECISIONS-v2), so a v2 of any report shows what you already decided.</li>
+        <li>The answered queue becomes <code>GATE.md</code>, the autonomy contract the build reads (E4).</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> one page tells you what is waiting on you, what each answer unblocks, and what happens if you answer nothing. The build stops asking at 3am.</p>
+</section>
+
+<!-- E4 -->
+<section class="enh" id="e4">
+  <div class="enh-head"><span class="enh-id">E4</span><h3>Build topology is a planning decision</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"Take in mind that we will run this with the orchestrator session approach, and the plan should determine all other sessions should I open, the name of other sessions so the orchestrator session can manage over night." · "kind of a new format that the plan should ask for which build format we want to plan."<span class="src">Notion · A new way of planning</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>The handoff targets one fresh <code>/build-it</code> session: KICKOFF.md plus one copy-paste launch prompt. praxya's six-session KICKOFF, the sessions table in its program plan, and its orchestrator runbook were all authored ad hoc inside that run and never fed back into the plugin.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>G1 gains a third axis beside size and shape: <b>topology</b>. Options: <b>solo</b> (one build-it session, the v3 default), <b>orchestrator + squads</b> (one conductor plus one session per repo lane plus a QA session), <b>headless overnight</b> (conductor drives <code>claude -p</code> workers; the fallback the closeout night needed when a terminal stuck).</li>
+        <li><code>KICKOFF.md</code> and its single copy-paste launch prompt stay exactly as in v3 (the solo path, and the orchestrator's own entry point). Topology adds to them, never replaces them.</li>
+        <li><code>SESSIONS.md</code>: exact session names (used by <code>/rename</code> so the ledger and cross-session addressing work), role, what each reads, opens-when, and one launch prompt per session. Squad prompts name the orchestrator as the only address for contract contradictions.</li>
+        <li>The orchestrator runbook becomes a template: dispatch by wave, verify on disk, merge and deploy per CONTRACT, amend centrally, usage-limit wakeup chain, reap at wave close, morning report. Two lessons from the closeout night go in as standing rules: worktrees-only for any repo another session may touch, and deploys versus live squad runs are a collision class the conductor tracks.</li>
+        <li>Squads flag build-order corrections back into KICKOFF (praxya: "C1 → C3 → C2 → C4 → C5").</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> you open N terminals, paste N prompts, go to sleep. The plan already decided who talks to whom.</p>
+</section>
+
+<!-- E5 -->
+<section class="enh" id="e5">
+  <div class="enh-head"><span class="enh-id">E5</span><h3>Show it, don't describe it</h3><span class="badge b-warn">discipline</span></div>
+  <blockquote class="quote">"I need in the report a visual mockup of each part that you try to explain. this is not so clear to me yet. also real usecases examples might help." · "I need a visual proposal, as mockup or mermaid flow for me to better understand."<span class="src">Notion · Great Report explaining why · Fernando's follow-up on SEED-TRIAGE</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>Findings must cite <code>path:line</code>; confusing workflows must get a state model in the CONTRACT. Nothing asks for a picture, a mockup, or a use case a human can recognise. The triage report that prompted the quote was already good by v3's rules and still left you unconvinced.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>Report rule: every UI-shaped item ships a mockup drawn with <b>real measured rows</b> (SEED-DECISIONS-v2 drew the Salas pane from 8,510 WhatsApp rows and 89 transcripts, and said which text it had not read).</li>
+        <li>Every flow-shaped item ships a mermaid diagram of the mechanism, not the org chart.</li>
+        <li>Every proposal carries at least one real use case in the reader's words ("When the Secretário sends a message, the row should say Secretário, not Você").</li>
+        <li>Every surface enumerates its honest states: the good case, the legitimately empty case, the misconfigured case. When the system cannot answer the question a control implies, the control is removed, not the copy softened.</li>
+        <li>The renderer (E2) has first-class blocks for mockup, flow, use-case and states, so the model fills slots instead of inventing layout.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> you judge a proposal by looking at it. Prose stops being the only place a bad idea can hide.</p>
+</section>
+
+<!-- E6 -->
+<section class="enh" id="e6">
+  <div class="enh-head"><span class="enh-id">E6</span><h3>Triage before you plan, measure before you assert</h3><span class="badge b-warn">discipline</span></div>
+  <blockquote class="quote">"Seven seeds, four plans. Three read-only measurements ran on the live tenants after the first draft of this page. They moved three verdicts." · "Measured zero, skip the plan."<span class="src">SEED-TRIAGE-2026-09-04.html</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>Invocation implies a plan. Phase 1 locks a DoD for the planning job; there is no verdict step that can conclude "do not run plan-it on this". Live grounding exists (Rule 4) but as a pre-freeze check, not as report content that can refuse a premise.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>A <code>triage</code> state before <code>dodLock</code> with four verdicts: <b>Plan now</b>, <b>Build instead</b> (already planned and frozen elsewhere), <b>Owner decision, not a build</b>, <b>Skip</b> (premise false or measured zero). Skip and Build-instead end the run with a one-page memo and a backlog card, not a package.</li>
+        <li>Multi-seed intake: N seeds in, one triage page out, then the surviving runs' G1s presented together so you answer once.</li>
+        <li>Measurement blocks in every report: the number, where it was read, when, read-only. A finding an agent could not re-verify is flagged where it appears ("one agent fabricated a finding. It is corrected in place and flagged").</li>
+        <li>Stale-fact detection is a named check: a seed that assumes a dependency is unbuilt when the board says 8/8 VERIFIED gets a "Stale fact" badge, and G1 sizes against the real state.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> planning effort goes only where the data agrees it should. A program you should not run becomes a paragraph, not a package.</p>
+</section>
+
+<!-- E7 -->
+<section class="enh" id="e7">
+  <div class="enh-head"><span class="enh-id">E7</span><h3>Anamnesis first, then one review-and-contradict round</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"do the research on codebase, documentation, chrome CDP if necessary → anamynesis → use it own recommendations and create the entire plan end-to-end, and then a html report with the recommendations and then the user answer and contradict if he sees a problem in the plan." · "Before do the entire plan, the plan-it previously check everything that might need from the user so it can work end-to-end."<span class="src">Notion · New extra behaviour</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>"Guided, with autonomous bursts": the run stops at G1, again at G2 after specs are drafted, again at G3 before the split. Each stop is a chat prompt. If you are away, the run parks. Decisions the model could have defaulted wait for you anyway.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li><b>Anamnesis</b> (new state after <code>intake</code>): a single batched questionnaire of everything the run may need from you: access and credentials it will probe, fences, naming preferences, topology, authorizations for live probes (CDP, read-only DB), and the decisions it can already see are yours. Answered once, up front.</li>
+        <li><b>Autonomous-draft mode</b>: with anamnesis answered, the run proceeds through discovery, spec, decisions and the delivery split without stopping. Every decision gets the recommended default <b>applied and marked</b> "default, contradict if wrong". The CONTRACT is drafted, not frozen.</li>
+        <li><b>PLAN-REVIEW.html</b>: one page with the complete draft package summarised, every applied default listed with its alternative, the risks, and the open owner actions. You contradict by number. A coherence pass threads the contradictions through; then the contract freezes and G3 is implicit.</li>
+        <li>Guided mode (the v3 three gates) remains selectable at anamnesis for work where your judgment is the input at every step.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> you spend ten minutes at the start and twenty at the end, not three interruptions in between. The plan arrives whole.</p>
+  <div class="note">Trade-off to state plainly: applying defaults means the model decides things v3 refused to pre-decide (Rule 2). The guard is that every default is visible in one place with its alternative, nothing irreversible executes during planning, and the contract does not freeze until you have seen the review page. The rule becomes "batch and surface", not "never decide".</div>
+</section>
+
+<!-- E8 -->
+<section class="enh" id="e8">
+  <div class="enh-head"><span class="enh-id">E8</span><h3>Residual disposition so epics can close honestly</h3><span class="badge b-warn">discipline</span></div>
+  <blockquote class="quote">"Mainly at the end it learned one adaptation when we decide to move to backlog small items so we can close the epic."<span class="src">Notion · pointing at done-open-sessions-closeout-aug26-orchestrator · state file: backlog 33 → 19 accounted (10 parked-with-reason) → 3 with exact exit criteria</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>The Test Contract is binding: 100% or iterate; an unreachable <code>[REAL]</code> case is IMPLEMENTED-NOT-VERIFIED. The status vocabulary is closed to four terms. What to do with small findings that are not contract cases is undefined, so overnight runs either hold the epic or invent a fifth status.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>CONTRACT and STATUS gain a <b>residual disposition</b> section: every non-green item at epic close is one of <b>backlog-with-reason</b> (a filed note with an exact exit criterion), <b>owner-gated</b> (waiting on a named human action), or <b>INV</b> (a contract case with an unreachable target). Nothing else is allowed.</li>
+        <li>An epic may close when all contract cases are VERIFIED or INV-with-reason <b>and</b> every residual has a disposition. Contract cases never move to backlog.</li>
+        <li>The orchestrator runbook (E4) includes the drain move: at wave close, sweep residuals into dispositions and report the counts, the way Wave 7 and Wave 8 did.</li>
+        <li><code>gate-check reconcile</code> counts dispositions the way it counts cases: computed, never typed.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> a morning board that says "closed, 3 residuals filed with exit criteria" instead of an epic held open for a typo.</p>
+</section>
+
+<!-- E9 -->
+<section class="enh" id="e9">
+  <div class="enh-head"><span class="enh-id">E9</span><h3>Named runs and the portfolio as the normal case</h3><span class="badge b-warn">discipline</span></div>
+  <blockquote class="quote">The screenshot: <code>mv .plan-it/state.json .plan-it/state-2026-07-20-google-drive-shared-drive.done.json</code> next to three other archived states. The triage page: "Three plan-it runs … Each run keeps its own state file under <code>.plan-it/&lt;name&gt;.state.json</code>."<span class="src">image.png · SEED-TRIAGE · commit 7fcff27 (guard resolves the named state file)</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>The skill prose and KICKOFF pinning still say <code>.plan-it/state.json</code>. Named state files work because the guard was patched to find them, but archiving a finished run is a manual rename the model narrates in chat.</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li>Named runs are the default (<code>.plan-it/&lt;slug&gt;.state.json</code>); the prose, KICKOFF pinning, guard and every gate-check verb agree on it.</li>
+        <li><code>gate-check archive &lt;slug&gt;</code> moves a done run to <code>.plan-it/done/</code> and records it; <code>gate-check runs</code> lists the portfolio with state and last transition.</li>
+        <li>A portfolio view in the KICKOFF / STATUS pages when more than one run is live in a repo, which is the triage page's "three runs" case.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> several plans in one repo stop being a special case you manage by hand.</p>
+</section>
+
+<!-- E10 -->
+<section class="enh" id="e10">
+  <div class="enh-head"><span class="enh-id">E10</span><h3>Readable acronyms and a glossary</h3><span class="badge b-v4">core</span></div>
+  <blockquote class="quote">"The user doesn't understand something like 'I will do the A1, A2 then E1 and finally go back to R5 based on X3'. You need to explain what these means. Yes it is important for the AI and for us to have the acronyms but with explanation. A glossary would be good."<span class="src">Fernando · ruling on this report · 2026-09-07</span></blockquote>
+  <div class="cols">
+    <div class="col v3"><div class="col-h">v3 today</div>
+      <p>IDs are the grammar of the package (S1-A1, T-E1-06a, G-3, CB-n, D4, W2) and gate-check lints them for coherence. Nothing requires that a human-facing sentence expand them. Chat messages read like the screenshot: "Rule 5 first", "dodLock", "G1: Scope".</p></div>
+    <div class="col v4"><div class="col-h">v4</div>
+      <ul>
+        <li><b>First-use rule</b> for every human-facing surface (chat messages, HTML reports, KICKOFF, DECISIONS): an ID or acronym is written with its meaning the first time it appears in that message or page. "S1-A1 (the scoped-settings collections epic)" then "S1-A1" after.</li>
+        <li><b>Glossary</b> as a deliverable: <code>GLOSSARY.md</code> generated from the package (every epic ID, case prefix, gate, wave, squad, governance rule and status term with one line each), embedded as a collapsed panel at the top of every HTML report and linked from KICKOFF.</li>
+        <li>IDs stay exactly as they are in the markdown, because the AI and the gate-check lints need them. The renderer expands them; the model does not have to remember to.</li>
+        <li><code>gate-check handoff</code> gains a check: every ID that appears in KICKOFF or DECISIONS resolves to a glossary row. Unknown ID fails the lint.</li>
+      </ul></div>
+  </div>
+  <p class="why"><b>What it changes for you:</b> you can read any page or chat message cold. The IDs keep working for the machines.</p>
+</section>
+
+<h2>The v4 pipeline, state by state</h2>
+<p>All 17 v3 states stay, byte-identical in meaning. v4 adds states around them; the machine diff stays additive, as v3's did against v2. Dashed boxes are human stops; solid teal boxes are new.</p>
+<div class="legend"><span><span class="st">state</span> unchanged</span><span><span class="st gate human">gate</span> human stop (v3)</span><span><span class="st new">state</span> new in v4</span><span><span class="st new human">state</span> new human stop</span></div>
+
+<h4>v3.0.1 as it runs today</h4>
+<div class="flow">
+<span class="st">intake</span><span class="arr">→</span><span class="st">dodLock</span><span class="arr">→</span><span class="st gate human">scopeGate G1</span><span class="arr">→</span><span class="st">preGround</span><span class="arr">→</span><span class="st">discovery</span><span class="arr">→</span><span class="st">preflight</span><span class="arr">→</span><span class="st">synthesis</span><span class="arr">→</span><span class="st">specAuthoring</span><span class="arr">→</span><span class="st gate human">decisionGate G2</span><span class="arr">→</span><span class="st">coherencePass</span><span class="arr">→</span><span class="st gate human">freezeGate G3</span><span class="arr">→</span><span class="st">backboneFreeze</span><span class="arr">→</span><span class="st">parallelPlanning ⟲</span><span class="arr">→</span><span class="st">verify</span><span class="arr">→</span><span class="st">adversaryGate</span><span class="arr">→</span><span class="st">handoff</span><span class="arr">→</span><span class="st">done</span>
+</div>
+
+<h4>v4, autonomous-draft mode (default proposed)</h4>
+<div class="flow">
+<span class="st">intake</span><span class="arr">→</span><span class="st new">triage</span><span class="arr">→</span><span class="st new human">anamnesis</span><span class="arr">→</span><span class="st">dodLock</span><span class="arr">→</span><span class="st new">scopeBrief</span><span class="arr">→</span><span class="st gate human">scopeGate G1 + topology</span><span class="arr">→</span><span class="st">preGround</span><span class="arr">→</span><span class="st">discovery</span><span class="arr">→</span><span class="st">preflight</span><span class="arr">→</span><span class="st">synthesis</span><span class="arr">→</span><span class="st">specAuthoring</span><span class="arr">→</span><span class="st new">defaultsApplied</span><span class="arr">→</span><span class="st">coherencePass</span><span class="arr">→</span><span class="st">backboneFreeze (draft)</span><span class="arr">→</span><span class="st">parallelPlanning ⟲</span><span class="arr">→</span><span class="st">verify</span><span class="arr">→</span><span class="st">adversaryGate</span><span class="arr">→</span><span class="st new">render</span><span class="arr">→</span><span class="st new human">planReview</span><span class="arr">→</span><span class="st new">freeze (contract v1.0)</span><span class="arr">→</span><span class="st">handoff + SESSIONS + GATE</span><span class="arr">→</span><span class="st">done</span>
+</div>
+<p class="sub">In guided mode the anamnesis answer selects the v3 path with <code>decisionGate</code> and <code>freezeGate</code> re-enabled; <code>triage</code>, <code>scopeBrief</code> and <code>render</code> still run. Two human stops in autonomous-draft mode (anamnesis, planReview) plus the G1 confirmation; three in guided.</p>
+
+<details><summary>Where the additions land in the plugin tree</summary>
+<pre>plugins/plan-it/
+  skills/plan-it/SKILL.md               phases rewritten around anamnesis · topology · review; legend rule
+  skills/plan-it/machine.json           + triage · anamnesis · scopeBrief · defaultsApplied · render · planReview · freeze
+  skills/plan-it/scripts/gate-check.mjs + render · mirror (md↔html) · archive · runs · disposition counts in reconcile
+  skills/plan-it/scripts/build-report.mjs   NEW  manifest → HTML (port of conclude-it/build-report.py, node, zero deps)
+  skills/plan-it/templates/report.html      NEW  tokens, light/dark, md embed, mockup / flow / states / measurement blocks
+  skills/plan-it/references/reports.md      NEW  the report family, manifest schema, show-don't-describe rule
+  skills/plan-it/references/topology.md     NEW  solo · orchestrator+squads · headless; SESSIONS.md + GATE.md + runbook
+  skills/plan-it/references/templates.md    + GATE.md · SESSIONS.md · DECISIONS.md · residual disposition block
+  scripts/hooks/planit-guard.mjs        unchanged (named-state resolution already landed in 7fcff27)</pre>
+</details>
+
+<h2>What does not change</h2>
+<ul>
+  <li>The frozen CONTRACT before parallel work, the <code>[REAL]</code> rule, the four-term status vocabulary, computed-never-typed tallies, the PreToolUse guard, and the D4 adversarial-depth gate. v4 adds around them and <code>gate-check machine-diff</code> proves it additive against the 3.0.1 baseline.</li>
+  <li>Markdown stays canonical. HTML is a rendered mirror you read; the build agent reads the markdown.</li>
+  <li>The Test Contract stays the bridge to build-it and review-it. E8 governs residuals around it, never cases inside it.</li>
+</ul>
+
+<h2>Your rulings</h2>
+<p class="sub">Recorded 2026-09-07 · owner Fernando Ott. These are the anamnesis answers the v4 plan-it run starts from.</p>
+<div class="overflow"><table>
+<thead><tr><th>#</th><th>Your call</th><th>Effect on the plan</th></tr></thead>
+<tbody>
+<tr><td class="num"><b>Shift 3</b></td><td>Agreed, and KICKOFF + one launch prompt stay in v4 as well</td><td>E4 adds SESSIONS / GATE / runbook beside KICKOFF, never instead of it</td></tr>
+<tr><td class="num"><b>Surface</b></td><td>Markdown continues in the final bundle, used mostly by the AI; HTML does not replace it</td><td>E2 renders mirrors; markdown is canonical and the build agent's input</td></tr>
+<tr><td class="num"><b>Acronyms</b></td><td>Every acronym and ID must be explained for the human; a glossary is wanted</td><td>New E10: first-use rule + GLOSSARY.md + lint</td></tr>
+<tr><td class="num"><b>D1</b></td><td>Follow recommendation</td><td>Autonomous-draft is the default mode; guided selectable at anamnesis</td></tr>
+<tr><td class="num"><b>D2</b></td><td>If the target repository has a brand guideline, use it; otherwise use DevOtts' own at <code>assets/brand</code></td><td>Renderer takes a brand token file; discovery looks for the repo's guideline first, falls back to the plan-it bundled brand</td></tr>
+<tr><td class="num"><b>D3</b></td><td>Agree, and always create the HTML locally by default</td><td>Beside the markdown twin, auto-open in Chrome, never an artifact</td></tr>
+<tr><td class="num"><b>D4</b></td><td>Give the user the choice, show the recommendation; plan-it already derives it from size and complexity</td><td>Three topology options at G1 with a recommended one marked, computed from the size/shape read</td></tr>
+<tr><td class="num"><b>D5</b></td><td>Rulings block ships in v4.0, not 4.1</td><td>DECISIONS.html assembles a copy-your-rulings block; answers still land in DECISIONS.md / GATE.md</td></tr>
+<tr><td class="num"><b>D6</b></td><td>Follow recommendation</td><td>All ten enhancements in 4.0.0</td></tr>
+<tr><td class="num"><b>D7</b></td><td>Follow recommendation</td><td>Orchestrator + 3 squads + QA; the v4 plan-it run is E4's first dogfood</td></tr>
+</tbody></table></div>
+
+<h2>Decisions that were open before the rulings</h2>
+<p>Kept for the record, as they were put: each item with its recommendation. The table above is what was decided.</p>
+<div class="stats">
+  <div class="stat"><b class="num">10</b><span>enhancements proposed</span></div>
+  <div class="stat"><b class="num">5</b><span>core (E1–E4, E7, E10)</span></div>
+  <div class="stat"><b class="num">7</b><span>new statechart states</span></div>
+  <div class="stat"><b class="num">5</b><span>new gate-check verbs</span></div>
+  <div class="stat"><b class="num">0</b><span>v3 states or verbs removed</span></div>
+</div>
+
+<div class="decision"><div class="id">D1</div><div>
+  <p><b>Default interaction mode.</b> Autonomous-draft (anamnesis + one review) or guided (the v3 three gates) as the default when the user does not say.</p>
+  <p class="rec">Autonomous-draft. It is what the last three requests asked for; guided stays one word away at anamnesis.</p></div></div>
+<div class="decision"><div class="id">D2</div><div>
+  <p><b>How HTML gets made.</b> A deterministic manifest → template renderer (port of <code>conclude-it/build-report.py</code> to node), or model-authored HTML against a style guide, as SEED-DECISIONS-v2 was.</p>
+  <p class="rec">Renderer for the report family; model-authored HTML allowed only inside a mockup slot, where layout is the content.</p></div></div>
+<div class="decision"><div class="id">D3</div><div>
+  <p><b>Where the HTML lives and opens.</b> Beside its markdown twin in <code>delivery/</code>, opened in Chrome on render, never published as an artifact; or a separate <code>reports/</code> folder.</p>
+  <p class="rec">Beside the twin, auto-open in Chrome. Matches the praxya CONTRACT.html and the standing rule from the closeout night.</p></div></div>
+<div class="decision"><div class="id">D4</div><div>
+  <p><b>Topology option set.</b> Three (solo, orchestrator + squads, headless) or two (solo, orchestrator) with headless as an orchestrator fallback rather than a choice.</p>
+  <p class="rec">Two choices, headless as a documented fallback in the runbook. The closeout night reached headless by failure, not by plan.</p></div></div>
+<div class="decision"><div class="id">D5</div><div>
+  <p><b>Answering in the HTML.</b> Read-only page, answers typed in chat by number (today's habit), or a copy-your-rulings block the page assembles from checkboxes.</p>
+  <p class="rec">Read-only with numbered items in v4.0. A rulings block is cheap to add in 4.1 once the renderer exists; it does not gate anything.</p></div></div>
+<div class="decision"><div class="id">D6</div><div>
+  <p><b>Release scope.</b> All nine in 4.0.0, or core (E1–E4, E7) in 4.0.0 and disciplines (E5, E6, E8, E9) in 4.1.</p>
+  <p class="rec">All nine. E5 and E6 are what make the E2 reports worth opening; E8 and E9 are small and already proven in the field.</p></div></div>
+<div class="decision"><div class="id">D7</div><div>
+  <p><b>Build topology for building v4 itself.</b> Solo build-it, or orchestrator + squads (renderer squad, statechart and gate-check squad, SKILL and references squad, dogfood QA squad).</p>
+  <p class="rec">Orchestrator + 3 squads + QA, and let the v4 plan-it run be its own first dogfood of E4.</p></div></div>
+
+<div class="note"><b>One thing I could not settle from the files.</b> The Notion note says the orchestrator session "learned one adaptation" about backlog and epics; the state file shows the counts and the dispositions, but the exact rule the session wrote down for itself may live only in the transcript. If E8's wording matters to you, <code>/read-chat "done-open-sessions-closeout-aug26-orchestrator"</code> before the plan-it run is the cheap check.</div>
+
+<footer>Sources: <code>delivery/v4/resources/</code> (Notion export + 4 HTML) · Engine-Core <code>docs/implementation/0-done/{praxya-sprint1-ads-rules,open-sessions-closeout,mission-control-card-context,drain-2026-09-04}</code> · <code>.agents/history/INDEX.md</code> cards · <code>.taskstate/open-sessions-closeout/ORCHESTRATOR-STATE.md</code> · <code>~/.claude/skills/conclude-it/build-report.py</code> · plan-it <code>plugins/plan-it/</code> @ 3.0.1. Written 2026-09-07 for the plan-it v4 planning session.</footer>
+</main>
+<script>
+(function(){
+  var b=document.getElementById('theme'),r=document.documentElement;
+  var saved=null;try{saved=localStorage.getItem('planit-v4-theme')}catch(e){}
+  if(saved==='dark'||saved==='light'){r.setAttribute('data-theme',saved)}
+  b.addEventListener('click',function(){
+    var cur=r.getAttribute('data-theme');
+    var sysDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next=cur?(cur==='dark'?'light':'dark'):(sysDark?'light':'dark');
+    r.setAttribute('data-theme',next);
+    try{localStorage.setItem('planit-v4-theme',next)}catch(e){}
+  });
+})();
+</script>
+</body>
+</html>

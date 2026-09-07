@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fernando's Decision Queue — Open-Sessions Closeout</title>
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#ffffff; --ink:#1f2430; --muted:#6b7280; --line:#e5e1d8;
+    --accent:#0e7490; --act:#b45309; --gate:#b91c1c; --ok:#15803d; --chip:#eef2f7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14161c; --card:#1d2129; --ink:#e8e6e1; --muted:#9aa1ad; --line:#2b303b;
+           --accent:#38bdf8; --act:#fbbf24; --gate:#f87171; --ok:#4ade80; --chip:#262b35; }
+  }
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:2.5rem 1rem}
+  main{max-width:900px;margin:0 auto}
+  h1{font-size:1.5rem;margin:0 0 .25rem} .sub{color:var(--muted);margin:0 0 2rem}
+  h2{font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+     margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+        padding:1rem 1.1rem;margin-bottom:.75rem}
+  .card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+  .id{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+         padding:.1rem .55rem;text-transform:uppercase}
+  .b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+  .b-open{background:color-mix(in srgb,var(--gate) 14%,transparent);color:var(--gate)}
+  .card p{margin:.25rem 0}
+  .unblocks{margin-top:.5rem;font-size:.85rem;color:var(--muted)} .unblocks b{color:var(--accent)}
+  code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+        border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+  .overflow{overflow-x:auto}
+  details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+  details.more>summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.88rem;
+    list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+  details.more>summary::before{content:"▸";transition:transform .15s}
+  details.more[open]>summary::before{transform:rotate(90deg)}
+  .exp{margin:.6rem 0 .4rem;font-size:.92rem}
+  .srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+  .mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+         border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+  .mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+    text-transform:none;letter-spacing:0;color:var(--ink)}
+  .mdout h1{font-size:1.12em}
+  .mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+  .mdout blockquote{border-left:3px solid var(--accent);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+  .mdout ul{padding-left:1.3em} .mdout li{margin:.15em 0}
+  .mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+  .mdout a{color:var(--accent)}
+</style>
+</head>
+<body><main>
+<h1>Fernando's Decision Queue</h1>
+<p class="sub">Open-sessions closeout · updated 2026-08-25 round 2 (batch rulings applied) ·
+markdown twin: <code>DECISIONS.md</code>. Open items carry a <b>Read more</b> — the source
+note renders inline.</p>
+
+<h2>Ruled / done</h2>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Ruling</th><th>Effect</th></tr>
+<tr><td><b>A1</b></td><td>✅ DONE — 3 Video Forge keys entered on fernando-ott</td><td><b>Wave 4 unblocked</b></td></tr>
+<tr><td><b>A2</b></td><td>✅ quick-wins = tactiq fix + claude-sub default backbone</td><td>carded</td></tr>
+<tr><td><b>A3</b></td><td>⏸ PARKED — "work on this in the future, don't touch"</td><td>audio-transcription plan removed from Wave 3; folder untouched</td></tr>
+<tr><td><b>D1</b></td><td>✅ ratified: (a) roll api-core to praxya</td><td><b>Wave 2 unblocked</b></td></tr>
+<tr><td><b>D2</b></td><td>✅ APPROVED, cap <b>US$3 per entire video process</b></td><td>Wave 1 V3 go — D-47 run must verify <code>budget_usd ≤ 3</code></td></tr>
+<tr><td><b>D3</b></td><td>✅ ratified: sign-off + enforce <code>last_30_days</code> default</td><td>Wave 1 task 3 go</td></tr>
+<tr><td><b>D5</b></td><td>✅ ratified: praxya brain-agent rides Wave 2's deploy</td><td>one soak, one rollback point</td></tr>
+<tr><td><b>D6</b></td><td>✅ simplified mode default <b>ON</b> <i>(answered "Modo Focus on" — interpreted as Modo Simples/A4, since Modo Foco is already live; interpretation re-confirmed in Wave 7)</i></td><td>closes Hermes A4</td></tr>
+<tr><td><b>D7</b></td><td>✅ <b>auto-expire proposals older than 31 days</b> — ⚠ supersedes P3-D17; needs its own service + audit trail + conscious fence-spec update</td><td>Wave 7 build</td></tr>
+<tr><td><b>D11</b></td><td>✅ <b>GREEN LIGHT: delete + clean up everything aivivum</b></td><td>Wave 6 executes the teardown</td></tr>
+<tr><td><b>D14</b></td><td>✅ re-mint (in-pod recipe E-029)</td><td>Wave 1 task 4 go</td></tr>
+<tr><td><b>D15</b></td><td>⏸ hermes parked — "don't touch for now"</td><td>Wave 7 scoping task removed</td></tr>
+</table></div>
+
+<h2>Open — read &amp; answer when ready</h2>
+
+<div class="card"><h3><span class="id">D4</span> Squad-run identity: A or B <span class="badge b-open">open</span></h3>
+<p>File: <code>docs/implementation/open-sessions-closeout/backlog/squad-run-identity-needs-fernandos-a-or-b.md</code></p>
+<p>Radar's "Otimizar" starts squad runs with <code>started_by.user = null</code> → any squad whose
+first step needs a brand slice dies at step 1. <b>A</b> = thread the real logged-in user through
+(most correct, 3 repos of plumbing). <b>B</b> = act as the app-install's owner (cheap — but one
+fixed person becomes the audit identity for every app-started run, and these squads touch real
+client ads).</p>
+<p class="unblocks">Related same-family call: <b>D-B4</b> (is <code>publish</code> still refused for autonomous squads?) — cheapest answered together.</p>
+<details class="more"><summary>Read more</summary>
+<p class="exp">Why nobody should pick for you: widening identity is the wrong reflex for squads that
+can pause/activate real ads; B quietly makes one person accountable for everything in the audit
+trail. Today it reads as flakiness — squads whose first step needs no slice run fine, others die,
+so "Otimizar" succeeds or fails depending on routing.</p>
+<p class="srcnote">Source note (rendered):</p>
+<div class="mdout"><script type="text/markdown">
+# App-started squad runs still have no human identity — A or B is Fernando's call
+
+**Owner: Fernando** — this is a product/risk decision, not a bug fix.
+
+## What already shipped
+`squad-persona-runner.service.ts` now threads `owner_email` from `run.started_by?.user` and states
+the rule in the code: *"a squad step must act as the human who launched it, never as a widened
+service principal. When a run has no human starter, the slice is legitimately unauthorized and the
+step fails saying so — inventing a privileged identity here would be a silent escalation."*
+What it does not yet do is refuse at **START** with a readable reason; a run without a starter
+still dies at step 1 with `Access denied: no authorized scope`.
+
+## The decision still owed
+Radar's "Otimizar" starts a run with `started_by: {kind:"app", app_slug:"radar"}` — correct
+provenance — but `started_by.user` is `null`.
+
+- **A — thread the real user through.** Host admin-ui hands the acting user into micro-frontend
+  pages, Radar forwards it, `started_by.user` carries it. Most correct, most plumbing, **3 repos**.
+- **B — act as the app install's owner.** Resolve an owner email from the Radar installation.
+  Cheap, but every app-started run then acts as one fixed person.
+
+Proven live on praxya, run `2026-08-03-1527-mo2imy` (`google-ads-manager`, org `bosslife`).
+
+## Related, same family
+**D-B4** — is `publish` still refused for autonomous squads? Gates `upload-post` and `imgbb`;
+carried in `squad-pipeline-correctness/SEED.md`.
+</script></div></details></div>
+
+<div class="card"><h3><span class="id">D8</span> Two approval surfaces, one proposal <span class="badge b-open">open</span></h3>
+<p><b>Not a duplicate-card bug — two different questions about the same proposal.</b>
+Card 1 asks "should this CONTENT change be approved?" (the classic proposal card). Card 2 appears
+only when you ask the CHAT AGENT to act on a proposal, and asks "should the AI be allowed to make
+that approve/reject call?" — a meta-approval on the tool call. You see two similar cards with no
+hint which is which; approving the wrong one is a confusing no-op (no data risk).</p>
+<p class="unblocks">Options, cheapest first: (1) distinguishing title on the meta card ("Authorize the
+assistant to approve X"); (2) meta card links to its content card; (3) suppress the meta card when
+the content card is already decidable. <b>Recommended: 1+2 together</b> (S effort).</p>
+<details class="more"><summary>Read more</summary>
+<p class="srcnote">Source note (rendered):</p>
+<div class="mdout"><script type="text/markdown">
+# Mission Control can now show TWO "approve this proposal" cards for the same proposal
+
+## What
+Two independent producers can surface a card about the same underlying change proposal:
+1. `ChangeProposalCardProducer` — reads `client_bible_change_proposals`. The question it asks is
+   **"should this CONTENT change be approved?"** Pre-dates Wave 1.
+2. `PendingActionCardProducer`, widened in Wave 1 (D-W1-14) — cards a `chat.proposal.approve` /
+   `chat.proposal.reject` action-execution row. The question it asks is **"should the AI be
+   allowed to make that approve/reject call?"** — a meta-approval, staged only when a human asks
+   the chat agent to act on a proposal.
+
+These are genuinely different decisions, so this is not a duplicate-card bug and nothing was
+changed. But an operator seeing two similar-looking cards has no affordance telling them which is
+which, and approving the wrong one produces a confusing no-op.
+
+## Why it is worth a product look
+This is exactly the "honesty constrains the interface" case. Options, cheapest first:
+- Distinguishing title/summary on the chat-rail card.
+- Chat-rail card links to the content card it is about.
+- Suppress the meta-card when the content card for the same target is already decidable.
+
+## Not urgent
+Only occurs when a human asks the chat agent to approve/reject a proposal AND that proposal is
+also carded by the content producer. No data at risk either way.
+</script></div></details></div>
+
+<div class="card"><h3><span class="id">D9</span> Mission Control P8 — fleet data <span class="badge b-open">open</span></h3>
+<p><b>P8 is ops-only, no code.</b> The /home + /equipe CODE is already fleet-wide (all tenants pin
+identical digests). What the other tenants never got is praxya's DATA — roster, sidebar config,
+seeded content — so their Mission Control renders empty. P8 was frozen pending "Fernando accepts
+praxya", which has been true in practice since 08-15. And the fleet shrank to 2 tenants (engine
+and aivivum are gone), so P8 today = <b>seed fernando-ott's Mission Control data</b>. That's it.</p>
+<p class="unblocks"><b>Recommended:</b> fold that one-tenant seeding into Wave 7 and retire the frozen PRD.</p>
+<details class="more"><summary>Read more</summary>
+<p class="exp">From the frozen PRD: "Wave 2 is data only: no digest pin, no image rollout, no
+terraform apply." The original premise ("W2/W3 shipped praxya-only") was disproven by live
+grounding on 2026-08-14 — all tenants already served /home and /equipe at HTTP 200; only the data
+differs. Source: <code>docs/implementation/0-done/mission-control-team/PRDs/PRD-P8-wave2-fleet-data.md</code>
+(+ the package README's freeze banner).</p></details></div>
+
+<div class="card"><h3><span class="id">D10</span> Old box — yes, it's Hetzner <span class="badge b-open">awaiting go</span></h3>
+<p><b>Answer to your question: `178.156.183.64` is the old HETZNER box</b> (178.156.x is Hetzner's
+range). Your current fleet is the two Contabo boxes — tenants <code>167.86.98.85</code> + apps
+<code>75.119.153.239</code>. This is the survivor of the Hetzner→Contabo consolidation.
+Measured 08-22: everything migrated, its containers stopped, nothing broke, the security exposure
+is closed — it is purely a machine burning rent. The old "it still serves icons" worry is MOOT:
+those DNS names resolve to a third-party IP (<code>2.57.91.92</code>), not this box.</p>
+<p class="unblocks"><b>Recommended: approve retirement.</b> Wave 6 re-verifies + preps the 28-record DNS
+checklist; you do the two console actions (delete records, cancel the VPS at Hetzner). DB dumps
+are already archived locally and stay.</p>
+<details class="more"><summary>Read more</summary>
+<p class="srcnote">Source note (rendered):</p>
+<div class="mdout"><script type="text/markdown">
+# The old box `178.156.183.64` is still up, still paying rent
+
+**Owner: Fernando only** — needs a DNS console and a provider account.
+
+## State, measured at the close of drain-2026-08-21
+`ping -c 1 178.156.183.64` → 1 packet received — the box is ALIVE. Checked repeatedly; it never
+stopped answering.
+
+## What is true (and no longer urgent)
+Every dependency was migrated to `75.119.153.239` and independence-verified with the old box's
+containers **stopped** — they are stopped now and nothing has broken. The security reason to hurry
+is gone: the 12 per-app Postgres containers publishing `0.0.0.0:55433-55471` with guessable
+credentials are firewalled (`raw`-table rule, proven able to fail). So this is now purely **a
+machine that costs money and does nothing**.
+
+## The steps
+1. Delete the 28 DNS records — exact list per zone in
+   `.taskstate/drain-2026-07-30/DNS-RECORDS-TO-DELETE.md` (two don't exist; skip them).
+2. Cancel/destroy the VPS at the provider, then delete its disks.
+3. Keep the 13 DB dumps in `.secrets/archive/oldbox-178.156.183.64-retire-20260731/` until sure.
+
+## ⚠ The icons sub-decision is MOOT
+`ads-reports-maps.gestaoia.cloud` and `ads.gestaoia.cloud` resolve to `2.57.91.92` — **neither the
+old box nor the apps box**. Deleting the old box does not affect them; verify they still resolve
+after, and treat the original either/or as answered.
+
+## ⚠ If you KEEP the box instead
+Rotate `brain`/`brain*` before restarting anything — the not-rotated reasoning inverts the moment
+you keep it.
+</script></div></details></div>
+
+<div class="card"><h3><span class="id">D12</span> 8ftools headless permissions <span class="badge b-open">open</span></h3>
+<p><code>~/.claude-8ftools/settings.json</code> has no <code>permissions.allow</code> block, so
+headless (<code>-p</code>) runs under that alias stall at the Bash permission gate — observed live
+during the deploy-router fail-open test. Question: deliberate safety brake on that subscription,
+or should it match your other aliases so overnight automation works?</p>
+<p class="unblocks">If deliberate → we note it in the vault so nobody re-files it. If not →
+one run of <code>/fewer-permission-prompts</code> under that alias is the whole fix (minutes).</p>
+<details class="more"><summary>Read more</summary>
+<p class="srcnote">Source note (rendered):</p>
+<div class="mdout"><script type="text/markdown">
+# Decide: should ~/.claude-8ftools/settings.json get a permissions.allow block?
+
+**Originating session:** `deploy-router-skill-creation` (2026-08-24; carried forward by
+`deploy-router-skill-enhancement`, which applied every other item of the original note).
+
+`~/.claude-8ftools/settings.json` has NO `permissions.allow` block, so headless (`-p`) sessions
+under that alias can't run Bash without approval — observed during the deploy-router fail-open
+test: the command fell through the guard correctly, then stalled at the permission gate. This is
+distinct from the (now fixed) lock-identity bug in the same subscription.
+
+**Decision for Fernando:** is the missing allowlist intentional for 8ftools automation (a safety
+brake on that alias), or should it get the same allow block as the other subscriptions so headless
+runs work? If intentional, note it in the vault so the next session doesn't re-file this; if not,
+`/fewer-permission-prompts` under that alias is the fast path.
+</script></div></details></div>
+
+<div class="card"><h3><span class="id">D13</span> <code>.value</code> vs <code>.defaultValue</code> <span class="badge b-open">open</span></h3>
+<p>Integration credential fields live in prod under BOTH <code>configSchema.fields[].value</code>
+AND <code>.defaultValue</code> — a schema fork no plan modeled. The masking/audit code now
+tolerates both (binding rule: scan BOTH or "0 plaintext remaining" is a false-clean). The parked
+question: run a one-time migration normalizing <code>.value</code> → <code>.defaultValue</code>
+so there is ONE canonical field?</p>
+<p class="unblocks"><b>Recommended: yes, normalize</b> — as its own small package (audit-backed
+migration + fleet grep of every config reader), Wave 7 candidate, S/M effort.</p>
+<details class="more"><summary>Read more</summary>
+<p class="srcnote">Source (build-all-seed-items run decisions, 2026-08-24T02:50Z — rendered):</p>
+<div class="mdout"><script type="text/markdown">
+**`configSchema.fields[].value` is a real, populated production field that no plan models.**
+Binding on every package that reads or masks integration secrets:
+
+- (a) readers must tolerate ciphertext in BOTH `f.value` and `f.defaultValue`;
+- (b) masking must cover BOTH field names AND stop being slug-gated to document-storage/slack;
+- (c) audits/migrations must scan BOTH, or "0 plaintext remaining" is a false-clean.
+
+**PARKED, not decided:** whether to normalize `.value` into `.defaultValue`. That is a schema
+change with blast radius beyond this package and it is NOT on Fernando's locked list — it must not
+be decided as a side effect of a masking fix. Raise it with Fernando in the final report.
+</script></div></details></div>
+
+<h2>Wave gates after round 2</h2>
+<div class="overflow"><table>
+<tr><th>Wave</th><th>Status</th></tr>
+<tr><td>1 — residuals drain</td><td>✅ fully unblocked (D2 capped $3/video · D3 go · D14 re-mint)</td></tr>
+<tr><td>2 — chat-manages closure</td><td>✅ fully unblocked (D1=a, D5 rides along)</td></tr>
+<tr><td>3 — planning</td><td>scope reduced: Higgsfield/browser-agent only (A3 parked audio)</td></tr>
+<tr><td>4 — alimento diário</td><td>✅ fully unblocked (A1 done)</td></tr>
+<tr><td>5 — multi-space W0</td><td>✅ unblocked</td></tr>
+<tr><td>6 — security sweep</td><td>✅ D11 teardown GO · D10 awaiting your yes (prep proceeds)</td></tr>
+<tr><td>7 — M/L backlog</td><td>D7 decided (31-day auto-expire, supersedes P3-D17) · D4/D8/D9/D13 open · hermes removed (D15)</td></tr>
+</table></div>
+
+<script>
+// Tiny markdown renderer for the embedded source notes (headers, bold/italic, code, lists,
+// blockquotes, links, hr). Deliberately minimal — notes are simple markdown.
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,(m,c)=>"<code>"+c+"</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2">$1</a>');
+}
+function md(src){
+  const lines=esc(src).split("\n"); let out=[],inCode=false,inList=false,inQuote=false;
+  const closeAll=()=>{if(inList){out.push("</ul>");inList=false}if(inQuote){out.push("</blockquote>");inQuote=false}};
+  for(const raw of lines){
+    if(raw.startsWith("```")){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;continue}
+    if(inCode){out.push(raw);continue}
+    const l=raw;
+    if(/^\s*$/.test(l)){closeAll();continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");continue}
+    let m;
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();const h=m[1].length;out.push(`<h${h}>`+inline(m[2])+`</h${h}>`);continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){if(inQuote){out.push("</blockquote>");inQuote=false}if(!inList){out.push("<ul>");inList=true}out.push("<li>"+inline(m[1])+"</li>");continue}
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){if(inQuote){out.push("</blockquote>");inQuote=false}if(!inList){out.push("<ul>");inList=true}out.push("<li><b>"+m[1]+".</b> "+inline(m[2])+"</li>");continue}
+    closeAll();out.push("<p>"+inline(l)+"</p>");
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  return out.join("\n");
+}
+document.querySelectorAll('script[type="text/markdown"]').forEach(s=>{
+  const d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+</main></body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>plan-it v4 Plan Review</title>
+<meta name="planit-source" content="PLAN-REVIEW.md sha256=7a1358f06738af9bf7474b3b12c9c0a873696eee94e4c981456988a4439d5873">
+<meta name="planit-brand" content="default sha256=8a978f97b922096a3b1fda438a0000ace20765a81104ee2baf11be61f87a8773">
+<meta name="planit-renderer" content="hand-render/coordinator-2026-09-07 (v4 build-report.mjs pending)">
+<meta name="planit-kind" content="PLAN-REVIEW">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root{
+    --bg:#FFFFFF; --card:#F6F8FA; --line:#E6EDF3; --ink:#0D1117; --muted:#484F58;
+    --accent:#00B37D; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent);
+    --ok:#2EA043; --warn:#D29922; --bad:#F85149; --info:#58A6FF; --chip:#E6EDF3; --hold:#484F58;
+    --font-display:"Space Grotesk","Segoe UI",system-ui,sans-serif;
+    --font-body:Inter,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D1117; --card:#161B22; --line:#21262D; --ink:#C9D1D9; --muted:#8B949E;
+      --accent:#00E5A0; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent); --chip:#21262D; --hold:#8B949E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1117; --card:#161B22; --line:#21262D; --ink:#C9D1D9; --muted:#8B949E;
+    --accent:#00E5A0; --accent-bg:color-mix(in srgb,#00E5A0 15%,transparent); --chip:#21262D; --hold:#8B949E;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+  body::before{content:"";display:block;height:3px;background:var(--accent);position:fixed;top:0;left:0;right:0}
+  main{max-width:940px;margin:0 auto;position:relative}
+  h1,h2,h3,.eyebrow,.badge,#theme-toggle,.brand-badge,th,.stat b{font-family:var(--font-display)}
+  .eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  h1{font-size:1.75rem;margin:.2rem 0 .3rem;letter-spacing:-.01em;text-wrap:balance;padding-right:7rem}
+  .sub{color:var(--muted);margin:0 0 1.4rem;max-width:72ch}
+  h2{font-size:1rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2.4rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+  h3{font-size:1.02rem;margin:.9rem 0 .3rem}
+  #theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:.3rem .8rem;font-size:.78rem;cursor:pointer}
+  #theme-toggle:focus-visible,.copy button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .brand-badge{display:inline-block;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:.1rem .6rem;margin-right:.5rem}
+  code{font-family:var(--font-mono);background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-word}
+  pre{font-family:var(--font-mono);background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font-size:.8rem;line-height:1.5}
+  .overflow{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.9rem}
+  th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:.74rem;letter-spacing:.06em;text-transform:uppercase}
+  tr:last-child td{border-bottom:none}
+  td.id{font-family:var(--font-mono);font-weight:600;color:var(--accent);white-space:nowrap}
+  .badge{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:.12rem .55rem}
+  .b-ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+  .b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+  .b-hold{background:color-mix(in srgb,var(--hold) 16%,transparent);color:var(--hold)}
+  .b-default{background:var(--accent-bg);color:var(--accent)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin:1rem 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.7rem .9rem}
+  .stat b{display:block;font-size:1.5rem;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .stat span{font-size:.8rem;color:var(--muted)}
+  .stat small{display:block;font-size:.7rem;color:var(--muted);margin-top:.2rem}
+  .first{border-left:3px solid var(--accent);background:var(--card);padding:.8rem 1rem;border-radius:0 8px 8px 0;margin:.6rem 0}
+  .first b.n{font-family:var(--font-display);color:var(--accent)}
+  .states{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin:1rem 0}
+  @media (max-width:760px){.states{grid-template-columns:1fr}}
+  .state{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem 1rem;font-size:.9rem}
+  .state h4{margin:0 0 .3rem;font-family:var(--font-display);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase}
+  .state.good h4{color:var(--ok)} .state.empty h4{color:var(--muted)} .state.bad h4{color:var(--bad)}
+  details.glossary{border:1px solid var(--line);border-radius:8px;background:var(--card);padding:.6rem .9rem;margin:.8rem 0}
+  details summary{cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:.88rem;color:var(--accent);list-style:none;display:inline-flex;gap:.4rem;align-items:center}
+  details summary::before{content:"▸";transition:transform .15s}
+  details[open] summary::before{transform:rotate(90deg)}
+  details table{font-size:.82rem;margin-top:.6rem}
+  .copy{position:relative}
+  .copy button{position:absolute;top:.5rem;right:.5rem;font:inherit;font-size:.75rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:.2rem .6rem;cursor:pointer}
+  .legend{font-size:.8rem;color:var(--muted);margin:.3rem 0 1rem}
+  .note{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--card);padding:.6rem 1rem;border-radius:0 8px 8px 0;font-size:.9rem;margin:1rem 0}
+  footer{margin-top:3rem;color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:1rem}
+  @media (prefers-reduced-motion: reduce){details summary::before{transition:none}}
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<div class="eyebrow">plan-it v4 · delivery/v4 · plan review (gate G4) · ratified 2026-09-07</div>
+<h1>plan-it v4 Plan Review</h1>
+<p class="sub"><span class="brand-badge" data-brand="default">brand: Her0 default</span> The complete draft package, produced end to end after your rulings on the analysis report. <b>Ratified as recommended on 2026-09-07:</b> R1–R12 confirmed; A-1, A-3, A-4 granted; A-2 held until O-2; no contradictions. The CONTRACT is v1.0 and the package is handed off. Markdown twin: <code>PLAN-REVIEW.md</code> (canonical).</p>
+<p class="legend">Legend: <b>Rn</b> default the run applied · <b>A-n</b> authorization · <b>O-n</b> owner action · <b>Dn</b> your earlier ruling · <b>V4An…V4Cn</b> epics · <b>C-E&lt;n&gt;-NN</b> CONTRACT case — glossary panel below.</p>
+
+<details class="glossary"><summary>Glossary — every ID and acronym on this page</summary>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Means</th><th>Where defined</th></tr>
+<tr><td class="id">R1…R12</td><td>defaults the run applied at the decisions gate, to contradict here</td><td>DECISIONS.md</td></tr>
+<tr><td class="id">A-1…A-4</td><td>authorizations the build needs: branch commits and merges, release tag, Chrome and headless sessions, the guard-fix commit</td><td>DECISIONS.md — Open</td></tr>
+<tr><td class="id">O-1…O-3</td><td>owner actions only you can do: stale installs, QA sign-off, brand ratification</td><td>DECISIONS.md — Open</td></tr>
+<tr><td class="id">D1…D7</td><td>your rulings on the analysis report</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td class="id">CONTRACT</td><td>the frozen shared law squads build against; <code>v1.1-draft</code> now, v1.0 when you ratify</td><td>delivery/v4/CONTRACT.md</td></tr>
+<tr><td class="id">SQ-A · SQ-B · SQ-C</td><td>the three build squads: renderer · deterministic core · prose and packaging</td><td>CONTRACT §2</td></tr>
+<tr><td class="id">V4A1…V4C4</td><td>the 13 epics (A renderer, B core, C prose)</td><td>STATUS.md</td></tr>
+<tr><td class="id">C-E&lt;n&gt;-NN</td><td>an enforcement case in the CONTRACT for enhancement n (60 in total)</td><td>CONTRACT ## Cases</td></tr>
+<tr><td class="id">T-&lt;EID&gt;-NN</td><td>a per-epic test case (166 in total)</td><td>epics/*.md</td></tr>
+<tr><td class="id">[REAL]</td><td>a test case that needs a live target; never verified on a mock (none in this package)</td><td>GLOSSARY.md</td></tr>
+<tr><td class="id">gate-check</td><td>the plugin's zero-dependency script whose exit codes decide whether the pipeline advances</td><td>plugins/plan-it/skills/plan-it/scripts/gate-check.mjs</td></tr>
+<tr><td class="id">guard</td><td>the hook that denies PRD/epic writes while the CONTRACT is unfrozen</td><td>plugins/plan-it/scripts/hooks/planit-guard.mjs</td></tr>
+<tr><td class="id">7fcff27</td><td>the commit that added named-run resolution to the root guard only</td><td>docs/v4/01-findings.md §2.9</td></tr>
+<tr><td class="id">AMD-4 · AMD-5</td><td>amendments to the test harness: gate count bound to the v2 baseline; mirror pairs 8 → 11</td><td>delivery/decisions.md</td></tr>
+<tr><td class="id">W0…W4</td><td>build waves: orchestrator prep · squads · integration · QA · release</td><td>00-program-plan.md</td></tr>
+<tr><td class="id">WCAG</td><td>Web Content Accessibility Guidelines — contrast ratios behind R7</td><td>docs/v4/01-findings.md §2.2</td></tr>
+<tr><td class="id">INV</td><td>IMPLEMENTED-NOT-VERIFIED: built, but the proving case could not run</td><td>GLOSSARY.md</td></tr>
+</table></div></details>
+
+<h2>What you are looking at</h2>
+<div class="stats">
+  <div class="stat"><b>13</b><span>epics</span><small>SQ-A 4 · SQ-B 5 · SQ-C 4</small></div>
+  <div class="stat"><b>166</b><span>epic test cases</span><small>48 · 74 · 44 — declared = counted for all 13</small></div>
+  <div class="stat"><b>60</b><span>CONTRACT enforcement cases</span><small>1 manual (~2%)</small></div>
+  <div class="stat"><b>0</b><span>cases needing a live target</span><small>everything runs offline</small></div>
+  <div class="stat"><b>5 / 5</b><span>failure cascade classes covered</span><small>6 failure states modelled</small></div>
+  <div class="stat"><b>51+25</b><span>baseline cases green</span><small>after the guard mirror fix</small></div>
+</div>
+<p class="legend">Every number above was computed by the gate-check verbs (<code>handoff</code>, <code>contract</code>, <code>adversary</code>) on 2026-09-07, not typed.</p>
+<pre>docs/v4/
+  01-findings.md          synthesis of four research streams + 18 measured facts
+  02-v4-design.md         the additive design (statechart, verbs, renderer, prose, topology)
+  research/               stream-A..D reports + the coordinator's grounding file
+delivery/v4/
+  CONTRACT.md             v1.0 · 60 enforcement cases · frozen, ratified at this review
+  DECISIONS.md / .html    rulings · defaults · authorizations · owner actions · copy-your-rulings
+  GATE.md                 the autonomy contract the build reads
+  GLOSSARY.md             every ID and acronym, one line each
+  00-program-plan.md      sessions · waves · runbook · test standard
+  STATUS.md               the board: 13 epics, all NOT-STARTED
+  SESSIONS.md             5 sessions with launch prompts
+  KICKOFF.md / .html      pinning · re-derive step · first slice · gotchas · the launch prompt
+  TEST-CONTRACT-REVIEW.md the case review
+  prds/  epics/           one PRD + one epics file per squad</pre>
+
+<h2>Read these three first</h2>
+<div class="first"><b class="n">1 · R1 — how the autonomous mode keeps the rule "no frozen contract, no squads".</b> Squads build against a contract frozen as a draft; this review ratifies it into v1.0; a contradiction that changes the CONTRACT re-enters the squads as an amendment. The alternative was to review before squads write (praxya's order). This is the one default that changes how a run feels.</div>
+<div class="first"><b class="n">2 · The guard fix that was never installed</b> (cases C-E9-07, C-E9-08). The named-run fix from commit 7fcff27 lived only in the root copy; the plugin copy Claude Code actually runs never had it. It is mirrored now (uncommitted, authorization A-4) and v4 makes the rule robust: the guard resolves a run by its package folder, not by a path convention.</div>
+<div class="first"><b class="n">3 · The renderer's escaping case</b> (C-E2-12). The renderer being ported can be broken out of with an upper-case <code>&lt;/SCRIPT&gt;</code> inside an embedded note. v4 fixes it and asserts it.</div>
+
+<h2>The twelve defaults — contradict by writing <code>Rn: &lt;alternative&gt;</code></h2>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Default applied</th><th>Alternative not taken</th></tr>
+<tr><td class="id">R1</td><td><span class="badge b-default">default</span> draft contract for squads → one review round → v1.0 → amendment loop on contradiction</td><td>review before squads write</td></tr>
+<tr><td class="id">R2</td><td><span class="badge b-default">default</span> "owner decision" triage verdict exits to closed-without-plan with a memo and a reopen condition</td><td>back into the questionnaire</td></tr>
+<tr><td class="id">R3</td><td><span class="badge b-default">default</span> typed ruling tags canonical in markdown; glyphs are decoration</td><td>glyphs as source of truth</td></tr>
+<tr><td class="id">R4</td><td><span class="badge b-default">default</span> optional Deadline column; owner actions with deadlines surface at close</td><td>no column</td></tr>
+<tr><td class="id">R5</td><td><span class="badge b-default">default</span> orchestrator = top tier</td><td>unspecified</td></tr>
+<tr><td class="id">R6</td><td><span class="badge b-default">default</span> incidental findings in the STATUS log, tagged, never in the case tally</td><td>separate file</td></tr>
+<tr><td class="id">R7</td><td><span class="badge b-default">default</span> brand accents as chip backgrounds in light mode; muted text Steel (WCAG measured: Signal on white 1.65)</td><td>guideline colours as text</td></tr>
+<tr><td class="id">R8</td><td><span class="badge b-default">default</span> mirror pairs 8 → 11</td><td>9</td></tr>
+<tr><td class="id">R9</td><td><span class="badge b-default">default</span> mermaid 10.9.1 pinned on cdnjs, strict, text fallback offline</td><td>11.x</td></tr>
+<tr><td class="id">R10</td><td><span class="badge b-default">default</span> the state file names the package folder; verbs derive paths from it</td><td>keep the <code>delivery/v3/</code> literals</td></tr>
+<tr><td class="id">R11</td><td><span class="badge b-default">default</span> harness amendments AMD-4 and AMD-5, like the v3 amendments</td><td>fork the gate concept</td></tr>
+<tr><td class="id">R12</td><td><span class="badge b-default">default</span> renderer is a separate script, not a gate-check verb</td><td>a gate-check verb</td></tr>
+</table></div>
+<p class="legend">Full rationale per row in <code>DECISIONS.md</code>; design consequences in <code>docs/v4/02-v4-design.md</code>.</p>
+
+<h2>Authorizations the build needs — <code>A-n: grant</code> or <code>A-n: hold</code></h2>
+<div class="overflow"><table>
+<tr><th>ID</th><th>Question</th><th>Recommended</th></tr>
+<tr><td class="id">A-1</td><td>squads commit to <code>epic/v4*</code>; the orchestrator merges to <code>main</code> overnight</td><td><span class="badge b-ok">grant</span></td></tr>
+<tr><td class="id">A-2</td><td>the orchestrator tags and pushes 4.0.0 and updates the marketplace entry</td><td><span class="badge b-hold">hold</span> until you have read QA-REPORT.md (O-2)</td></tr>
+<tr><td class="id">A-3</td><td>QA opens Chrome for rendered pages; headless fallback sessions allowed</td><td><span class="badge b-ok">grant</span></td></tr>
+<tr><td class="id">A-4</td><td>commit the guard mirror fix as the first W0 commit</td><td><span class="badge b-ok">grant</span></td></tr>
+</table></div>
+<p>Owner actions (only you; none blocks the build): <b>O-1</b> remove the stale installs before the tag · <b>O-2</b> read QA-REPORT.md, then decide A-2 · <b>O-3</b> ratify R7 or send colours.</p>
+
+<h2>The three honest states of this review</h2>
+<div class="states">
+  <div class="state good"><h4>good · you answer</h4>Contradictions are threaded through the affected files, the CONTRACT is re-frozen as v1.0, KICKOFF's pinning block is re-pinned, and the five terminals in <code>SESSIONS.md</code> can be opened. The build runs overnight; the morning report names what to read first.</div>
+  <div class="state empty"><h4>legitimately empty · you answer nothing</h4>Nothing irreversible happens. The CONTRACT stays <code>v1.1-draft</code>, the machine refuses to hand off a draft, no session opens, no commit or tag is made. The package waits on disk.</div>
+  <div class="state bad"><h4>misconfigured · a contradiction changes the CONTRACT</h4>The affected squad's PRD and epics are re-planned against the amended contract (v1.1 → v1.2) before any session opens. This page is re-rendered as a v2 with a "what changed since v1" section and your rulings carried forward. No "Approve" is offered for a changed contract until that round completes.</div>
+</div>
+
+<h2>Known limitations of this planning run</h2>
+<div class="note">
+This run executed on the 3.0.1 machine (17 states), so the decisions and freeze gates were recorded as coordinator defaults pending this review rather than through the new v4 states. The 3.0.1 reconcile embedded in the handoff lint scans the v3 folder by literal; the coordinator reconciled the v4 package through the lint's own per-epic declared-versus-counted check. The HTML pages of this run are hand-rendered following the renderer's contract (stamps in the page head, brand badge, glossary panel); the v4 renderer replaces them and the markdown stays canonical. The run's own state file keeps its legacy name until the named-runs epic lands.
+</div>
+
+<h2>Rulings as given (2026-09-07)</h2>
+<p>Recorded in <code>PLAN-REVIEW.md</code>, <code>DECISIONS.md</code>, <code>GATE.md</code> and the run state.</p>
+<div class="copy"><button type="button" id="copy-btn">Copy</button><pre id="rulings">R1: ok · R2: ok · R3: ok · R4: ok · R5: ok · R6: ok · R7: ok · R8: ok · R9: ok · R10: ok · R11: ok · R12: ok
+A-1: grant · A-2: hold until O-2 · A-3: grant · A-4: grant
+Reviewed-by: Fernando Ott 2026-09-07</pre></div>
+
+<footer>Hand-rendered by the coordinator on 2026-09-07 following the v4 renderer's contract. Sources: <code>PLAN-REVIEW.md</code> (canonical), <code>DECISIONS.md</code>, <code>CONTRACT.md</code>, <code>STATUS.md</code>. Counts computed by gate-check verbs the same day.</footer>
+</main>
+<script>
+(function(){
+  var btn=document.getElementById("theme-toggle"),lab=document.getElementById("theme-label");
+  var order=["auto","light","dark"],cur="auto";
+  try{cur=localStorage.getItem("planit-v4-theme")||"auto"}catch(e){}
+  function apply(v){cur=v;lab.textContent=v;if(v==="auto"){document.documentElement.removeAttribute("data-theme")}else{document.documentElement.setAttribute("data-theme",v)}try{localStorage.setItem("planit-v4-theme",v)}catch(e){}}
+  apply(cur);btn.addEventListener("click",function(){apply(order[(order.indexOf(cur)+1)%order.length])});
+  var cb=document.getElementById("copy-btn");
+  cb.addEventListener("click",function(){var t=document.getElementById("rulings").textContent;if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){cb.textContent="Copied";setTimeout(function(){cb.textContent="Copy"},1500)})}});
+})();
+</script>
+</body>
+</html>

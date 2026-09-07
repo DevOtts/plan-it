@@ -1,0 +1,405 @@
+<title>Seven Seeds Triage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F6F7F4; --panel:#FFFFFF; --panel-2:#EEF1EC; --ink:#17202A; --muted:#5B6570; --rule:#D6DCD4;
+  --accent:#106B6E; --accent-ink:#0B4E50; --accent-soft:#DDEDEC;
+  --plan:#106B6E; --plan-soft:#DDEDEC;
+  --build:#3B4FA8; --build-soft:#E3E7F7;
+  --decide:#A8681A; --decide-soft:#F6E9D4;
+  --light:#5B6570; --light-soft:#E6E9EA;
+  --warn:#9C2F2F; --warn-soft:#F5E0E0;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12171B; --panel:#1A2126; --panel-2:#212A30; --ink:#E8ECE6; --muted:#9AA5AD; --rule:#2C363D;
+    --accent:#4FB3B0; --accent-ink:#8ED6D3; --accent-soft:#173B3C;
+    --plan:#4FB3B0; --plan-soft:#173B3C;
+    --build:#8D9CE6; --build-soft:#242C4D;
+    --decide:#E0A24C; --decide-soft:#3F2E14;
+    --light:#9AA5AD; --light-soft:#2A3238;
+    --warn:#E07C7C; --warn-soft:#3F1D1D;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12171B; --panel:#1A2126; --panel-2:#212A30; --ink:#E8ECE6; --muted:#9AA5AD; --rule:#2C363D;
+  --accent:#4FB3B0; --accent-ink:#8ED6D3; --accent-soft:#173B3C;
+  --plan:#4FB3B0; --plan-soft:#173B3C;
+  --build:#8D9CE6; --build-soft:#242C4D;
+  --decide:#E0A24C; --decide-soft:#3F2E14;
+  --light:#9AA5AD; --light-soft:#2A3238;
+  --warn:#E07C7C; --warn-soft:#3F1D1D;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:15.5px;line-height:1.55;margin:0}
+.page{max-width:1080px;margin:0 auto;padding:40px 24px 80px}
+h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",system-ui,sans-serif;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,4.2vw,44px);font-weight:700;line-height:1.05;letter-spacing:-.01em}
+h2{font-size:24px;font-weight:700;line-height:1.15}
+h3{font-size:15px;font-weight:700;letter-spacing:.01em}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em}
+code{background:var(--panel-2);padding:.08em .35em;border-radius:3px}
+a{color:var(--accent-ink)}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:32px;align-items:end;padding-bottom:28px;border-bottom:2px solid var(--ink)}
+header.hero .lede{max-width:64ch;color:var(--muted);margin-top:14px;font-size:16.5px}
+.meta{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:28px 0 8px;border:1px solid var(--rule);border-radius:6px;overflow:hidden;background:var(--panel)}
+.tally div{padding:14px 16px;border-right:1px solid var(--rule)}
+.tally div:last-child{border-right:0}
+.tally .n{font-family:"Bricolage Grotesque",sans-serif;font-size:32px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.tally .l{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.tally .plan .n{color:var(--plan)} .tally .build .n{color:var(--build)} .tally .decide .n{color:var(--decide)} .tally .light .n{color:var(--light)}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap;line-height:1.5}
+.pill.plan{background:var(--plan-soft);color:var(--plan)}
+.pill.build{background:var(--build-soft);color:var(--build)}
+.pill.decide{background:var(--decide-soft);color:var(--decide)}
+.pill.light{background:var(--light-soft);color:var(--light)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.tablewrap{overflow-x:auto;margin:22px 0 0}
+table{border-collapse:collapse;width:100%;font-size:14px;background:var(--panel)}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--panel-2)}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.tablewrap table{border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+section.seed{margin-top:56px;padding-top:28px;border-top:1px solid var(--rule)}
+section.seed .head{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:baseline;justify-content:space-between}
+section.seed .head .path{color:var(--muted);font-size:13px;margin-top:4px}
+.anatomy{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px 24px;margin-top:22px}
+.anatomy .k{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;padding-top:3px}
+.anatomy .v{max-width:72ch}
+.anatomy .v p+p{margin-top:8px}
+.anatomy ul{margin:0;padding-left:18px}
+.anatomy li{margin:3px 0}
+.verdict{margin-top:22px;padding:16px 18px;border-left:3px solid var(--accent);background:var(--panel);border-radius:0 6px 6px 0;max-width:80ch}
+.verdict.build{border-left-color:var(--build)}
+.verdict.decide{border-left-color:var(--decide)}
+.verdict.light{border-left-color:var(--light)}
+.verdict .eyebrow{margin-bottom:6px}
+.verdict p+p{margin-top:8px}
+.flag{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;margin-top:18px;padding:12px 14px;background:var(--warn-soft);border-radius:6px;font-size:14px;max-width:80ch}
+.flag .pill{margin-top:2px}
+.lineup{margin-top:56px;padding-top:28px;border-top:2px solid var(--ink)}
+.lineup ol{margin:14px 0 0;padding-left:22px;max-width:76ch}
+.lineup li{margin:8px 0}
+.deps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:18px}
+.dep{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:12px 14px;font-size:14px}
+.dep b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:15px;margin-bottom:4px}
+.dep .arrow{color:var(--muted);font-size:12.5px;margin-top:6px}
+.footer{margin-top:48px;color:var(--muted);font-size:13px;max-width:76ch}
+@media (max-width:760px){
+  header.hero{grid-template-columns:1fr}
+  .tally{grid-template-columns:repeat(2,1fr)}
+  .tally div:nth-child(2){border-right:0}
+  .tally div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
+  .anatomy{grid-template-columns:1fr;gap:4px 0}
+  .anatomy .k{margin-top:12px}
+}
+@media (prefers-reduced-motion:no-preference){ a{transition:color .15s} }
+</style>
+
+<div class="page">
+<header class="hero">
+  <div>
+    <div class="eyebrow">Engine-Core · docs/implementation · seed triage · 2026-09-04</div>
+    <h1 style="margin-top:10px">Seven seeds, four plans</h1>
+    <p class="lede">What each SEED folder asks for, why it was filed, and whether Engine actually needs it before any planning effort is spent. Every claim below was re-checked against the tree and the delivery boards today, not taken from the seed text.</p>
+  </div>
+  <div class="meta">
+    <span><b>Read for:</b> Fernando Ott, owner</span>
+    <span><b>Inputs:</b> 7 × <span class="mono">SEED.md</span> (1,008 lines)</span>
+    <span><b>Cross-checked:</b> governed-send-tiering-and-rail, byo-subscription, secretary-personal-agent boards; brain-agent / api-core / admin-ui origin/main</span>
+    <span><b>Canary tenant for every [REAL] leg:</b> fernando-ott · praxya untouched</span>
+  </div>
+</header>
+
+<div class="tally">
+  <div class="plan"><div class="n">3</div><div class="l">Plan now</div></div>
+  <div class="build"><div class="n">2</div><div class="l">Already planned, build instead</div></div>
+  <div class="decide"><div class="n">1</div><div class="l">Owner decision, not a build</div></div>
+  <div class="light"><div class="n">1</div><div class="l">Measured zero, skip the plan</div></div>
+</div>
+<p style="margin-top:14px;max-width:76ch;color:var(--muted);font-size:14px">Three read-only measurements ran on the live tenants after the first draft of this page. They moved three verdicts: group bodies are stored after all, org-attribution drift is zero today, and the N5 cost model is settled by data. Each seed section carries its numbers.</p>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>Seed</th><th>In one line</th><th>Verdict</th><th>Size</th><th>Need it?</th></tr></thead>
+<tbody>
+<tr><td><b>hermes-studio-layer</b><br><span class="mono" style="color:var(--muted)">S1–S4</span></td><td>The owner-facing shell: rooms (S1), one Connections page (S2), a plan object before a squad runs (S3), agent identity of record (S4).</td><td><span class="pill plan">Plan</span></td><td class="num">L · 2 waves</td><td>S4 yes (live defect). S2 yes, cheap. S3 real but deferrable. S1 gated on the group-bodies decision.</td></tr>
+<tr><td><b>agent-proposes-skill</b><br><span class="mono" style="color:var(--muted)">N5</span></td><td>The post-run reflection pass gains a fourth output: a drafted Skill filed as a ChangeProposal for human approval.</td><td><span class="pill plan">Plan</span></td><td class="num">M</td><td>Commissioned by you 09-03. Measured: 55 of 83 runs qualified in 14 days, 6 to 9 reflection calls a day. Fold-in cost is trivial; the threshold decision is the whole risk.</td></tr>
+<tr><td><b>self-serve-first-run</b><br><span class="mono" style="color:var(--muted)">N6</span></td><td>Register into an existing tenant, land in your own Space, bring your own subscription, meet a seeded agent. Zero operator keystrokes.</td><td><span class="pill plan">Plan</span> <span class="pill light">Stale fact</span></td><td class="num">M</td><td>Only if you want a self-serve motion at all. Its "hard precondition" is already built, which the seed does not know.</td></tr>
+<tr><td><b>org-attribution-reconciliation</b><br><span class="mono" style="color:var(--muted)">G-5</span></td><td>A read-only sweep that reports interactions whose stored org differs from what the resolver would say today. Never corrects.</td><td><span class="pill light">Skip plan-it</span></td><td class="num">S</td><td>Measured today: zero drift on both tenants (8,408 and 45,147 interactions). The resolver is not side-effect-free, so a sweep is not free either. One backlog card, not a program.</td></tr>
+<tr><td><b>initiative-aware-send-tiering</b><br><span class="mono" style="color:var(--muted)">D6</span></td><td>Notify tier stays ungated only to the persona's own console group; any other agent-initiated send escalates to approve.</td><td><span class="pill build">Build, not plan</span></td><td class="num">19 cases</td><td>Yes, real gap. But it is already E1 of a frozen package. Re-planning duplicates work.</td></tr>
+<tr><td><b>governed-send-approval-rail-hardening</b></td><td>Explain the one dead approve click, make 4xx/5xx visible, add the cross-process / aged-card / redacted-tool E2E contract.</td><td><span class="pill build">Build, not plan</span></td><td class="num">16 cases</td><td>Yes. Already E2 of the same package; the dead click is diagnosed (a 401 at the edge).</td></tr>
+<tr><td><b>interactions-group-message-bodies</b><br><span class="mono" style="color:var(--muted)">G-4</span></td><td>Seed says group bodies are not persisted. Measured today: 88% of live group messages on fernando-ott carry the body. The gap is non-text messages with no placeholder.</td><td><span class="pill decide">Decide</span> <span class="pill warn">Premise false</span></td><td class="num">S</td><td>The decision shrinks to retention posture for data already stored, plus an S-sized placeholder fix. S1 is no longer blocked on it.</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ============ 1. hermes-studio-layer ============ -->
+<section class="seed" id="hermes">
+  <div class="head">
+    <div>
+      <div class="eyebrow">1 · Largest · owner-facing shell</div>
+      <h2>hermes-studio-layer</h2>
+      <div class="path mono">docs/implementation/hermes-studio-layer/SEED.md · 323 lines · seeded 2026-09-03</div>
+    </div>
+    <span class="pill plan">Plan · L · ~2 waves</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What it does</div>
+    <div class="v">
+      <p>Four screens that compose runtime Engine already has, filed as one seed by your ruling because they are one product decision.</p>
+      <ul>
+        <li><b>S1 Conversas / Salas</b>: a rooms list grouped by client org, the existing thread drawer in the centre, and a right pane with who is in the room and what the brain learned there (pending <code>extracted_object</code> proposals, approve inline).</li>
+        <li><b>S2 Conexões</b>: one page with four chips (Dados, Canais, Ferramentas, Modelos) over the six connection-shaped nav rows, five of which hide under "Development" today.</li>
+        <li><b>S3 Plano</b>: widen the squad <code>admission</code> object from goal + budget into steps + an acceptance checklist, and refuse "completed" while any item is red.</li>
+        <li><b>S4 Agent identity</b>: a principal grammar <code>agent:&lt;space&gt;/&lt;slug&gt;</code> accepted by the ledger, proposal reviewer and admission decider, set at execute time from the bearer's agent slot.</li>
+      </ul>
+    </div>
+    <div class="k">Why it exists</div>
+    <div class="v"><p>Leo built a Studio layer by hand over Hermes and Fernando wants the equivalent over Engine's governed runtime. Two of the four became urgent in the last two weeks: the Secretário now sends real WhatsApp messages, and every one of those rows is attributed to the service <code>brain-agent</code>, not the persona. In the interactions feed an agent send is indistinguishable from Fernando typing on his phone.</p></div>
+    <div class="k">Do we need it</div>
+    <div class="v">
+      <p><b>S4: yes.</b> It closes a live attribution defect and is the fact S1 and S3 both need to render honestly. It depends on the origin slot from governed-send R3-1, which merged on brain-agent as PR #151. That precondition is met.</p>
+      <p><b>S2: yes, and it is the cheapest visible win.</b> Pure information architecture over existing endpoints. Zero dependencies.</p>
+      <p><b>S3: real, but the smallest honest cut is enough.</b> The fence, the spend gate and the human checkpoint already exist. What is missing is a plan object with steps and acceptance. Leo's "20 use cases" is a development practice (plan-it test contracts), not a runtime object Engine lacks. Recommend hand-declared acceptance lists, no LLM, no canvas, in v1.</p>
+      <p><b>S1: needed, but its centre pane for group rooms has nothing to render until G-4 is decided.</b> The seed already says so. A DM-only first cut can start once S4 lands.</p>
+    </div>
+    <div class="k">Plan-it must decide</div>
+    <div class="v"><ul>
+      <li>G-4 store-or-wall at this plan's gate (see seed 7). Recommended.</li>
+      <li>Decision G: personas per Space (recommended) or per client.</li>
+      <li>The noun. "Conversas" is already Modo Simples' label for the AI chat row. Recommend "Salas".</li>
+      <li>Principal grammar: slug (readable in an audit row, recommended) vs persona id.</li>
+      <li>Plan scope: every squad definition (recommended) or render-bearing only.</li>
+      <li>S2 default: move the five <code>dev-</code> rows to picker-only for all tenants (recommended; the overlay tombstone rule makes it safe).</li>
+    </ul></div>
+    <div class="k">Depends on</div>
+    <div class="v"><p>governed-send E1 (identity plumbing at the send; reuse, never re-plumb) · G-4 for S1 groups · secretary R3-5 (sticky re-entry, open) for the room to show a live loop · two sidebar registries (api-core + admin-ui mirror) must move in one PR.</p></div>
+  </div>
+  <div class="verdict">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Plan it, as the anchor package of this cycle.</b> Order inside the plan: S4 first, S2 in parallel, S3 third, S1 last. Put G-4 and decision G at the G2 gate so S1 is not planned against an unmade privacy call.</p>
+  </div>
+</section>
+
+<!-- ============ 2. agent-proposes-skill ============ -->
+<section class="seed" id="n5">
+  <div class="head">
+    <div>
+      <div class="eyebrow">2 · Governance as a feature</div>
+      <h2>agent-proposes-skill</h2>
+      <div class="path mono">docs/implementation/agent-proposes-skill/SEED.md · 219 lines · commissioned 2026-09-03</div>
+    </div>
+    <span class="pill plan">Plan · M</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What it does</div>
+    <div class="v"><p>The reflection pass that already turns a finished run into flat facts and typed ontology candidates gains a fourth output: "was there a repeatable procedure here?" When it fires, the agent drafts a SKILL.md and files it as a <code>skill_proposal</code> ChangeProposal. On approve, a Skill row is minted with <code>sourceType: agent-proposed</code>, active but inert: attached to nothing, granting no tools, until a human attaches it through the existing governed chat tools.</p></div>
+    <div class="k">Why it exists</div>
+    <div class="v"><p>Hermes learns procedures from its own runs. Engine's answer is to gate that learning the same signed way it gates spending money. The P16 ruling from drain 08-29 bound it to N3's reflection seam and forbade a second post-run pass. N3 shipped 08-31 with the seam live and instrumented on fernando-ott, which is why the seed was written now.</p></div>
+    <div class="k">Do we need it</div>
+    <div class="v">
+      <p><b>It is commissioned, and the plumbing is cheap.</b> Seven gaps, all of the same shape N3 already closed for <code>extracted_object</code>: a new proposal kind, an approve branch, a card copy case, a provenance enum, a ledger key.</p>
+      <p><b>The value is entirely in one decision the seed cannot make:</b> what counts as "worth proposing". Ask the LLM to judge every qualifying run in isolation and Mission Control fills with one-off "skills" nobody wants, which is the board-you-learn-to-ignore failure. A cross-run repeatability signal is the right detector but needs a tool-sequence store that does not exist, which pushes the size to L.</p>
+      <p><b>Cost is now measured on fernando-ott (last 14 days).</b> 83 triggered runs, 55 passed the reflection gates, 861 memory rows written, 217 <code>memory.capture</code> ledger rows. The reflection call runs on <code>openai/gpt-4o-mini</code> through the Space's OpenRouter key. A fourth JSON field on that call adds roughly 50 to 80 tokens per run; a second call would add a whole prompt. Decision #1 is answered by the data: fold in.</p>
+      <p><b>No tool-sequence store exists.</b> The runs collection does not persist tool calls, so a cross-run "same procedure seen N times" detector needs new schema. That confirms the seed's L-size warning for that path.</p>
+    </div>
+    <div class="k">Plan-it must decide</div>
+    <div class="v"><ul>
+      <li>Fold the fourth field onto the existing call (recommended, measured) vs a second call. Confirm recall on the other three streams does not degrade.</li>
+      <li>The proposing threshold (the load-bearing call).</li>
+      <li>Approval bar: confirm-tier at minimum, since no human asked for the skill.</li>
+      <li>Draft body on the proposal payload (recommended) vs a staging collection.</li>
+      <li>Ledger key: new <code>skill.propose</code> (recommended) vs widening <code>memory.capture</code>.</li>
+    </ul></div>
+    <div class="k">Depends on</div>
+    <div class="v"><p>Nothing unshipped. Rides N3's seam, the ChangeProposal fence, the card producer and the kind-agnostic chat approve/reject tools as-is.</p></div>
+  </div>
+  <div class="verdict">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Plan it, second in priority.</b> Insist the plan opens with a measured qualifying-run count and a same-run heuristic in v1 (0 or 1 candidate per run, own flag, default OFF everywhere). Defer the cross-run store to its own epic only if the v1 proposal stream proves noisy.</p>
+  </div>
+</section>
+
+<!-- ============ 3. self-serve-first-run ============ -->
+<section class="seed" id="n6">
+  <div class="head">
+    <div>
+      <div class="eyebrow">3 · Strategic · new public surface</div>
+      <h2>self-serve-first-run</h2>
+      <div class="path mono">docs/implementation/self-serve-first-run/SEED.md · 215 lines · seeded 2026-09-03</div>
+    </div>
+    <span class="pill plan">Plan · M</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What it does</div>
+    <div class="v"><p>A registration endpoint pair that creates a User and a fresh Space atomically inside an existing tenant, seed-on-register (default backbone, default agent), a first-run wizard route, and abuse controls (invite code, rate limits, per-Space spend cap). Shape (a) in the seed: new Space, not new tenant. No terraform, no new database, no operator keystrokes.</p></div>
+    <div class="k">Why it exists</div>
+    <div class="v"><p>Hermes installs with <code>curl | bash</code>. Engine has no public account creation anywhere: every user after the first is created by an admin calling a guarded endpoint by hand. N6 was the last un-ruled item of hermes-research, seeded with no design constraint.</p></div>
+    <div class="k">Do we need it</div>
+    <div class="v">
+      <p><b>This is a product question before it is an engineering one.</b> Every tenant to date was created at sales-cycle speed by you or an operator, and the seed's own history says shape (b), tenant-per-signup, has never once been exercised. Self-serve Spaces only pay off if there is a motion for strangers signing up. If there is not, the (c) half alone, an in-Space onboarding wizard for a user an admin already created, still has real value for onboarding new clients on existing tenants.</p>
+      <p><b>The seed's hardest constraint is already solved.</b> It calls byo-subscription "designed, frozen, nothing built" and makes it a hard precondition. The byo-subscription board says 8/8 epics VERIFIED, 103 of 107 cases green, the settings surface deployed to fernando-ott, and the package archived to 0-done. The planning gate should size against the real state, not the seed's.</p>
+      <p><b>The one genuinely new attack surface is real.</b> Public account creation on a system that provisions LLM spend and a governed-actions fence needs the same review discipline as the SSRF and secret-blind-refs work. Invite-code only, fernando-ott only, in v1.</p>
+    </div>
+    <div class="k">Plan-it must decide</div>
+    <div class="v"><ul>
+      <li>Whether Engine wants a self-serve motion now, or only the in-Space wizard. G1 question.</li>
+      <li>Registration gate: invite code (recommended) vs public vs domain allowlist.</li>
+      <li>Hosting tenant: fernando-ott behind invite code; a dedicated tenant if the gate ever loosens.</li>
+      <li>Default agent identity for a fresh Space.</li>
+      <li>Email verification: no outbound email exists today; defer behind the invite code.</li>
+      <li>Space deletion for abandoned signups: nothing exists at Space granularity.</li>
+    </ul></div>
+    <div class="k">Depends on</div>
+    <div class="v"><p>byo-subscription (built; confirm the four gated cases do not touch registration) · a decision on outbound email (G4) · the governance fence stays on by default.</p></div>
+  </div>
+  <div class="flag"><span class="pill warn">Stale fact</span><span>The seed's effort estimate and decision #2 both assume byo-subscription is unbuilt. It is built and verified. The plan-it run must correct this in its findings doc before sizing.</span></div>
+  <div class="verdict">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Plan it, with the product question first.</b> If the answer at G1 is "not a self-serve motion yet", downscope to the wizard (shape c) and keep the registration pair as a later wave.</p>
+  </div>
+</section>
+
+<!-- ============ 4. org-attribution-reconciliation ============ -->
+<section class="seed" id="g5">
+  <div class="head">
+    <div>
+      <div class="eyebrow">4 · Hygiene · locked flag-only</div>
+      <h2>org-attribution-reconciliation</h2>
+      <div class="path mono">docs/implementation/org-attribution-reconciliation/SEED.md · 45 lines · promoted 2026-08-31 (G-5)</div>
+    </div>
+    <span class="pill plan">Plan light · S</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What it does</div>
+    <div class="v"><p>A sweep that reads every interaction (and possibly persons and chat mappings), asks the org resolver what it would produce today, and reports rows where the stored <code>organization_id</code> differs. It never writes. Where the report lands (notifications, master-admin) and how often it runs are open.</p></div>
+    <div class="k">Why it exists</div>
+    <div class="v"><p>Two root causes of misattribution were fixed on 08-30 (api-core #299, connectors #80). Those stop new drift. Nothing re-validates the existing corpus or catches future regressions: no cron in api-core and no script in brain-scripts touches attribution. Your ruling locked it to report-only because silently rewriting org ids has business blast radius.</p></div>
+    <div class="k">Do we need it</div>
+    <div class="v">
+      <p><b>Measured today: zero drift.</b> On fernando-ott all 8,408 interactions carry an org id with no null, no person-to-interaction disagreement and no chat-mapping disagreement. On praxya the same holds across 45,147 interactions. The two 08-30 fixes did their job and nothing has regressed since.</p>
+      <p><b>The sweep is not free either.</b> The resolver's <code>resolve()</code> unconditionally memoizes aliases and registers integration bindings on every call (<code>org-resolver.service.ts:206,210</code>). A "read-only oracle" needs a read-only variant of the resolver, or accepts idempotent writes on a sweep that was ruled report-only. That is design work for a problem that currently has zero rows.</p>
+      <p><b>The residual risk is small and named:</b> 32 phones on fernando-ott match more than one person. The deterministic tiebreak (oldest person wins) handles them today; if the resolver ever regresses, those 32 are the rows that would drift first.</p>
+    </div>
+    <div class="k">Plan-it must decide</div>
+    <div class="v"><ul>
+      <li>Confirm the resolver is deterministic and side-effect-free when invoked read-only.</li>
+      <li>Cadence: nightly cron vs on-demand governed chat tool. Measure volume first.</li>
+      <li>Report surface: somewhere a human sees it, not a log line.</li>
+      <li>Scope: interactions only, or persons and chat mappings too.</li>
+    </ul></div>
+    <div class="k">Depends on</div>
+    <div class="v"><p>Nothing. Auto-correction is out of scope by ruling and stays a new owner decision.</p></div>
+  </div>
+  <div class="verdict light">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Do not run plan-it on this.</b> Keep the five drift queries the measurement produced as a script in brain-scripts, re-run them weekly by hand or from a cron, and file one backlog card that names the 32 multi-match phones as the watch list. Promote to a program only if a re-run ever returns a non-zero count. The seed folder moves to 0-done with this measurement as its close-out.</p>
+  </div>
+</section>
+
+<!-- ============ 5+6. the two send seeds ============ -->
+<section class="seed" id="send">
+  <div class="head">
+    <div>
+      <div class="eyebrow">5 and 6 · Already planned jointly on 2026-09-02</div>
+      <h2>initiative-aware-send-tiering · governed-send-approval-rail-hardening</h2>
+      <div class="path mono">planned as docs/implementation/governed-send-tiering-and-rail/ · CONTRACT v1.1 frozen · rulings LOCKED (R3-6)</div>
+    </div>
+    <span class="pill build">Build, not plan</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What they do</div>
+    <div class="v">
+      <p><b>Initiative-aware tiering (E1, 19 cases):</b> console = the persona's own pinned group on both backbone faces; an agent-initiated send to anywhere else swaps to a new <code>chat.message.send_agent_initiated</code> key at approve tier; origin travels as a sixth bearer slot plus a ContextVar; every chat-turn send is one inline click, never notify (Model T v1.1).</p>
+      <p><b>Approval-rail hardening (E2, 16 cases):</b> make 4xx/5xx visible in api-core and keep-and-re-offer the decision in the admin UI; the cross-process, aged-card, redacted-tool E2E contract that made bugs 1, 2 and 4 invisible to green suites; <code>system:automated</code> stages and never approves; one attended real approve to your second number.</p>
+    </div>
+    <div class="k">Why they exist</div>
+    <div class="v"><p>On 09-01 an agent-initiated notify-tier send reached your console group inside an unrelated approve-tier turn with no human gate. The same day, six approve clicks on the Sandra card failed for five different reasons before the send finally landed at 02:04Z on 09-02, the first governed send ever recorded with a provider message id. One click remained unexplained.</p></div>
+    <div class="k">Do we need them</div>
+    <div class="v">
+      <p><b>Yes, both.</b> The tiering hole is a real safety gap on a rail that now sends real messages to real people. The rail-hardening E2E class is the difference between a governed send you trust and one you debug for a day.</p>
+      <p><b>But the planning is done.</b> A <code>/plan-it</code> run on 09-02 produced the package: research with 17 findings re-based to a commit, 18 locked decisions, a frozen contract, two PRDs, two epic files, 35 binding cases, a launch prompt. The dead click is diagnosed at planning time from Caddy: 01:55:37Z → 401, 01:57:56Z → 502, 02:04:55Z → 201, with api-core logging nothing at the 401. E2 task 1 only has to confirm the JWT TTL and write the paragraph.</p>
+      <p>Re-running plan-it on the two SEED folders would produce a second, competing package for the same seam. The two folders should be archived as absorbed, pointing at the package.</p>
+    </div>
+    <div class="k">What blocks the build</div>
+    <div class="v"><ul>
+      <li><b>D15 / RL-2.8, your hand:</b> pin the Secretário's console. Persona <code>6a95c4b7fb9062c2b4e72df0</code> still had <code>config: null</code> at v1.1. E1-agent must not deploy before it.</li>
+      <li>E1-api deploys before E1-agent (an unknown ActionType key returns 422).</li>
+      <li>The self-enrolled Claude CLI seat must be active and healthy at the start of each [REAL] leg.</li>
+      <li>R3-1 (origin slot + ContextVar) is merged on brain-agent main as PR #151. E1-agent rebases onto it. That precondition is met.</li>
+    </ul></div>
+  </div>
+  <div class="verdict build">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Do not plan these again. Hand the package to <code>/build-it</code> from its LAUNCH-PROMPT once the console pin is set.</b> In this session: archive both SEED folders under 0-done with an absorbed-by note so nobody re-plans them by accident.</p>
+  </div>
+</section>
+
+<!-- ============ 7. group bodies ============ -->
+<section class="seed" id="g4">
+  <div class="head">
+    <div>
+      <div class="eyebrow">7 · Privacy decision · gates S1</div>
+      <h2>interactions-group-message-bodies</h2>
+      <div class="path mono">docs/implementation/interactions-group-message-bodies/SEED.md · 42 lines · promoted 2026-08-31 (G-4, deferred by you)</div>
+    </div>
+    <span class="pill decide">Decide · S</span>
+  </div>
+  <div class="anatomy">
+    <div class="k">What it asks</div>
+    <div class="v"><p>The seed states that WhatsApp group message bodies are structurally not persisted: <code>vector_data.text</code> holds sender attribution only. It asks you to choose between <b>store</b> (retention policy, PII posture, consent stance, backfill decision; L) and <b>wall off</b> (declare group content out of Engine's memory by design; S).</p></div>
+    <div class="k">What is actually stored</div>
+    <div class="v">
+      <p><b>The premise is false on the live path.</b> Measured today on fernando-ott, message rows only, split by ingestion source:</p>
+      <div class="tablewrap" style="margin-top:10px"><table>
+        <thead><tr><th>Source</th><th>Rows</th><th>With body</th><th>Attribution only</th></tr></thead>
+        <tbody>
+          <tr><td>Live webhook</td><td class="num">6,299</td><td class="num">5,523 (87.7%)</td><td class="num">776 (12.3%)</td></tr>
+          <tr><td>Backfill job</td><td class="num">440</td><td class="num">417 (94.8%)</td><td class="num">23 (5.2%)</td></tr>
+          <tr><td>DM messages, for scale</td><td class="num">1,554</td><td colspan="2"></td></tr>
+        </tbody></table></div>
+      <p style="margin-top:10px">The attribution-only rows are not a persistence gap. The connector composes group text as <code>Group / From / displayText || text</code> (<code>normalize.ts:477-484</code>), so a message with no text (a photo without a caption, a sticker, a reaction) writes no third line. The share is stable at 10 to 20 percent per day with no step change around any deploy, and it concentrates in one media-heavy group: Alimento Diário, 107 of 125 recent rows. Praxya has no WhatsApp connector and zero rows.</p>
+    </div>
+    <div class="k">Why it matters now</div>
+    <div class="v"><p>Bodies for every group have been accumulating since 05-27 with no retention policy and no consent stance. That is the real privacy fact in front of you. hermes-studio S1 is no longer blocked on this; its group centre pane has content today.</p></div>
+    <div class="k">Do we need it</div>
+    <div class="v">
+      <p><b>A decision, yes, but a different one.</b> Not store versus wall: the honest options are (a) keep storing and declare retention and PII posture, or (b) actively stop and purge, which is a removal with a migration, not a wall. Option (c) from the first draft of this page, scope storage to rooms the Secretário is pinned to or has adopted, is still on the table as a narrowing of (a).</p>
+      <p><b>One S-sized fix regardless:</b> write the <code>[image]</code> / <code>[audio]</code> placeholder on the message row the way the thread parent already gets it, so a rooms UI does not render a blank turn for 12 percent of group traffic.</p>
+    </div>
+  </div>
+  <div class="flag"><span class="pill warn">Premise false</span><span>The seed's central claim did not survive measurement. Whether it was true for the rows the 08-31 drain inspected is not reconstructible; the connector block that writes bodies predates that date. The seed should be corrected before anyone plans against it.</span></div>
+  <div class="verdict decide">
+    <div class="eyebrow">Verdict</div>
+    <p><b>Not a plan-it run.</b> A one-page decision memo with the corrected facts and the retention options goes in hermes-studio's G2 gate. The placeholder fix is a backlog card. The measurement file already sits in the seed's <code>research/</code> folder as evidence.</p>
+  </div>
+</section>
+
+<!-- ============ lineup ============ -->
+<section class="lineup">
+  <div class="eyebrow">Proposed planning lineup</div>
+  <h2 style="margin-top:8px">Three plan-it runs, measurements done</h2>
+  <p style="margin-top:12px;max-width:72ch;color:var(--muted)">Each run keeps its own state file under <span class="mono">.plan-it/&lt;name&gt;.state.json</span>, as every prior package does. The main session coordinates and reviews; subagents research and author.</p>
+  <div class="deps">
+    <div class="dep"><b>Measured · in each seed's research/</b>Group bodies: 88% stored on the live path. Drift: zero on both tenants. N5: 55 of 83 runs qualify per fortnight, one gpt-4o-mini call each.<div class="arrow">feeds → every G1 below</div></div>
+    <div class="dep"><b>Run A · hermes-studio-layer</b>L, shape 3 (research → locked architecture → phase PRDs). Carries the group-bodies retention memo and decision G at its G2 gate.<div class="arrow">S4 reuses governed-send E1; S1 no longer blocked</div></div>
+    <div class="dep"><b>Run B · agent-proposes-skill</b>M, single-feature shape. Fold-in settled by data; the threshold decision at G2.<div class="arrow">no unshipped dependency</div></div>
+    <div class="dep"><b>Run C · self-serve-first-run</b>M. G1 opens with the product question and the corrected byo-subscription state.<div class="arrow">wizard-only fallback if self-serve is "not now"</div></div>
+    <div class="dep"><b>Not planned · org-attribution</b>Zero drift. Drift queries become a brain-scripts script plus one backlog card with the 32-phone watch list; seed folder to 0-done.<div class="arrow">independent</div></div>
+    <div class="dep"><b>Not planned · the two send seeds</b>Archive both SEED folders as absorbed by governed-send-tiering-and-rail. Next action is yours: pin the console, then /build-it.<div class="arrow">blocks nothing here</div></div>
+  </div>
+  <ol>
+    <li><b>Runs B and C are independent of each other and of A.</b> All three can fan out in parallel now.</li>
+    <li><b>Run A is the only one with a cross-package dependency</b>, and it is satisfied: R3-1 merged, the governed-send contract is frozen, S4 reuses its bearer slot.</li>
+    <li><b>Every run pauses at its own G1 and G2.</b> Three runs means three batched decision gates; expect them presented together so you answer once.</li>
+  </ol>
+</section>
+
+<p class="footer">Sources re-checked today: the seven SEED files; <span class="mono">governed-send-tiering-and-rail/README.md</span> and <span class="mono">delivery/STATUS.md</span>; <span class="mono">0-done/byo-subscription/README.md</span> and <span class="mono">delivery/STATUS.md</span>; <span class="mono">secretary-personal-agent/delivery/STATUS.md</span>; <span class="mono">0-done/drain-2026-09-01/d6-initiative-aware-send-tiering.md</span>; brain-agent origin/main (PR #151), brain-api-core and brain-admin-ui branch lists. Live measurements (read-only, fernando-ott and praxya, 2026-09-04) are filed under each seed's <span class="mono">research/00-measured-*.md</span>; the group-bodies file carries a coordinator re-run that corrects the subagent's first "100 percent" claim to the split shown above.</p>
+</div>

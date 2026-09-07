@@ -143,3 +143,14 @@ The v3.2.0 wave shipped with one honest open boundary: the gate was proven to di
 - **Cycles used: 1 of 4.** v3.2 met the win condition on cycle 0, so iteration cycles 1-3 were not needed and **no v3.x code was changed — no new version ships.** The winning package was authored by v3.2 exactly as already shipped (`v3.2.0`). Stop rule fired on the win.
 - **v2 strengths worth porting into v3 authoring teeth (future additive wave, NOT this run):** v2's `T-EB2-01` races two real OS processes with a crisp `[REAL]` tag (deepest concurrency case of either package); v2's CONTRACT decision-log with *rejected alternatives* is a richer document (D2). Candidates: mandate a `[REAL]` two-process concurrency exemplar + a rejected-alternatives decision log in v3 templates.
 - No repo code touched by this trial (docs-only): reports + STATUS boundary line + this entry. Live repo stays `main @ v3.2.0` (merge `2a8f84d`, tag `v3.2.0`), still **not pushed** — push remains the user's call.
+
+---
+
+## plan-it v4 run — decisions log (2026-09-07)
+
+Owner: Fernando Ott · Coordinator: plan-it run "v4" (autonomous-draft mode, ruling D1). Rulings D1–D7 and defaults R1–R12 live in `delivery/v4/DECISIONS.md`; this section holds the amendments.
+
+- **CONTRACT v1.0-draft → v1.1-draft** — 2026-09-07 — orchestrator amendment after squad planning; 21 corrections folded from `delivery/v4/prds/prd-a-renderer.md` §9, `prd-b-core.md` §9, `prd-c-prose.md` §10; 0 cases added or removed (60). Ruling on the one cross-squad disagreement: `gate-check mirror` recomputes stamped hashes itself and never invokes the renderer (`build-report.mjs --check` stays a renderer convenience). Details in the CONTRACT Changelog.
+- **AMD-4 (planned, executed in W0 by the orchestrator)** — `tests/run-contract.mjs` T-E1-05 "exactly three gate states" binds to the byte-pinned v2 baseline; the live machine must carry G1, G2, G3 and every `meta.gate` state must have `meta.human: true`. Precedent: AMD-1 (2026-07-08). Default R11; ratification at PLAN-REVIEW.
+- **AMD-5 (planned, executed in W2)** — mirror pairs 8 → 11 (`scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`); `MIRROR_PAIRS`, T-E5-02 and the CHANGELOG Verification line move together. Precedent: AMD-2. Default R8; ratification at PLAN-REVIEW.
+- **W0-in-planning** — 2026-09-07 — the coordinator copied `scripts/hooks/planit-guard.mjs` over `plugins/plan-it/scripts/hooks/planit-guard.mjs` to restore the 3.0.1 mirror invariant (drift since 7fcff27); uncommitted, pending authorization A-4.

@@ -1,215 +1,406 @@
 {
   "schemaVersion": 1,
-  "machineVersion": "2.0.0",
+  "machineVersion": "3.0.1",
   "run": {
-    "goal": "plan-it v3: enforce the plan-phase gaps found by the v3-research (8 pairs, EC-A1..EC-H*), enriched by pxpipe/damon-ade/web research on Fable-like behavior for lower models; builder-side ECs filed as fable-it backlog",
-    "startedAt": "2026-07-07T00:00:00Z"
+    "name": "v4",
+    "goal": "plan-it v4: make the run legible to the human (HTML report layer, scope brief, decision queue, glossary, readable acronyms) and autonomous end to end (anamnesis + one review-and-contradict round, build topology with sessions + GATE autonomy contract, triage, residual disposition, named runs) \u2014 additive over the v2/v3 core",
+    "startedAt": "2026-09-07T00:00:00Z",
+    "inputs": [
+      "delivery/v4/V3-VS-V4-CORE-ENHANCEMENTS.html",
+      "delivery/v4/resources/",
+      "plugins/plan-it/ @ 3.0.1"
+    ],
+    "anamnesis": {
+      "answeredAt": "2026-09-07",
+      "owner": "Fernando Ott",
+      "rulings": {
+        "mode": "autonomous-draft default; guided selectable",
+        "surface": "markdown canonical for AI; HTML additive for humans, local beside md twin, opened in Chrome, never an artifact",
+        "brand": "target repo brand guideline if present, else assets/brand (DevOtts)",
+        "kickoff": "KICKOFF.md + single launch prompt stay; SESSIONS/GATE/runbook added beside",
+        "topology": "user choice (solo / orchestrator+squads / headless) with plan-it recommendation shown",
+        "rulingsBlock": "DECISIONS.html copy-your-rulings block ships in 4.0",
+        "releaseScope": "all ten enhancements E1-E10 in 4.0.0",
+        "buildTopologyForV4": "orchestrator + 3 squads + QA",
+        "acronyms": "explain on first use in every human-facing surface + GLOSSARY.md"
+      }
+    },
+    "w0InPlanning": [
+      {
+        "what": "cp scripts/hooks/planit-guard.mjs plugins/plan-it/scripts/hooks/planit-guard.mjs",
+        "why": "LG-1 mirror drift blocked preflight (deployed-vs-installed) and T-E5-02; restores the 3.0.1 release invariant mirror-check 8/8",
+        "at": "2026-09-07T18:30:00Z",
+        "committed": false
+      }
+    ],
+    "mode": "autonomous-draft",
+    "deliveryRoot": "delivery/v4/",
+    "topology": "orchestrator+squads"
   },
   "state": "done",
-  "size": "M",
+  "size": "L",
   "shape": 3,
   "gates": {
     "G1": {
       "approved": true,
       "owner": "Fernando Ott",
-      "date": "2026-07-07",
+      "date": "2026-09-07",
       "decisions": {
-        "scope": "plan-it v3 first; builder-side ECs -> fable-it backlog doc",
-        "size_shape": "M, existing-repo shape (digest -> design -> CONTRACT+PRDs/epics)",
-        "tiering": "haiku fetch / sonnet analyze; Fable 5 main-thread synthesis+freeze only",
-        "build_today": "Plan only; build later on Opus/Sonnet with escalate-on-struggle"
+        "size_shape": "L, shape 3 (research \u2192 locked design \u2192 CONTRACT + 3 PRDs/epic sets), package home delivery/v4/, docs in docs/v4/",
+        "topology_for_build": "orchestrator + 3 squads (renderer \u00b7 statechart+gate-check+guard \u00b7 SKILL/references/docs/packaging) + QA",
+        "mode": "autonomous-draft: no chat gate until the draft is complete; one review-and-contradict round replaces G2+G3 chat prompts (both still recorded in state)",
+        "tiering": "coordinator = top tier; design-bearing research streams (renderer, statechart) = top; mapping streams (prose, precedents) = mid; PRD/epic authoring and spec'd implementation = mid; mechanical work (fixture scaffolds, manifest authoring, mirror copies, version bumps) = low; judgment slices (guard/statechart semantics, escaping, adversarial verify) = top review; escalate-on-struggle one tier up (stated at G1 2026-09-07; global tiering rule)"
       }
     },
     "G2": {
       "approved": true,
-      "owner": "Fernando Ott",
-      "date": "2026-07-08",
-      "answers": {
-        "Q1": "fold-into-G2-exhibit",
-        "Q2": "always-on-tiered-preflight",
-        "Q3": "scaffold-pointer-to-fable-it",
-        "Q4": "chore-epic-in-v3"
-      }
+      "owner": "Fernando Ott (ratified at PLAN-REVIEW 2026-09-07; applied as coordinator defaults per ruling D1)",
+      "date": "2026-09-07",
+      "pendingReview": false,
+      "defaults": [
+        {
+          "id": "R1",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R2",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R3",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R4",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R5",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R6",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R7",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R8",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R9",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R10",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R11",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R12",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ],
+      "decisionsFile": "delivery/v4/DECISIONS.md",
+      "ratifiedBy": "Fernando Ott",
+      "ratifiedAt": "2026-09-07"
     },
     "G3": {
       "approved": true,
+      "owner": "Fernando Ott (ratified at PLAN-REVIEW 2026-09-07; applied as coordinator defaults per ruling D1)",
+      "date": "2026-09-07",
+      "pendingReview": false,
+      "note": "FD-2 review file delivery/v4/TEST-CONTRACT-REVIEW.md (coordinator review; the 3.0.1 state verb reads delivery/TEST-CONTRACT-REVIEW.md, the v3 file \u2014 R10)",
+      "ratifiedBy": "Fernando Ott",
+      "ratifiedAt": "2026-09-07"
+    },
+    "G4": {
+      "approved": true,
       "owner": "Fernando Ott",
-      "date": "2026-07-07",
-      "note": "FD-2 case review approved as-is (24 draft + 26 enforcement rows); freeze & fan out authorized"
+      "date": "2026-09-07",
+      "records": [
+        "G2",
+        "G3"
+      ],
+      "contradictions": [],
+      "authorizations": {
+        "A-1": "granted",
+        "A-2": "held until O-2",
+        "A-3": "granted",
+        "A-4": "granted"
+      },
+      "reviewFile": "delivery/v4/PLAN-REVIEW.md"
     }
   },
   "contract": {
-    "path": "delivery/v3/CONTRACT.md",
-    "version": "v1.0+AMD",
-    "frozenAt": "2026-07-07",
-    "sha256": "44b5507f930756c81758863de3aa70cc94b38da2bdbeafa775a06406e4b77fbf"
+    "path": "delivery/v4/CONTRACT.md",
+    "version": "1.0",
+    "draft": false,
+    "frozenAt": "2026-09-07",
+    "sha256": "a7f28d034b789907e4f1dbabe26786a66ac7ed01073c3fa7b4af8171aca865f3",
+    "amendedAt": "2026-09-07",
+    "ratifiedAt": "2026-09-07"
   },
   "artifacts": [
     {
-      "path": "docs/research/v3/stream-A-pxpipe.md",
+      "path": "docs/v4/research/SHARED-CONTEXT.md",
+      "phase": 3,
+      "verifiedAt": "2026-09-07T00:40:00Z"
+    },
+    {
+      "path": "docs/v4/research/stream-A-renderer.md",
       "phase": 4,
-      "verifiedAt": "2026-07-07T15:28:00Z"
+      "verifiedAt": "2026-09-07T18:30:00Z"
     },
     {
-      "path": "docs/research/v3/stream-B-damonade.md",
+      "path": "docs/v4/research/stream-B-machine.md",
       "phase": 4,
-      "verifiedAt": "2026-07-07T15:28:00Z"
+      "verifiedAt": "2026-09-07T18:30:00Z"
     },
     {
-      "path": "docs/research/v3/stream-C-webscan.md",
+      "path": "docs/v4/research/stream-C-prose.md",
       "phase": 4,
-      "verifiedAt": "2026-07-07T15:28:00Z"
+      "verifiedAt": "2026-09-07T18:30:00Z"
     },
     {
-      "path": "docs/research/v3/stream-D-ec-map.md",
+      "path": "docs/v4/research/stream-D-precedents.md",
       "phase": 4,
-      "verifiedAt": "2026-07-07T15:28:00Z"
+      "verifiedAt": "2026-09-07T18:30:00Z"
     },
     {
-      "path": "delivery/design/v3-architecture.md",
-      "phase": 5,
-      "verifiedAt": "2026-07-07T15:45:00Z"
+      "path": "docs/v4/research/00-main-thread-grounding.md",
+      "phase": 4,
+      "verifiedAt": "2026-09-07T18:30:00Z"
     },
     {
-      "path": "delivery/fable-it-backlog.md",
-      "phase": 5,
-      "verifiedAt": "2026-07-07T15:45:00Z"
+      "path": "ENV-FACTS.md",
+      "phase": "preflight",
+      "verifiedAt": "2026-09-07T18:30:00Z",
+      "note": "9/9 PRESENT after W0-in-planning guard mirror fix (uncommitted cp root\u2192plugin)"
     },
     {
-      "path": "delivery/TEST-CONTRACT-REVIEW.md",
-      "phase": 6,
-      "verifiedAt": "2026-07-07T15:55:00Z"
+      "path": "docs/v4/01-findings.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "docs/v4/02-v4-design.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "delivery/v4/DECISIONS.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "delivery/v4/GLOSSARY.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "delivery/v4/00-program-plan.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "delivery/v4/TEST-CONTRACT-REVIEW.md",
+      "phase": "6-8",
+      "verifiedAt": "2026-09-07T19:00:00Z"
+    },
+    {
+      "path": "delivery/v4/prds/prd-a-renderer.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/prds/prd-b-core.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/prds/prd-c-prose.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/epics/epics-a-renderer.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/epics/epics-b-core.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/epics/epics-c-prose.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/GATE.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/DECISIONS.md",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
+    },
+    {
+      "path": "delivery/v4/DECISIONS.html",
+      "phase": 9,
+      "verifiedAt": "2026-09-07T19:40:00Z"
     }
   ],
   "history": [
     {
       "state": "intake",
       "event": "INTAKE_CAPTURED",
-      "at": "2026-07-07T00:00:00Z"
+      "at": "2026-09-07T00:05:00Z"
     },
     {
       "state": "dodLock",
       "event": "DOD_LOCKED",
-      "at": "2026-07-07T00:05:00Z"
+      "at": "2026-09-07T00:10:00Z"
     },
     {
       "state": "scopeGate",
-      "event": "G1_PRESENTED",
-      "at": "2026-07-07T00:10:00Z"
+      "event": "G1_APPROVED",
+      "at": "2026-09-07T00:20:00Z",
+      "gate": "G1"
     },
     {
       "state": "preGround",
-      "event": "G1_APPROVED",
-      "at": "2026-07-07T00:15:00Z"
+      "event": "GROUNDED",
+      "at": "2026-09-07T00:40:00Z",
+      "note": "FD-1 receipt registered; SHARED-CONTEXT written; LG-1..LG-5 recorded"
     },
     {
       "state": "discovery",
-      "event": "GROUNDED",
-      "at": "2026-07-07T00:30:00Z"
-    },
-    {
-      "state": "synthesis",
       "event": "FANOUT_COMPLETE",
-      "at": "2026-07-07T15:28:30Z",
-      "note": "4/4 verified. Incidents: stream-C v1 + stream-D v1 stalled/misdelivered -> reaped, re-dispatched (Rule 3 recovery). Stream-D v1 flagged prompt-injection attempts in tool results; injected retasking ignored by all streams."
+      "at": "2026-09-07T18:30:00Z",
+      "guard": "artifactsOnDisk",
+      "result": "PASS 5/5"
     },
     {
-      "at": "2026-07-07T18:31:10.294Z",
-      "from": "synthesis",
-      "to": "specAuthoring",
-      "note": "4/4 streams reconciled in main thread; synthesis authored"
-    },
-    {
-      "at": "2026-07-07T18:32:29.287Z",
-      "from": "specAuthoring",
-      "to": "gate:G2",
-      "note": "design authored; 4 batched decisions to user"
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-09-07T18:30:00Z",
+      "note": "preflight L PASS 9/9 after guard mirror; mirror-check 8/8"
     },
     {
       "state": "synthesis",
       "event": "SYNTHESIZED",
-      "at": "2026-07-07T15:45:00Z",
-      "note": "Design LOCKED (pending G2): all stream C/D markers resolved; builder-side ECs filed to delivery/fable-it-backlog.md per G1 scope decision."
+      "at": "2026-09-07T19:00:00Z",
+      "artifact": "docs/v4/01-findings.md"
     },
     {
       "state": "specAuthoring",
       "event": "SPECS_DRAFTED",
-      "at": "2026-07-07T15:55:00Z",
-      "note": "FD-2 draft-case exhibit authored (32 cases, 7 areas) per Stream D F5 option (a); credential checklist dispositioned: gh CLI only, verified live; no unprocured rows."
+      "at": "2026-09-07T19:00:00Z",
+      "artifact": "docs/v4/02-v4-design.md",
+      "note": "autonomous-draft: 3.0.1 machine has no defaultsApplied state, so the G2/G3 gates are recorded as coordinator defaults pending PLAN-REVIEW (R1)"
     },
     {
       "state": "decisionGate",
-      "event": "G2_PRESENTED",
-      "at": "2026-07-07T15:56:00Z"
+      "event": "G2_ANSWERED",
+      "at": "2026-09-07T19:00:00Z",
+      "gate": "G2",
+      "note": "defaults applied, not human-answered; review at G4"
     },
     {
-      "at": "2026-07-08T00:17:48.411Z",
-      "from": "gate:G2",
-      "to": "contract",
-      "note": "G2 passed 4/4 on recommendations; contract v0.9 drafted, pending FD-2 case review"
+      "state": "coherencePass",
+      "event": "COHERENT",
+      "at": "2026-09-07T19:00:00Z"
     },
     {
-      "at": "2026-07-08T00:18:12.236Z",
-      "from": "contract",
-      "to": "contract",
-      "note": "CHECKPOINT: user restarting machine; all agents reaped; resume = FD-2 case review of delivery/v3/CONTRACT.md, then freeze"
-    },
-    {
-      "at": "2026-07-08T01:51:04.257Z",
-      "from": "contract",
-      "to": "freezeGate",
-      "note": "STATE REPAIR on resume (2026-07-07 session): prior checkpoint wrote invalid state \"contract\"; canonical machine state is freezeGate (contract v0.9-draft on disk, casesReviewed=false, G3 pending). G2 recorded with owner+date from history (passed 4/4 on recommendations)."
-    },
-    {
-      "at": "2026-07-08T02:52:43.933Z",
-      "from": "freezeGate",
-      "to": "backboneFreeze",
+      "state": "freezeGate",
       "event": "G3_APPROVED",
-      "note": "FD-2 gate passed: cases approved without edits; Reviewed-by line filled; proceeding to backbone freeze"
+      "at": "2026-09-07T19:00:00Z",
+      "gate": "G3",
+      "note": "draft freeze authorization, pending G4"
     },
     {
-      "at": "2026-07-08T02:54:27.750Z",
-      "from": "backboneFreeze",
-      "to": "parallelPlanning",
+      "state": "backboneFreeze",
       "event": "CONTRACT_FROZEN",
-      "note": "CONTRACT v1.0 frozen (SHA pinned); backbone: 00-program-plan.md + STATUS.md written; fanning out squads A/B/C"
+      "at": "2026-09-07T19:10:00Z",
+      "guard": "contractFrozen",
+      "result": "PASS (draft freeze; 3.0.1 freeze verb positional \u2014 v3 run-root demands N/A for delivery/v4/, see R10)"
     },
     {
-      "at": "2026-07-08T13:39:28.756Z",
-      "from": "parallelPlanning",
-      "to": "parallelPlanning",
-      "event": "AMENDMENT_PASS",
-      "note": "AMD-1/2 user-approved, AMD-3 coordinator; squads A/B/C delivered, 50/50 ID audit clean; contract SHA re-pinned"
+      "state": "parallelPlanning",
+      "event": "AMENDMENT",
+      "at": "2026-09-07T19:40:00Z",
+      "note": "v1.0-draft \u2192 v1.1-draft: 21 squad corrections folded (prd-a \u00a79, prd-b \u00a79, prd-c \u00a710); 0 cases added/removed"
     },
     {
-      "at": "2026-07-08T13:40:14.373Z",
-      "from": "parallelPlanning",
-      "to": "verify",
+      "state": "parallelPlanning",
       "event": "SQUADS_COMPLETE",
-      "note": "guard artifactsOnDisk PASS (9 files); 50/50 ID audit + amendment pass complete"
+      "at": "2026-09-07T19:40:00Z",
+      "guard": "artifactsOnDisk",
+      "result": "PASS 6/6"
     },
     {
-      "at": "2026-07-08T13:42:31.995Z",
-      "from": "verify",
-      "to": "handoff",
+      "state": "verify",
       "event": "LINT_CLEAN",
-      "note": "handoffLintClean PASS (exit 0) after formatting-only reflow of prd-1-gatecheck-fd.md; decision logged"
+      "at": "2026-09-07T19:55:00Z",
+      "guard": "handoffLintClean",
+      "result": "PASS (173 case IDs across 13 files; declared==counted for all 13 epics)"
     },
     {
-      "at": "2026-07-08T13:44:23.189Z",
-      "from": "handoff",
-      "to": "done",
+      "state": "adversaryGate",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-09-07T19:55:00Z",
+      "guard": "adversarialDepth",
+      "result": "PASS (54 states, 6 failure states, 5/5 cascade classes covered)"
+    },
+    {
+      "state": "handoff",
+      "event": "PLAN_REVIEWED",
+      "at": "2026-09-07T20:40:00Z",
+      "note": "G4 recorded (3.0.1 machine has no planReview state; recorded as a handoff-phase event): R1-R12 ratified, A-1/A-3/A-4 granted, A-2 held; CONTRACT v1.1-draft -> v1.0"
+    },
+    {
+      "state": "handoff",
       "event": "HANDED_OFF",
-      "note": "KICKOFF.md written (C-W6-01 pins @ 42f5d78, C-W6-02 re-derive step, pinned-resume only); board filled; launch prompt included"
+      "at": "2026-09-07T20:40:00Z",
+      "artifacts": [
+        "delivery/v4/KICKOFF.md",
+        "delivery/v4/SESSIONS.md",
+        "delivery/v4/GATE.md",
+        "delivery/v4/STATUS.md",
+        "delivery/v4/PLAN-REVIEW.md",
+        "delivery/v4/README.md",
+        "delivery/v4/DECISIONS.html",
+        "delivery/v4/PLAN-REVIEW.html",
+        "delivery/v4/KICKOFF.html"
+      ]
     }
   ],
-  "decisions": {
-    "G2": {
-      "Q1": "fold-into-G2-exhibit",
-      "Q2": "always-on-tiered-preflight",
-      "Q3": "scaffold-pointer-to-fable-it",
-      "Q4": "chore-epic-in-v3"
-    }
+  "testConventions": {
+    "registered": true,
+    "source": "registered",
+    "at": "2026-09-07T18:09:48.028Z"
   },
   "casesReviewed": true
 }

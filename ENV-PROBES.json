@@ -1,0 +1,15 @@
+{
+  "run": "plan-it v4 (shape L)",
+  "note": "Probes are argv arrays run from the repo root with a 10s budget each. Facts are probed, never guessed. Every probe names the fact the v4 plan depends on.",
+  "probes": [
+    { "id": "config-reachability", "fact": "the 3.0.1 gate-check runs and accepts this run's state file", "check": ["node", "plugins/plan-it/skills/plan-it/scripts/gate-check.mjs", "state", ".plan-it/state.json", "plugins/plan-it/skills/plan-it/machine.json"] },
+    { "id": "live-registry", "fact": "which plan-it copies the harness can load (marketplaces + user skill + plugin version)", "check": ["sh", "-c", "echo \"marketplaces: $(ls ~/.claude-loudr/plugins/marketplaces | tr '\\n' ' ') | skill-copy: $(grep -m1 '^version:' ~/.claude-loudr/skills/plan-it/SKILL.md) | plugin: $(grep -m1 '\"version\"' plugins/plan-it/.claude-plugin/plugin.json | tr -d ' ,')\""] },
+    { "id": "deployed-vs-installed", "fact": "root mirrors vs the plugin copy Claude Code runs — byte parity of the 8 pairs", "check": ["node", "plugins/plan-it/skills/plan-it/scripts/gate-check.mjs", "mirror-check"] },
+    { "id": "credential-validity", "fact": "GitHub CLI is authenticated (the 4.0.0 release pushes to DevOtts/plan-it)", "check": ["gh", "auth", "status"] },
+    { "id": "dependency-actual-usage", "fact": "node present and the binding test runner exists (zero-dep policy)", "check": ["sh", "-c", "node --version && test -f tests/run-contract.mjs && echo run-contract.mjs present"] },
+    { "id": "code-vs-external-split", "fact": "external pieces the renderer leans on: Google Chrome for --open, cdnjs for mermaid", "check": ["sh", "-c", "test -d '/Applications/Google Chrome.app' && echo 'Chrome present' && curl -sI --max-time 6 https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.1/mermaid.min.js | head -1"] },
+    { "id": "tool-availability", "fact": "the CLI tools the run and the renderer invoke", "check": ["sh", "-c", "command -v open && command -v node && command -v git && command -v python3"] },
+    { "id": "caller-consumer-surface", "fact": "the *-it family that consumes plan-it's package (build-it, review-it, conclude-it, prompt-it) is installed", "check": ["sh", "-c", "ls ~/.claude-loudr/plugins/marketplaces | grep -E 'build-it|devotts' | tr '\\n' ' '; ls ~/.claude-loudr/skills ~/.claude/skills 2>/dev/null | grep -E '^(build-it|review-it|conclude-it|prompt-it)$' | sort -u | tr '\\n' ' '"] },
+    { "id": "secret-scan-on-import", "fact": "the imported brand assets and v4 inputs carry no secret-shaped strings", "check": ["sh", "-c", "if grep -rIl -E 'sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|PRIVATE)' assets/brand delivery/v4 2>/dev/null; then exit 1; else echo 'no secret patterns in assets/brand + delivery/v4'; fi"] }
+  ]
+}
