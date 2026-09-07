@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "RESEARCH-REPORT",
+  "title": "Measurement Writeable",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Measure", "blocks": [
+      {"type": "measurement", "value": 42, "unit": "rows", "where": "db", "read_at": "2026-09-07", "read_only": false}
+    ]}
+  ]
+}

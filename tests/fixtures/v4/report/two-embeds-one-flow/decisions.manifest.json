@@ -1,0 +1,18 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "Two Embeds One Flow",
+  "subtitle_html": "fixture for determinism + --check",
+  "output": "out.html",
+  "source": {"path": "source.md"},
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Embeds", "blocks": [
+      {"type": "embed", "path": "embed1.md", "label": "Embed One"},
+      {"type": "embed", "path": "embed2.md", "label": "Embed Two"}
+    ]},
+    {"heading": "Flow", "blocks": [
+      {"type": "flow", "source": "graph TD;\nA-->B;\nB-->C;"}
+    ]}
+  ]
+}

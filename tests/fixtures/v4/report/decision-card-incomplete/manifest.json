@@ -1,0 +1,13 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "Decision Card Incomplete",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Decisions", "blocks": [
+      {"type": "decision-card", "id": "D1", "status": "open", "question_html": "<p>Ship now?</p>", "recommendation": "yes"},
+      {"type": "decision-card", "id": "D2", "status": "ruled", "question_html": "<p>Rollback?</p>"}
+    ]}
+  ]
+}

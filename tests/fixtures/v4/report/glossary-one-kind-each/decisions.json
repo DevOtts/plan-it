@@ -1,0 +1,10 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "Kind DECISIONS",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [{"type": "table", "headers": ["A"], "rows": [["1"]]}]}
+  ]
+}

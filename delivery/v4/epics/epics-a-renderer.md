@@ -98,8 +98,8 @@ back-compat path so `kind: LEGACY` renders without a rewrite (PRD D-A2).
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | ~1 session | escalate to top on struggle (RUN-POLICY) | `build-it:iteration-impl#slice=V4A1` |
-| top | review of stamp/determinism correctness only | — (top does not escalate further) | `build-it:launch#slice=V4A1-review` |
+| mid | ~1 session | escalate to top on struggle (RUN-POLICY) | build-it:iteration-impl#slice=V4A1 |
+| top | review of stamp/determinism correctness only | — (top does not escalate further) | build-it:launch#slice=V4A1-review |
 
 ### Test Contract — Renderer core (V4A1)  (BINDING: 100% pass or /iterate)
 Types: [unit][integration] · Count: 12 (0 [REAL]) · Surfaces: CLI (node
@@ -240,8 +240,8 @@ legible instead of a bare shell.
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | ~2 sessions (largest epic — 17 block types) | escalate to top on struggle, one block type at a time (RUN-POLICY) | `build-it:iteration-impl#slice=V4A2` |
-| top | brand-contrast ratification + escaping review only | — | `build-it:launch#slice=V4A2-review` |
+| mid | ~2 sessions (largest epic — 17 block types) | escalate to top on struggle, one block type at a time (RUN-POLICY) | build-it:iteration-impl#slice=V4A2 |
+| top | brand-contrast ratification + escaping review only | — | build-it:launch#slice=V4A2-review |
 
 ### Test Contract — Block catalogue + brand (V4A2)  (BINDING: 100% pass or /iterate)
 Types: [unit][integration] · Count: 15 (0 [REAL]) · Surfaces: CLI + file/regex
@@ -333,8 +333,8 @@ and the CSS token completeness audit (C-E2-13).
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | ~1 session | escalate to top on struggle (RUN-POLICY) | `build-it:iteration-impl#slice=V4A3` |
-| top | escaping + adversarial-verify review (never resolved below coordinator, RUN-POLICY "judgment" row) | — | `build-it:launch#slice=V4A3-review` |
+| mid | ~1 session | escalate to top on struggle (RUN-POLICY) | build-it:iteration-impl#slice=V4A3 |
+| top | escaping + adversarial-verify review (never resolved below coordinator, RUN-POLICY "judgment" row) | — | build-it:launch#slice=V4A3-review |
 
 ### Test Contract — Glossary, security, tokens (V4A3)  (BINDING: 100% pass or /iterate)
 Types: [unit][integration] · Count: 11 (0 [REAL]) · Surfaces: CLI + HTML-
@@ -428,8 +428,8 @@ pass, IMPLEMENTED-NOT-VERIFIED ships nothing).
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| low | ~0.5 session (mechanical: doc authoring against a frozen schema, fixture existence checks) | escalate to mid on struggle (RUN-POLICY) | `build-it:iteration-impl#slice=V4A4` |
-| top | final cross-epic coverage sign-off only | — | `build-it:launch#slice=V4A4-review` |
+| low | ~0.5 session (mechanical: doc authoring against a frozen schema, fixture existence checks) | escalate to mid on struggle (RUN-POLICY) | build-it:iteration-impl#slice=V4A4 |
+| top | final cross-epic coverage sign-off only | — | build-it:launch#slice=V4A4-review |
 
 ### Test Contract — Docs, fixtures, harness completeness (V4A4)  (BINDING: 100% pass or /iterate)
 Types: [unit][integration] · Count: 10 (0 [REAL]) · Surfaces: file-existence +

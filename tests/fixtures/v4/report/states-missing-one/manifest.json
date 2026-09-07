@@ -1,0 +1,15 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "States Missing One",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "States", "blocks": [
+      {"type": "states",
+        "good": {"text": "everything renders"},
+        "empty": {"text": "no rows yet"}
+      }
+    ]}
+  ]
+}

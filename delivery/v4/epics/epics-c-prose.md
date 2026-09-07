@@ -104,7 +104,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (judgment collisions — e.g. wording the G1/G-1 legend line, deciding which sentence to cut from the description) | `build-it:V4C1` |
+| mid | xhigh | escalate to top on struggle (judgment collisions — e.g. wording the G1/G-1 legend line, deciding which sentence to cut from the description) | build-it:iteration-impl#slice=V4C1 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 12 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -194,7 +194,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (porting field-precedent schemas faithfully — GATE.md/SESSIONS.md/DECISIONS.md shape fidelity to the two precedents read in full) | `build-it:V4C2` |
+| mid | xhigh | escalate to top on struggle (porting field-precedent schemas faithfully — GATE.md/SESSIONS.md/DECISIONS.md shape fidelity to the two precedents read in full) | build-it:iteration-impl#slice=V4C2 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 12 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -253,7 +253,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (narrative coherence across README/docs — keeping the "three shifts" story consistent without contradicting SQ-A/SQ-B's mechanisms) | `build-it:V4C3` |
+| mid | xhigh | escalate to top on struggle (narrative coherence across README/docs — keeping the "three shifts" story consistent without contradicting SQ-A/SQ-B's mechanisms) | build-it:iteration-impl#slice=V4C3 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 10 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -265,9 +265,9 @@ Types: [prose][packaging] · Count: 10 (0 [REAL]) · counted by `gate-check hand
 | T-V4C3-03 | @case-packaging | Given `docs/methodology.md`, when grepped, then the heading reads "five non-negotiable rules" | phrase found, "four" absent | `sh -c 'grep -q "five non-negotiable rules" docs/methodology.md && ! grep -q "four non-negotiable rules" docs/methodology.md'` |
 | T-V4C3-04 | @case-packaging | Given `docs/installation.md`, when grepped, then it names the stale-install cleanup as an owner action (O-1) | phrase found | `sh -c 'grep -qi "stale" docs/installation.md'` |
 | T-V4C3-05 | @case-packaging | Given `README.md`'s Status section, when grepped, then it references the "4.0.0" release line | phrase found | `sh -c 'grep -q "4.0.0" README.md'` |
-| T-V4C3-06 | @case-packaging | Given `CHANGELOG.md`'s `## 4.0.0` section, when its `### ` subsections are counted, then the count matches 3.0.0's required-section set | ≥6 subsections found (Founder mandates/Write-time invariants/Enforcement reach/Additive tooling/Deferred/Verification) | `sh -c "awk '/^## 4\\.0\\.0/,/^## [0-9]/' CHANGELOG.md | grep -c '^### '"` (≥6) |
+| T-V4C3-06 | @case-packaging | Given `CHANGELOG.md`'s `## 4.0.0` section, when its `### ` subsections are counted, then the count matches 3.0.0's required-section set | ≥6 subsections found (Founder mandates/Write-time invariants/Enforcement reach/Additive tooling/Deferred/Verification) | `sh -c "awk '/^## 4\\.0\\.0/{f=1;print;next} /^## [0-9]/{f=0} f' CHANGELOG.md | grep -c '^### '"` (≥6; AMD-6: flag-based range — the original two-address range closed on its own start line and always counted 0) |
 | T-V4C3-07 | @case-packaging | Given `CHANGELOG.md`'s 4.0.0 Verification subsection, when grepped, then it names "mirror-check 11/11" | phrase found | `sh -c 'grep -q "mirror-check 11/11" CHANGELOG.md'` |
-| T-V4C3-08 | @case-packaging | Given every file this epic touches, when scanned for a `claude-<model>` literal (G-4), then zero hits exist | 0 hits | `sh -c '! grep -rEn "claude-[a-z0-9-]*-[0-9]" docs/ README.md CHANGELOG.md'` |
+| T-V4C3-08 | @case-packaging | Given every file this epic touches, when scanned for a `claude-<model>` literal (G-4), then zero hits exist | 0 hits | `sh -c '! grep -rEn --exclude-dir=research "claude-[a-z0-9-]*-[0-9]" docs/ README.md CHANGELOG.md'` (AMD-6: `docs/**/research/**` are evidence records that quote observed model IDs; G-4 governs plan artifacts and rendered twins) |
 | T-V4C3-09 | @case-packaging | Given `docs/usage.md`'s "What you get back" package tree, when topology = orchestrator+squads is described, then GLOSSARY.md/SESSIONS.md/GATE.md are mentioned as part of that shape | 3/3 file names found | `sh -c 'grep -q "SESSIONS.md" docs/usage.md'` |
 | T-V4C3-10 | @case-packaging | manual: after all edits land, a human visually confirms README.md and the three docs/*.md files render correctly as GitHub-flavored markdown (no broken tables, no unclosed code fences) — no new lint tooling introduced (G-2 zero deps) | 0 rendering defects observed | `manual: open README.md, docs/usage.md, docs/methodology.md, docs/installation.md in a markdown preview and confirm no broken tables/fences` |
 
@@ -312,7 +312,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (cross-squad version-integration sequencing at W2) | `build-it:V4C4` |
+| mid | xhigh | escalate to top on struggle (cross-squad version-integration sequencing at W2) | build-it:iteration-impl#slice=V4C4 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 10 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed

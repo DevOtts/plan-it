@@ -1,0 +1,9 @@
+{
+  "schema": "planit-brand/1",
+  "name": "Winner .plan-it/brand.json",
+  "fonts": {"display": "Arial", "body": "Arial", "mono": "monospace"},
+  "roles": {
+    "light": {"bg": "#ffffff", "card": "#f0f0f0", "line": "#dddddd", "ink": "#111111", "muted": "#666666", "accent": "#111111", "accentBg": "#ff00ff", "ok": "#00aa00", "warn": "#aaaa00", "bad": "#aa0000", "info": "#0000aa", "chip": "#eeeeee", "hold": "#aa00aa"},
+    "dark": {"bg": "#111111", "card": "#222222", "line": "#333333", "ink": "#eeeeee", "muted": "#999999", "accent": "#ff00ff", "accentBg": "#ff00ff", "ok": "#00aa00", "warn": "#aaaa00", "bad": "#aa0000", "info": "#0000aa", "chip": "#333333", "hold": "#aa00aa"}
+  }
+}

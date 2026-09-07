@@ -1,0 +1,9 @@
+{
+  "schema": "planit-brand/1",
+  "name": "Second assets/brand/brand.json",
+  "fonts": {"display": "Arial", "body": "Arial", "mono": "monospace"},
+  "roles": {
+    "light": {"bg": "#ffffff", "card": "#f0f0f0", "line": "#dddddd", "ink": "#111111", "muted": "#666666", "accent": "#111111", "accentBg": "#00ffff", "ok": "#00aa00", "warn": "#aaaa00", "bad": "#aa0000", "info": "#0000aa", "chip": "#eeeeee", "hold": "#00aaaa"},
+    "dark": {"bg": "#111111", "card": "#222222", "line": "#333333", "ink": "#eeeeee", "muted": "#999999", "accent": "#00ffff", "accentBg": "#00ffff", "ok": "#00aa00", "warn": "#aaaa00", "bad": "#aa0000", "info": "#0000aa", "chip": "#333333", "hold": "#00aaaa"}
+  }
+}
