@@ -1,0 +1,20 @@
+{
+  "title": "Payments Retry Epic",
+  "subtitle_html": "concluded 2026-08-26 · session <code>done-payments-retry</code>",
+  "output": "REPORT.html",
+  "sections": [
+    {"heading": "Scoreboard",
+     "table": {"headers": ["Gate", "Result", "Evidence"],
+               "rows": [["Local tests", "<b>GREEN</b>", "412 passing"]]}},
+    {"heading": "What was done",
+     "cards": [
+       {"id": "E1", "title": "Retry queue",
+        "badge": {"label": "shipped", "tone": "ok"},
+        "rename_html": "&rarr; <code>done-*</code>",
+        "body_html": "<p>the retry queue now backs off exponentially.</p>",
+        "test_html": "<ul><li>trigger a failed webhook and watch it retry</li></ul>",
+        "embeds": [{"path": "FINAL-REPORT.md", "label": "Full report"}]
+       }]},
+    {"html": "<p class=\"sub\">free-form footer note</p>"}
+  ]
+}

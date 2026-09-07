@@ -1,0 +1,60 @@
+{
+  "schema": "planit-brand/1",
+  "name": "Her0 default",
+  "source": "assets/brand/Her0 brad guideline.md §4 (L178-205), §5 (L225-239) — R7 contrast mapping applied (delivery/v4/DECISIONS.md)",
+  "palette": {
+    "ink": "#0D1117",
+    "inkSoft": "#161B22",
+    "inkMid": "#21262D",
+    "signal": "#00E5A0",
+    "flare": "#FF6B4A",
+    "snow": "#FFFFFF",
+    "cloud": "#F6F8FA",
+    "mist": "#E6EDF3",
+    "slate": "#8B949E",
+    "steel": "#484F58",
+    "carbon": "#C9D1D9",
+    "valid": "#2EA043",
+    "warn": "#D29922",
+    "fail": "#F85149",
+    "info": "#58A6FF"
+  },
+  "fonts": {
+    "display": "Space Grotesk",
+    "body": "Inter",
+    "mono": "JetBrains Mono",
+    "googleFontsHref": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap"
+  },
+  "roles": {
+    "light": {
+      "bg": "#FFFFFF",
+      "card": "#F6F8FA",
+      "line": "#E6EDF3",
+      "ink": "#0D1117",
+      "muted": "#484F58",
+      "accent": "#0D1117",
+      "accentBg": "#00E5A0",
+      "ok": "#2EA043",
+      "warn": "#D29922",
+      "bad": "#F85149",
+      "info": "#58A6FF",
+      "chip": "#F6F8FA",
+      "hold": "#FF6B4A"
+    },
+    "dark": {
+      "bg": "#0D1117",
+      "card": "#161B22",
+      "line": "#21262D",
+      "ink": "#C9D1D9",
+      "muted": "#8B949E",
+      "accent": "#00E5A0",
+      "accentBg": "#00E5A0",
+      "ok": "#2EA043",
+      "warn": "#D29922",
+      "bad": "#F85149",
+      "info": "#58A6FF",
+      "chip": "#21262D",
+      "hold": "#FF6B4A"
+    }
+  }
+}
