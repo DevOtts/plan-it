@@ -1,0 +1,38 @@
+{
+  "schema": "planit-report/1",
+  "kind": "GLOSSARY",
+  "title": "GLOSSARY — plan-it v4",
+  "subtitle_html": "Static vocabulary and minted IDs — available continuously through the run",
+  "source": {
+    "path": "../GLOSSARY.md"
+  },
+  "output": "../GLOSSARY.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "glossary-content",
+      "heading": "Glossary",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../GLOSSARY.md"
+        }
+      ]
+    },
+    {
+      "id": "glossary-panel",
+      "heading": "Reference",
+      "blocks": [
+        {
+          "type": "glossary"
+        }
+      ]
+    }
+  ],
+  "allow_tokens": [
+    "claude-plugin",
+    "claude-loudr"
+  ]
+}

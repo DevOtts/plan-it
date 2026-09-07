@@ -1,0 +1,38 @@
+{
+  "schema": "planit-report/1",
+  "kind": "PLAN-REVIEW",
+  "title": "PLAN-REVIEW — plan-it v4 · the one review-and-contradict round (gate G4)",
+  "subtitle_html": "Reviewed-by: Fernando Ott 2026-09-07 — ratified as recommended: R1–R12 confirmed as applied; A-1, A-3, A-4 granted; A-2 held until owner action O-2; no contradictions",
+  "source": {
+    "path": "../PLAN-REVIEW.md"
+  },
+  "output": "../PLAN-REVIEW.html",
+  "glossary": {
+    "path": "../GLOSSARY.md"
+  },
+  "sections": [
+    {
+      "id": "content",
+      "heading": "Plan Review",
+      "blocks": [
+        {
+          "type": "embed",
+          "path": "../PLAN-REVIEW.md"
+        }
+      ]
+    },
+    {
+      "id": "glossary",
+      "heading": "Glossary",
+      "blocks": [
+        {
+          "type": "glossary"
+        }
+      ]
+    }
+  ],
+  "allow_tokens": [
+    "claude-plugin",
+    "claude-loudr"
+  ]
+}
