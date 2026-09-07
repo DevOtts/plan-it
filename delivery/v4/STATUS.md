@@ -6,18 +6,18 @@ Program totals (computed by `gate-check handoff delivery/v4/`): 13 epics · 166 
 
 | EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch | Disposition |
 |---|---|---|---|---|---|---|---|
-| V4A1 | Renderer core: CLI, determinism, exit codes, `--open` routing, legacy manifest compat | SQ-A | W1 | VERIFIED | 12/12 | `epic/v4a-renderer-core` @ 1969c8f (lane merge pending) | |
-| V4A2 | Block catalogue (17 types) + brand tokens + detection + badge/stamps | SQ-A | W1 | VERIFIED | 15/15 | `epic/v4a-block-catalogue` @ 1b13c28 (lane merge pending) | |
-| V4A3 | Glossary panel + first-use expansion + model-ID leak lint + escape hardening + theme tokens | SQ-A | W1 | VERIFIED | 11/11 | `epic/v4a-glossary-security` @ f76dbfc (lane merge pending) | |
+| V4A1 | Renderer core: CLI, determinism, exit codes, `--open` routing, legacy manifest compat | SQ-A | W1 | VERIFIED | 12/12 | `epic/v4a-renderer-core` @ 1969c8f · local gate exit 0 (lane merge pending) | |
+| V4A2 | Block catalogue (17 types) + brand tokens + detection + badge/stamps | SQ-A | W1 | VERIFIED | 15/15 | `epic/v4a-block-catalogue` @ 1b13c28 · local gate exit 0 (lane merge pending) | |
+| V4A3 | Glossary panel + first-use expansion + model-ID leak lint + escape hardening + theme tokens | SQ-A | W1 | VERIFIED | 11/11 | `epic/v4a-glossary-security` @ f76dbfc · local gate exit 0 (lane merge pending) | |
 | V4A4 | `references/report-family.md`, fixture completeness, renderer test-harness wiring | SQ-A | W1 | IN-PROGRESS | 0/10 | `epic/v4a-fixtures-docs` | |
-| V4B1 | `machine.json` additive superset + byte-pinned 3.0.1 baseline + negative machine fixtures | SQ-B | W1 | VERIFIED | 14/14 | `epic/v4b-machine-superset` @ ebfa067 (lane merge pending) | |
+| V4B1 | `machine.json` additive superset + byte-pinned 3.0.1 baseline + negative machine fixtures | SQ-B | W1 | VERIFIED | 14/14 | `epic/v4b-machine-superset` @ ebfa067 · local gate exit 0 (lane merge pending) | |
 | V4B2 | `state` verb additions (triage · defaults · plan review · draft-cannot-hand-off · mode · `--run`) + `freeze --draft` | SQ-B | W1 | IN-PROGRESS | 0/15 | `epic/v4b-state-draft` | |
 | V4B3 | Named runs: state-file resolution, deliveryRoot-aware verbs, `archive`, `runs`, guard resolution in both copies, grammar widening | SQ-B | W1 | IN-PROGRESS | 0/17 | `epic/v4b-named-runs` | |
 | V4B4 | `mirror`, `glossary`, disposition counting in `reconcile`, ENV-FACTS tool-only fix, embedded in `handoff` | SQ-B | W1 | IN-PROGRESS | 0/16 | `epic/v4b-lints` | |
 | V4B5 | Harness: AMD-4, AMD-5, exit polarity, `tests/v4/core/*` wiring, fixture index, dogfood fixture | SQ-B | W1→W2 | IN-PROGRESS | 0/12 | `epic/v4b-harness` | |
-| V4C1 | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | W1 | VERIFIED | 12/12 | `epic/v4c-skill-prose` @ 31edb78 (lane merge pending) | |
-| V4C2 | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | W1 | VERIFIED | 12/12 | `epic/v4c-references` @ 7e26aa5 (lane merge pending) | |
-| V4C3 | docs + README + CHANGELOG 4.0.0 + installation note on stale installs | SQ-C | W1 | VERIFIED | 10/10 | `epic/v4c-docs-release` @ a4b87d0 (lane merge pending) | |
+| V4C1 | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | W1 | VERIFIED | 12/12 | `epic/v4c-skill-prose` @ 31edb78 · local gate exit 0 (lane merge pending) | |
+| V4C2 | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | W1 | VERIFIED | 12/12 | `epic/v4c-references` @ 7e26aa5 · local gate exit 0 (lane merge pending) | |
+| V4C3 | docs + README + CHANGELOG 4.0.0 + installation note on stale installs | SQ-C | W1 | VERIFIED | 10/10 | `epic/v4c-docs-release` @ a4b87d0 · local gate exit 0 (lane merge pending) | |
 | V4C4 | Versions 4.0.0 across six sites + harness literals + `kickoff-pinning`/`changelog-shape` updates + `tests/v4/prose/*` | SQ-C | W1→W2 | IN-PROGRESS | 0/10 | `epic/v4c-versions` | |
 
 Build order inside lanes: SQ-B V4B1 → V4B2 → V4B3 → V4B4 → V4B5 (V4B3 before QA runs the v4 cases). SQ-A V4A1 → V4A2 → V4A3 → V4A4. SQ-C V4C1 ∥ V4C2 → V4C3 → V4C4 (V4C4's six-site version check goes green only after SQ-B's `machine.json` bump lands in the same W2 merge).
