@@ -15,7 +15,7 @@ Reading order — a fresh session reads only what its role needs. Legend: `V4<le
 | 9 | `prds/prd-<squad>.md` + `epics/epics-<squad>.md` | each squad, only its own | PRD + epics with binding Test Contracts (SQ-A 48 · SQ-B 74 · SQ-C 44 cases) |
 | 10 | `GLOSSARY.md` | everyone | every ID and acronym, one line each |
 | 11 | `TEST-CONTRACT-REVIEW.md` | reviewer | FD-2 case review and cascade coverage |
-| 12 | `V3-VS-V4-CORE-ENHANCEMENTS.html` | background | the analysis report that started the run, with the rulings recorded |
+| 12 | `resources/V3-VS-V4-CORE-ENHANCEMENTS.html` | background (run input, moved under `resources/` at W1 — AMD-8) | the analysis report that started the run, with the rulings recorded |
 | 13 | `../../docs/v4/01-findings.md`, `02-v4-design.md`, `research/` | on demand | evidence and design |
 | 14 | prior planning session `plan-it-v4` (2026-09-07) | escape hatch only | `/read-chat "plan-it-v4"` distils the full planning conversation on demand — discarded alternatives, exact lint output, the reasoning behind each default. KICKOFF resume stays pinned-only; this is depth, not the contract. |
 

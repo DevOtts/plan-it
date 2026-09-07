@@ -53,7 +53,7 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 
 | ID | Expansion | Where defined |
 |---|---|---|
-| E1 … E10 | the ten v4 enhancements: scope brief · HTML report layer · decision queue · build topology · show-don't-describe · triage + measurement · anamnesis + review round · residual disposition · named runs · readable acronyms | V3-VS-V4-CORE-ENHANCEMENTS.html |
+| E1 … E10 | the ten v4 enhancements: scope brief · HTML report layer · decision queue · build topology · show-don't-describe · triage + measurement · anamnesis + review round · residual disposition · named runs · readable acronyms | resources/V3-VS-V4-CORE-ENHANCEMENTS.html |
 | D1 … D7 | Fernando's rulings on the analysis report (mode, brand, local HTML, topology choice, rulings block, release scope, build topology) | DECISIONS.md — Ruled |
 | R1 … R12 | defaults the run applied at G2, to contradict at PLAN-REVIEW | DECISIONS.md — Defaults; 01-findings §6 |
 | A-1 … A-4 | authorizations the build needs (branch commits, release tag, Chrome/headless, guard-fix commit) | DECISIONS.md — Open |
@@ -64,8 +64,12 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | ab0c192 | the W0 commit that landed the v4 planning package and the guard mirror fix (A-4) | STATUS.md ## Log |
 | SQ-A · SQ-B · SQ-C | the three build squads: renderer · deterministic core · prose and packaging | CONTRACT §2 |
 | V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
-| C-E<n>-NN | enforcement case for enhancement n (60 in the CONTRACT, computed) | CONTRACT ## Cases |
-| T-<EID>-NN | per-epic Test Contract case | delivery/v4/epics/ |
+| C-E*-NN | enforcement case for enhancement n (`C-E<n>-NN`; 60 in the CONTRACT, computed) | CONTRACT ## Cases |
+| T-*-NN | per-epic Test Contract case (`T-<EID>-NN`, e.g. T-V4B4-17) | delivery/v4/epics/ |
+| T-E*-NN | v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs) | tests/run-contract.mjs |
+| C-W*-NN · C-META-NN | v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist) | delivery/v3/CONTRACT.md |
+| SHA-256 | the hash function behind every pin and stamp (`sha256=<64-hex>`) | CONTRACT §4.3 |
+| AMD-8 | orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/` | delivery/decisions.md |
 | AMD-7 | orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17 | delivery/decisions.md |
 | AMD-6 | orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion) | delivery/decisions.md |
 | O-4 | owner action: redact-or-keep the model-ID citations in research records | GATE.md |
