@@ -97,6 +97,65 @@ evidence → design → decisions → test/acceptance plan → risks.
 
 ## PART B — Delivery package (`delivery/`)
 
+### `ANAMNESIS.md` — gate G0, the one up-front questionnaire
+Runs once, in Phase 0, before pre-grounding. Batched like G2 (numbered,
+answer-by-number), but about the run's own terms, not its content — answers
+seed the DoD's Assumptions list and `DECISIONS.md`'s Ruled table directly,
+so G2 never re-asks something already told up front.
+```
+## ANAMNESIS — before we start
+
+1. Access & credentials this run may probe: <list what's found so far;
+   ask which are live-testable vs off-limits>
+2. Fences: anything explicitly not-to-touch? (folds into the DoD's
+   Assumptions list)
+3. Naming: any existing convention for new entities/branches/sessions this
+   run must match?
+4. Topology preference, if you already know it (else: recommendation at G1)
+5. Live-probe authorization: may this run make read-only live calls during
+   live-grounding? Any calls that mutate anything, even dummy objects?
+6. Decisions you already know the answer to (so G2/DECISIONS.md doesn't
+   re-ask something you've already told us)
+```
+
+### `SCOPE-BRIEF.md` — the size/shape/topology explainer, before the G1 menu
+Rendered at Phase 2, before the G1 menu — a rendering of PART C (sizing) and
+PART D (shapes) into the specific combination intake's signals point at, not
+new domain knowledge. Closes the gap where the G1 menu names "Shape 1" and
+the human has to already know what that means.
+```
+## SCOPE-BRIEF — <one-line demand summary>
+
+### What this looks like at each size
+| Size | docs/ | delivery/ | Typical session count |
+|---|---|---|---|
+| S | ... | ... | 1 (solo) |
+| M | ... | ... | 1–2 |
+| L | ... | ... | orchestrator + N squads |
+(rows populated from PART C, not re-typed by hand)
+
+### What this looks like at each shape (only the 2-3 shapes the use-case
+### signal actually narrowed to — never show all 5)
+Shape <N> — <name>: produces <file tree>. Fits when <use-case signal>.
+Wrong when <the disqualifying signal — e.g. "you don't yet have a repo to
+ground against">.
+
+### Topology (solo / orchestrator+squads / headless)
+For the recommended topology: <what sessions open, what each does, in one
+line — a preview of SESSIONS.md, not the full table>.
+
+### What this costs you
+- Gates you'll be asked to clear: <G1 now, G2/G3 or one PLAN-REVIEW later,
+  each with what it will ask>
+- Estimated fan-out size: <N research agents / N squads>
+- Recommendation: <size, shape, topology> — <why, in one sentence>
+
+### When this is the wrong choice
+<the one or two honest disqualifiers for the recommended combination — e.g.
+"if this touches a live production system you haven't listed, add the
+live-grounding pass before freezing, which adds a phase">
+```
+
 ### `CONTRACT.md` — the law (frozen before parallel work)
 ```
 1. Vocabulary (the canonical entities)
@@ -151,6 +210,8 @@ Amendments fold cross-cutting squad findings back here so squads can't drift.
    Repo: <absolute repo path> @ <full 40-hex git SHA>
    State: <absolute repo path>/.plan-it/state.json
    Contract: <path to CONTRACT.md> sha256=<64-hex SHA-256 of CONTRACT.md>
+   (if `SESSIONS.md` exists, each session reads only its own row there —
+   this file stays the single shared entry point)
 1. Re-derive tally + reconcile from disk (the builder's first instruction):
    recompute the board from `.plan-it/state.json` + the CONTRACT case table,
    reconcile against every total claimed below; on mismatch, stop and report
@@ -172,8 +233,226 @@ Amendments fold cross-cutting squad findings back here so squads can't drift.
 ```
 Current wave · Legend (backlog · in-progress · testing · shipped · blocked)
 Program totals (N epics · M test cases · K shipped)
-| EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch |
+| EID | Epic | Squad | Wave | Status | Tests (green/total) | Branch | Disposition |
 [REAL]-coverage notes · how an epic moves (state machine)
+```
+Disposition cell: empty when Status = VERIFIED, else exactly one of
+`backlog-with-reason: <path>` · `owner-gated: <owner>` ·
+`IMPLEMENTED-NOT-VERIFIED: <case> <target>`. A binding Test Contract case
+never moves to `backlog-with-reason` — it stays IMPLEMENTED-NOT-VERIFIED
+with its reason attached until re-verified (G-9).
+
+```
+## Residuals
+| Item | Disposition | Reason / exit criterion | Evidence |
+|---|---|---|---|
+```
+Every row still open at close is disposed one of the three ways above; the
+board archives only when every Residuals row carries a disposition, with a
+named owner where `owner-gated`.
+
+```
+## Log
+```
+Reverse-chronological, append-only, one dated bullet per event — this is
+where the real narrative lives: a retracted finding, a corrected number, a
+discrepancy caught between two counts. Tag anything found but not asked for
+`[incidental]` — it is never folded silently into the Test Contract tally
+and never dropped (R6).
+
+### `DECISIONS.md` — the planning-time decision queue
+Modeled on two field precedents (`docs/v4/research/stream-D-precedents.md`
+F-D17/F-D18), reconciled onto the existing decision-log tags (§1 of
+`formats.md`) rather than inventing a second tag vocabulary.
+```
+# DECISIONS.md — <project> decision queue
+
+## Ruled
+| ID | Decision | Ruling | Effect / where it lands | Ruled by · date |
+|---|---|---|---|---|
+| D1 | ... | [DECIDED]/[CHANGED] ... | <epic/phase it unblocks> | <owner, date> |
+
+## Open — recommendation attached, nobody should pick for you
+| ID | Question | Recommendation | Why nobody should pick for you | Blocks |
+|---|---|---|---|---|
+| D4 | ... | ... | <the genuinely irreversible/vision-shaping reason> | <epic/phase> |
+
+## Rulings carried forward from a prior run/round (if any)
+| Item | Your call | State |
+|---|---|---|
+(sourced from an earlier DECISIONS.md — every prior item restated with its
+current state, never silently dropped)
+
+## Copy-your-rulings block
+<a single fenced block the human can paste back numbered answers into, same
+mechanic as the G2 "answer by number" convention already in use>
+```
+Once every Open row is ruled, the answered rows promote into `GATE.md`
+(next) as the build-time autonomy contract — DECISIONS.md is the
+*planning-time* queue, GATE.md is the *build-time* contract; they share
+row content but serve different readers (Fernando during planning vs. the
+orchestrator during build).
+
+### `GATE.md` — the autonomy contract (build-time)
+Modeled 1:1 on the field precedent (`stream-D-precedents.md` F-D7),
+generalized. Every run's exact answer to "did we ask a human everything
+this needs before running unattended."
+```
+# GATE — <project> decisions & authorizations (the autonomy contract)
+
+> Everything the build needs from a human, answered up front. Anything new
+> the build surfaces gets appended here — never guessed — and parks only
+> the narrowest blocked scope (one epic, not the whole run).
+
+## Answered (owner: <name> · <date>)
+| # | Type | Decision / authorization | Answer |
+|---|------|---------------------------|--------|
+| G-1 | decision | ... | ... |
+| G-3 | authorization | ... | ... |
+| O-1 | owner-action | ... | ... |
+
+`Type` ∈ `decision` (a choice among designs) · `authorization` (a
+permission grant, already decided elsewhere, just needs a yes) ·
+`owner-action` (delegable to nobody — only the named owner's own
+hands/credentials; also listed in the close-out's owner-actions list).
+
+## Still human, but NOT blocking the run
+| # | Item | Owner | When |
+|---|------|-------|------|
+| 1 | ... | ... | ... |
+
+## Standing rules the orchestrator enforces
+- Usage/session-limit resilience: persist state to disk, schedule a
+  wakeup chain (≤3600s hops, chained), resume from the state files —
+  never park the run waiting on the owner.
+- `[REAL]` case unreachable → `IMPLEMENTED-NOT-VERIFIED` with a reason —
+  never a fake green, never waking the owner just to report it.
+- A new genuinely-human decision discovered mid-run is appended here (not
+  guessed) plus the close-out report; take the reversible conservative
+  path if one exists, else park only that epic.
+```
+
+### `SESSIONS.md` — sessions to open (exact names for `/rename`/`SendMessage`)
+Modeled on the field precedent's `00-program-plan.md` §1
+(`stream-D-precedents.md` F-D5/F-D6), generalized beyond "squads" to any
+topology. `KICKOFF.md` keeps its own single launch prompt unchanged
+(the "KICKOFF.md + its single launch prompt STAY" ruling) — this file is
+additive, for the N-session case KICKOFF.md was never meant to carry.
+```
+# SESSIONS.md — <project> sessions to open (exact names for /rename)
+
+| # | Session name | Role | Reads | Opens when |
+|---|---|---|---|---|
+| 1 | <orchestrator-slug> | Orchestrator: dispatch, verify-on-disk, merge, reap | CONTRACT.md, GATE.md, STATUS.md | First |
+| 2 | <squad-slug> | Squad <letter>: <lane, one line> | own PRD + epics only | With #1 (Wave N) |
+```
+
+## Launch prompts
+One fenced, copy-paste block per session (same mechanic KICKOFF.md uses
+for its single prompt, one block per row here instead of one block total).
+Fences never nest — each prompt is its own top-level fenced block.
+
+### 1 · `<orchestrator-slug>` (opens First)
+```
+Command + package path: coordinate <program> from <CONTRACT path> +
+<PRD/epics index>.
+Law: <CONTRACT.md path> v<version> — never edit directly; contradictions
+fold in as a dated amendment.
+Lane: delivery/<program>/STATUS.md, CONTRACT.md amendments, root mirrors,
+merges — never a squad's owned files.
+Branch pattern: none (coordinates, does not build).
+DoD: every squad's Test Contract at 100%, mirrors clean, board archived.
+Register handshake: confirm registered and standing by before dispatching
+any squad.
+Gotcha: verify each squad's output on disk before advancing STATUS — idle
+≠ delivered.
+Worktrees: every session works in its own git worktree, never the shared
+checkout (G-10).
+Poll each squad's registration and wave readiness — never end a turn
+waiting for a notification; a headless session dies silently if it does.
+```
+
+### 2 · `<squad-slug>` (opens With #1, Wave N)
+```
+Command + package path: /build-it <squad-id> of <program>. Your package:
+<prd path> + <epics path> (<N epics>, <M binding cases>).
+Law: <CONTRACT.md path> v<version> (never edit — contradictions go to
+<orchestrator-slug> via SendMessage).
+Lane: <repos/files this session owns> — negatively scoped where another
+squad shares the same repo (`EXCEPT <files>, <other squad> owns those`).
+Branch pattern: epic/<prefix>-*
+DoD: 100% of its Test Contract.
+Register handshake: SendMessage "<orchestrator-slug>": "<squad> ready",
+then poll for its wave signal.
+Gotcha: <one concrete, specific trap — never generic advice>.
+Worktrees: every session works in its own git worktree, never the shared
+checkout (G-10).
+```
+
+## Orchestrator runbook
+See `playbooks.md` §G for the full runbook (dispatch → verify on disk →
+merge per lane → usage-limit resilience → domain boundary → worktrees-only
+→ reap → incidental channel) — this file only records session identity,
+not the runbook mechanics.
+
+### `PLAN-REVIEW.md` — gate G4, the single review-and-contradict round
+Autonomous-draft mode only: recommended answers were already applied and
+marked `[default — contradict if wrong]` inline through the package; this
+file is the one-screen summary plus the copy-paste contradiction mechanic.
+```
+# PLAN-REVIEW.md — <project> gate G4
+
+> Defaults were applied and marked inline. Read this, contradict anything
+> wrong by ID, or answer nothing and the run proceeds as drafted.
+
+## Defaults applied (contradict any that are wrong)
+| ID | Question | Default applied | Rationale |
+|---|---|---|---|
+| R1 | ... | ... | ... |
+| Rn | ... | ... | ... |
+
+## Package tree
+<the full file tree about to freeze — CONTRACT.md, PRDs, epics, GATE.md,
+SESSIONS.md, GLOSSARY.md — the whole shape in one place before ratifying>
+
+## States if you answer nothing
+Every default above stands as applied, the CONTRACT ratifies from
+`-draft` to its frozen version, and the run proceeds straight to
+parallel planning — reviewing this file is optional, not required, in
+autonomous-draft mode.
+
+## Copy-your-rulings block
+<a single fenced block: paste back `R3: contradicted — <why>` for any
+default to override; anything not mentioned stands as applied>
+```
+
+### `GLOSSARY.md` — static vocabulary + this run's minted IDs
+The static half ships seeded in this file (below) and is copied into every
+package at `intake`, before `scopeBrief` renders, so the first human-facing
+surface never shows "not generated yet." The minted half is appended as the
+run creates new per-run IDs (governance rules, epic IDs, wave numbers).
+```
+# GLOSSARY.md — <project>
+
+## plan-it vocabulary (static — same every run)
+| Term | Meaning | Defined in |
+|---|---|---|
+| PRD | Product Requirements Document | templates.md PART B |
+| CDP | Chrome DevTools Protocol (drives the UI half of a use-case) | formats.md §4a |
+| ATDD/BDD | Acceptance Test-Driven / Behavior-Driven Development | formats.md — Test Contract |
+| DoD | Definition of Done | SKILL.md Phase 1 |
+| xhigh | Claude Code's highest `/effort` reasoning-level setting | SKILL.md — Autonomy posture |
+| D4 | the adversarial-depth ruling behind `gate-check adversary`'s five cascade classes | templates.md PART B |
+| G0–G4 | the five run gates: G0 anamnesis · G1 scope · G2 decisions · G3 freeze · G4 plan review | machine.md §1 |
+| `[REAL]` | a test case needing a live target; never VERIFIED on a mock | formats.md — Test Contract |
+| INV | shorthand for `IMPLEMENTED-NOT-VERIFIED` — code exists, the proving case couldn't run | formats.md §7 |
+| S/M/L | the three run sizes (feature / subsystem / program) | templates.md PART C |
+| Shape 1–5 | the five packaging shapes (multi-doc / single-file / research-locked / numbered-PRD / debt-catalog) | templates.md PART D |
+| solo · orchestrator+squads · headless | the three topology values | CONTRACT §1 |
+
+## This run's invented IDs (generated — appended as the run creates them)
+| ID | Expansion | Where minted |
+|---|---|---|
 ```
 
 ### `prds/prd-N-<slug>.md` — per-squad product spec
