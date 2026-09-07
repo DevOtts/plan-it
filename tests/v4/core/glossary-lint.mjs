@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * T-V4B4-09 — `glossary-good/delivery/` (ranges, `·` lists, families, and a
- * code-span mention of an otherwise-unknown token) exits 0 with the computed
- * resolved-count in the ok-line; `glossary-missing/` exits 1 naming
- * GLOSSARY.md.
+ * T-V4B4-09 — `glossary-good/delivery/` (a family pattern over a numeric
+ * range, a literal ID that looks like a range but isn't, `·` lists,
+ * families, and a code-span mention of an otherwise-unknown token) exits 0
+ * with the computed resolved-count in the ok-line; `glossary-missing/`
+ * exits 1 naming GLOSSARY.md.
+ *
+ * AMD-11 regression: a GLOSSARY with the literal row `P2-11` and a document
+ * mentioning `P2-11` resolves it as that literal ID — never as the range
+ * `P2…P11` (there is no range expansion at all; CONTRACT §5).
  *
  * (T-V4B4-08 is the CONTRACT's own direct gate-check invocation against
  * glossary-unknown-id/ — verified by hand, no wrapper needed.)
@@ -39,6 +44,7 @@ function run(dir) {
   assert(r.code === 0, `expected exit 0, got ${r.code}:\n${r.out}`);
   assert(/PASS — glossary: \d+ ID mention\(s\) resolved/.test(r.out), `expected the computed resolved-count ok-line:\n${r.out}`);
   assert(!r.out.includes("Z9-99"), `expected the code-span-only token Z9-99 to never be scanned:\n${r.out}`);
+  assert(!r.out.includes("P2-11"), `expected the literal ID P2-11 to resolve, never reported unknown (AMD-11 — no range expansion):\n${r.out}`);
 }
 
 {

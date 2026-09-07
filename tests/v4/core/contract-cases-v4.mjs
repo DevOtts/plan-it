@@ -55,11 +55,12 @@ try {
   rcOut = execFileSync("node", [join(ROOT, "tests/run-contract.mjs")], { encoding: "utf8" });
 } catch (e) {
   // run-contract.mjs may exit non-zero for unrelated reasons (e.g. the
-  // pre-existing AMD-4 gap, T-E1-05) — this case only cares about its stdout shape.
+  // pre-W2 C-E11-01 version-skew gap) — this case only cares about its
+  // stdout shape.
   rcOut = e.stdout ?? "";
 }
 assert(/-- v4 \(from delivery\/v4\/CONTRACT\.md's Cases table\) --/.test(rcOut), `expected a "-- v4" section header in run-contract.mjs output`);
-assert(/\d+\/\d+ v4 cases mechanism-ready/.test(rcOut), `expected a computed v4 totals line in run-contract.mjs output`);
+assert(/\d+\/\d+ mechanism-ready cases correct/.test(rcOut), `expected a computed v4 totals line in run-contract.mjs output`);
 
 if (failed) {
   console.error("FAIL — contract-cases-v4.mjs: one or more assertions failed (see above)");

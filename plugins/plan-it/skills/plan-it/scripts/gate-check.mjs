@@ -188,15 +188,12 @@ function cmdFreeze(rawArgs) {
     // (tier-word-normalized) to this run's recorded gates.G1.decisions. Only
     // checkable when a run state is discoverable (--dir root, else cwd);
     // structural checks above still bind without one.
-    const statePath = join(runRoot || process.cwd(), ".plan-it", "state.json");
-    if (existsSync(statePath)) {
-      try {
-        const st = JSON.parse(readFileSync(statePath, "utf8"));
-        if (st?.gates?.G1?.decisions) for (const f of checkRunPolicySeeded(text, st)) fail(f);
-      } catch {
-        /* unreadable run state — the structural RUN-POLICY checks above still bind */
-      }
-    }
+    // v4 fix: this used to hardcode the generic ".plan-it/state.json" path,
+    // ignoring --run <slug> (unlike the casesReviewed check just above) — a
+    // named run's freeze silently read the wrong file (or none) instead of
+    // resolving via the same resolveStateFile every other verb uses.
+    const rpState = readState(runRoot || process.cwd(), runSlug);
+    if (rpState?.gates?.G1?.decisions) for (const f of checkRunPolicySeeded(text, rpState)) fail(f);
   }
   if (failures.length === 0) {
     ok(`${path}: version header, ${sections} sections, changelog, RUN-POLICY, no placeholders${draft ? " (--draft: casesReviewed skipped)" : ""}`);
@@ -1854,15 +1851,31 @@ function checkDispositions(root, deliveryDir) {
       if (status === "" || /^:?-+:?$/.test(status)) continue; // separator/empty row
       const disp = (row[dispCol] ?? "").trim();
       const rowLabel = eidCol !== -1 && row[eidCol] ? row[eidCol] : `line ${j + 1}`;
+      const isEmpty = disp === "" || disp === "—" || disp === "-";
+      // v4 AMD-8(a): a disposition is REQUIRED only when Status is
+      // IMPLEMENTED-NOT-VERIFIED (a closed-but-imperfect item genuinely needs
+      // one); OPTIONAL for NOT-STARTED / IN-PROGRESS (still-open work — the
+      // literal "any non-VERIFIED row needs one" reading failed every
+      // freshly-handed-off board and contradicted §1/the STATUS legend);
+      // MUST be empty for VERIFIED.
       if (status === "VERIFIED") {
-        if (disp !== "" && disp !== "—" && disp !== "-") {
+        if (!isEmpty) {
           fail(`C-E8-01 (G-3): STATUS row ${rowLabel} is VERIFIED but Disposition is "${disp}" (must be empty or "—")`);
         }
         continue;
       }
-      if (!DISPOSITION_RE.test(disp)) {
-        fail(`C-E8-01 (G-3): STATUS row ${rowLabel} is ${status} with no disposition — need backlog-with-reason:, owner-gated:, or IMPLEMENTED-NOT-VERIFIED:`);
-        continue;
+      if (status === "IMPLEMENTED-NOT-VERIFIED") {
+        if (!DISPOSITION_RE.test(disp)) {
+          fail(`C-E8-01 (G-3): STATUS row ${rowLabel} is IMPLEMENTED-NOT-VERIFIED with no disposition — need backlog-with-reason:, owner-gated:, or IMPLEMENTED-NOT-VERIFIED:`);
+          continue;
+        }
+      } else {
+        // NOT-STARTED / IN-PROGRESS: optional.
+        if (isEmpty) continue;
+        if (!DISPOSITION_RE.test(disp)) {
+          fail(`C-E8-01 (G-3): STATUS row ${rowLabel} (${status}) has a malformed disposition "${disp}" — must be empty or one of backlog-with-reason:/owner-gated:/IMPLEMENTED-NOT-VERIFIED:`);
+          continue;
+        }
       }
       if (disp.startsWith("backlog-with-reason:")) {
         const p = disp.slice("backlog-with-reason:".length).trim();
@@ -2171,6 +2184,10 @@ function checkMirrorTwin(mdPath, htmlPath, renderOutputs = null) {
 function walkFiles(dir, ext, out = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
     if (e.name.startsWith(".")) continue;
+    // v4 AMD-8(b): <delivery>/resources/** holds declared run inputs (a
+    // Notion export, seed HTMLs, an analysis report) — hand-authored by
+    // definition, never a rendered twin. mirror --dir must never scan them.
+    if (e.isDirectory() && e.name === "resources") continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) walkFiles(p, ext, out);
     else if (e.name.endsWith(ext)) out.push(p);
@@ -2250,19 +2267,13 @@ const GLOSSARY_SCAN_FILES = ["KICKOFF.md", "DECISIONS.md", "STATUS.md", "SESSION
 const GLOSSARY_TOKEN_RE = /\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
 const GLOSSARY_STOPLIST = new Set(["UTF8", "SHA256", "ISO8601", "HTTP2", "X11", "MD5", "I18N", "E2E"]);
 
-// A family item ("T-*-NN", "C-E<n>-NN", "V4B<n>", "R1 … R12") becomes either
-// an expanded literal set (a numeric range) or a regex ("*" -> [A-Za-z0-9.]+,
-// "NN" -> [A-Z0-9]{2,3}, "<n>"/a bare trailing "n" -> \d+).
-function expandGlossaryRange(item) {
-  const m = item.match(/^([A-Za-z]+-?)(\d+)\s*(?:…|\.\.\.|-{1,2}|–)\s*(?:[A-Za-z-]+)?(\d+)$/);
-  if (!m) return null;
-  const [, prefix, loStr, hiStr] = m;
-  const lo = Number(loStr), hi = Number(hiStr);
-  if (!Number.isFinite(lo) || !Number.isFinite(hi) || hi < lo || hi - lo > 500) return null;
-  const ids = [];
-  for (let i = lo; i <= hi; i++) ids.push(`${prefix}${i}`);
-  return ids;
-}
+// A family item ("T-*-NN", "C-E<n>-NN", "V4B<n>") becomes a regex ("*" ->
+// [A-Za-z0-9.]+, "NN" -> [A-Z0-9]{2,3}, "<n>"/a bare trailing "n" -> \d+).
+// AMD-11: there is NO range expansion — a mention resolves literal-first,
+// then against family rows. A cell like "D1 … D7" is not a row at all
+// (CONTRACT §5); the range syntax this used to parse mis-read the literal
+// ID "P2-11" as the range "P2…P11", so the function that did that expansion
+// is gone rather than special-cased.
 function familyItemToRegex(item) {
   if (!/(\*|<n>|\bNN\b|n$)/.test(item)) return null;
   const hasTrailingBareN = /n$/.test(item) && !/NN$/.test(item) && !item.endsWith("<n>");
@@ -2287,11 +2298,6 @@ function parseGlossaryEntries(text) {
     if (/^id$/i.test(idCell) || /^:?-+:?$/.test(idCell)) continue;
     for (let item of idCell.split(/[·,]/).map((s) => s.trim()).filter(Boolean)) {
       item = item.replace(/^`|`$/g, "");
-      const range = expandGlossaryRange(item);
-      if (range) {
-        range.forEach((id) => literals.add(id));
-        continue;
-      }
       const re = familyItemToRegex(item);
       if (re) {
         regexes.push(re);
@@ -2357,6 +2363,8 @@ function cmdGlossary(rawArgs) {
 // ---------------------------------------------------------------- mirror-check
 // PRD §D7: the skill is shipped twice (repo root + plugins/plan-it). These 8
 // pairs must stay byte-identical; drift → exit 2 listing every drifted pair.
+// v4 AMD-5: 8 -> 11 pairs — SQ-A's renderer ships the same way (repo root +
+// plugins/plan-it/skills/plan-it/ mirror), joining the 8 v3.0.1 pairs.
 const MIRROR_PAIRS = [
   ["SKILL.md", "plugins/plan-it/skills/plan-it/SKILL.md"],
   ["machine.json", "plugins/plan-it/skills/plan-it/machine.json"],
@@ -2366,6 +2374,9 @@ const MIRROR_PAIRS = [
   ["references/machine.md", "plugins/plan-it/skills/plan-it/references/machine.md"],
   ["references/playbooks.md", "plugins/plan-it/skills/plan-it/references/playbooks.md"],
   ["references/templates.md", "plugins/plan-it/skills/plan-it/references/templates.md"],
+  ["scripts/build-report.mjs", "plugins/plan-it/skills/plan-it/scripts/build-report.mjs"],
+  ["scripts/report-template.html", "plugins/plan-it/skills/plan-it/scripts/report-template.html"],
+  ["assets/brand/default.brand.json", "plugins/plan-it/skills/plan-it/assets/brand/default.brand.json"],
 ];
 
 function cmdMirrorCheck(rawArgs) {

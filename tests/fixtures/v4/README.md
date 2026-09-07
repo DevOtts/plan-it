@@ -53,6 +53,4 @@ Ownership (CONTRACT §2): SQ-B owns everything here except `report/` (SQ-A).
 | `disposition-tally-drift/` | V4B4 | T-V4B4-13 |
 | `disposition-good/`, `disposition-bad-path/`, `disposition-malformed/` | V4B4 | T-V4B4-14 |
 | `envfacts-tool-only/`, `envfacts-tool-only-no-column/` | V4B4 | T-V4B4-15, 16 |
-
-Further V4B5 fixtures (`dogfood-project/`) land as that epic builds, each
-with its own `README.md`.
+| `dogfood-project/` | V4B5 | T-V4B5-08, 09 |

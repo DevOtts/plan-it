@@ -2,4 +2,6 @@
 
 | EID | Epic | Status | Disposition |
 |---|---|---|---|
-| F1 | Fixture epic | IN-PROGRESS | |
+| F0 | Fixture epic zero | NOT-STARTED | |
+| F1 | Fixture epic one | IN-PROGRESS | |
+| F2 | Fixture epic two | IMPLEMENTED-NOT-VERIFIED | |
