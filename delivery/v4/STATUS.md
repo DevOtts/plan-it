@@ -1,6 +1,6 @@
 # STATUS — plan-it v4 · live board
 
-Current wave: **W0 ready** (handed off 2026-09-07; PLAN-REVIEW ratified, A-1/A-3/A-4 granted, A-2 held until O-2; opens when Fernando pastes the five prompts from SESSIONS.md).
+Current wave: **W1 open** (W0 closed 2026-09-07 by the orchestrator at `ab0c192`+pin; SQ-A ∥ SQ-B ∥ SQ-C building in their worktrees; A-2 held until O-2).
 Legend: status is one of NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED (closed vocabulary). Disposition is empty until an epic closes with a non-green residual; then exactly one of `backlog-with-reason: <path>` · `owner-gated: <owner>` · `IMPLEMENTED-NOT-VERIFIED: <case> <target>`. IDs: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTRACT case · `Wn` wave — see `GLOSSARY.md`.
 Program totals (computed by `gate-check handoff delivery/v4/`): 13 epics · 166 epic cases (SQ-A 48 · SQ-B 74 · SQ-C 44) + 60 CONTRACT cases · 0 `[REAL]`. The orchestrator recomputes this line from the epics files; it never hand-edits it.
 
@@ -30,6 +30,8 @@ No residuals at handoff. Rows appear here only when an epic closes with a non-gr
 |---|---|---|---|
 
 ## Log
+
+- 2026-09-07 21:05 — W0 CLOSED. Package + guard mirror fix committed `ab0c192` (A-4). Byte-pin `tests/fixtures/v3/machine.v3.7fcff27.json` sha256 `05d2147b…074eb` (== live 3.0.1 machine.json). 13 worktrees `.claude/worktrees/<branch-slug>` on `epic/v4{a,b,c}-*`. Tally re-derived from disk: `gate-check contract` 60 case rows (computed 60); `gate-check handoff` PASS 13 epics declared == counted, 173 distinct IDs; `node tests/run-contract.mjs` **51/51 + 25/25**; `gate-check mirror-check` **8/8**. CONTRACT sha256 matches the KICKOFF pin. W1 signalled to SQ-A/SQ-B/SQ-C via SendMessage.
 
 - 2026-09-07 20:30 — PLAN-REVIEW ratified as recommended by Fernando Ott (no contradictions); CONTRACT v1.0 frozen; package handed off (state `done`). Next: Fernando opens the five sessions in SESSIONS.md.
 - 2026-09-07 20:20 — `[incidental]` the 3.0.1 handoff lint scans forward from a `Count:` line to the next heading; a count line placed BELOW its table counts zero rows and is silently skipped (no failure, no ok line). SQ-C's four epics were affected and re-headed; disposition: backlog-with-reason for V4B5 (harness) — a `Count:` with zero rows in its block should be a lint finding, not silence.

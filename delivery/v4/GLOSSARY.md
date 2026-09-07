@@ -60,6 +60,8 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | O-1 … O-3 | owner actions only Fernando can do (stale installs, QA sign-off, brand ratification) | DECISIONS.md — Open |
 | LG-1 … LG-18 | live-grounding facts measured by the coordinator | research/00-main-thread-grounding.md |
 | F-A1 … F-A20 · F-B1 … F-B18 · F-C1 … F-C9 · F-D1 … F-D21 | research findings by stream (A renderer · B core · C prose · D precedents) | research/stream-*.md |
+| D-A<n> · D-B<n> · D-C<n> | PRD-level design decisions per squad (renderer · core · prose), cited by every epic task | delivery/v4/prds/ |
+| ab0c192 | the W0 commit that landed the v4 planning package and the guard mirror fix (A-4) | STATUS.md ## Log |
 | SQ-A · SQ-B · SQ-C | the three build squads: renderer · deterministic core · prose and packaging | CONTRACT §2 |
 | V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
 | C-E<n>-NN | enforcement case for enhancement n (60 in the CONTRACT, computed) | CONTRACT ## Cases |
