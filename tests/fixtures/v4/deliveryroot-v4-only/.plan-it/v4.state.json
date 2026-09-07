@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "deliveryRoot": "delivery/v4/", "goal": "fixture: a package that lives only under delivery/v4/, delivery/v3/ empty", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "parallelPlanning",
+  "gates": {
+    "G2": { "defaults": [
+      { "id": "D1", "question": "Which package shape?", "default": "single", "rationale": "smallest coherent shape", "source": "recommended", "contradicted": false }
+    ] }
+  },
+  "contract": { "version": "1.0-draft", "path": "delivery/v4/CONTRACT.md", "frozenAt": "2026-09-07T11:00:00Z" },
+  "history": []
+}

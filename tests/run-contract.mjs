@@ -9,7 +9,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
-import { parseContractCases, mechanismGap } from "./v3/lib/contract-cases.mjs";
+import { parseContractCases, parseAllContractCases, mechanismGap } from "./v3/lib/contract-cases.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const GC = join(ROOT, "scripts", "gate-check.mjs");
@@ -535,6 +535,31 @@ if (v3Pending.length > 0 || v3Results.length > 0) {
   }
   const v3PassCount = v3Results.filter((r) => r.pass).length;
   console.log(`${v3PassCount}/${v3Results.length} v3 mechanism-ready cases fail-closed; ${v3Pending.length} pending Wave 1 mechanism(s) (not silently passed)`);
+}
+
+// ---------- v4 (from delivery/v4/CONTRACT.md's Cases table) ----------
+// v4 D-B13 (C-E9-10): discovery only, computed from the file (never a
+// hand-typed count). This section does NOT execute rows — a v4 row's
+// polarity (a `node tests/v4/core/*.mjs` script is POSITIVE, exit 0 = PASS;
+// a `gate-check.mjs <verb>` row is negative, same as v3) is V4B5's job
+// (AMD-5); wiring per-row execution here ahead of that would misread every
+// positive harness script as a v2-style violating-fixture case. Never
+// affects this harness's exit code — same non-blocking contract as v3Pending.
+const v4ContractPath = join(ROOT, "delivery", "v4", "CONTRACT.md");
+const v4Rows = parseAllContractCases().filter((r) => r.source === v4ContractPath);
+if (v4Rows.length > 0) {
+  console.log(`\n-- v4 (from delivery/v4/CONTRACT.md's Cases table) --`);
+  let v4Ready = 0;
+  for (const row of v4Rows) {
+    const gap = mechanismGap(row);
+    if (gap) {
+      console.log(`PEND   ${row.id}  ${gap}`);
+    } else {
+      v4Ready++;
+      console.log(`READY  ${row.id}  mechanism on disk (polarity-aware execution wired in V4B5)`);
+    }
+  }
+  console.log(`${v4Ready}/${v4Rows.length} v4 cases mechanism-ready (discovery only, not executed here — see V4B5)`);
 }
 
 // v3 pending rows never block this harness's exit code (that is

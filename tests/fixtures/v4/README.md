@@ -27,8 +27,17 @@ Ownership (CONTRACT §2): SQ-B owns everything here except `report/` (SQ-A).
 | `state-run/` | V4B2 | T-V4B2-12, 15 |
 | `draft-header/` | V4B2 | T-V4B2-13, 14 |
 | `draft-no-defaults/`, `draft-no-reap/` | V4B2 | T-V4B2-14 |
+| `portfolio/` | V4B3 | T-V4B3-08, 09, 11 |
+| `portfolio-archived/` | V4B3 | T-V4B3-10, 12 |
+| `portfolio-broken/` | V4B3 | T-V4B3-12 |
+| `deliveryroot-v4-only/` | V4B3 | T-V4B3-04, 05, 07 |
+| `deliveryroot-thin/` | V4B3 | T-V4B3-06 |
+| `testconv-named/` | V4B3 | T-V4B3-02, 03 |
+| `guard-two-runs/` | V4B3 | T-V4B3-13 |
+| `guard-unfrozen-named/`, `guard-unfrozen-named-frozen/` | V4B3 | T-V4B3-14 |
+| `guard-legacy-docs/`, `guard-broken-named/` | V4B3 | T-V4B3-15 |
+| `epic-heading-v4/` | V4B3 | T-V4B3-17 |
 
-Further V4B3–V4B5 fixtures (`portfolio*`, `deliveryroot-*`, `guard-*`,
-`mirror-*`, `glossary-*`, `disposition-*`, `envfacts-*`, `dogfood-project/`,
-`epic-heading-v4/`, `testconv-named/`) land as those epics build, each with
-its own `README.md`.
+Further V4B4–V4B5 fixtures (`mirror-*`, `glossary-*`, `disposition-*`,
+`envfacts-*`, `dogfood-project/`) land as those epics build, each with its
+own `README.md`.

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "deliveryRoot": "delivery/v4/", "goal": "fixture: only a named run, genuinely unfrozen", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "backboneFreeze",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": []
+}

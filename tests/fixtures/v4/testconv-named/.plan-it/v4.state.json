@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "goal": "fixture: only a named state file, conventions block present", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "intake",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": []
+}

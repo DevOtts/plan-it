@@ -10,14 +10,21 @@
  *   preflight <S|M|L> [--dir <target>]   run the shape-tiered env probes, write ENV-FACTS.md (v3 W2)
  *   machine-diff <live.json> <base.json> live machine must be an additive-only superset of baseline (v3 E1)
  *   adversary <delivery-dir|--dir root> failure-mode depth: declared machine models failures+recovery, cascade classes covered-or-waived (v3.2 D4)
+ *   archive <slug> [--dir root]       move a done/closedWithoutPlan run to .plan-it/done/ (v4 D-B8)
+ *   runs [--dir root] [--json]        list every plan-it run, live + archived, computed counts (v4 D-B8)
  *
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
  */
-import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// v4 D-B13: the epic-id token, widened from the 3.0.1 [A-Z]\d+ (E1, A2, B3)
+// so a V4<letter><n>-shaped id (V4B1) is recognized too — everywhere an epic
+// heading or its id is matched.
+const EPIC_ID_SRC = "[A-Z]{1,3}\\d+[A-Z]?\\d*";
 
 const failures = [];
 const fail = (msg) => failures.push(msg);
@@ -87,10 +94,10 @@ function cmdFreeze(rawArgs) {
     fail(`freeze: ${dirErr}`);
     return finish("contract frozen");
   }
-  // v4 D-B6 (accepted here per task; full deliveryRoot-aware resolution for
-  // --run is V4B3's job) — parsed and validated, not yet used to pick a
-  // non-default CONTRACT path.
-  const { rest: rest2, runErr } = parseRunFlag(rest);
+  // v4 D-B6: --run <slug> resolves the package dir from that run's
+  // run.deliveryRoot (fixes F-B14: a package at delivery/v4/ got false
+  // greens from a hardcoded delivery/v3/).
+  const { run: runSlug, rest: rest2, runErr } = parseRunFlag(rest);
   if (runErr) {
     fail(`freeze: ${runErr}`);
     return finish("contract frozen");
@@ -98,10 +105,9 @@ function cmdFreeze(rawArgs) {
   let path;
   if (dir) {
     // Generalized --dir path (W3.1-2): a real project freezes delivery/CONTRACT.md;
-    // plan-it's own dogfood layout is delivery/v3/CONTRACT.md. Prefer the real
-    // path, fall back to the dogfood path (also the missing-file error path).
-    const cands = [join(dir, "delivery", "CONTRACT.md"), join(dir, "delivery", "v3", "CONTRACT.md")];
-    path = cands.find(existsSync) || cands[1];
+    // plan-it's own dogfood layout is delivery/v3/CONTRACT.md; a named run with
+    // run.deliveryRoot set freezes that package's CONTRACT.md instead.
+    path = join(resolveDeliveryDir(dir, runSlug), "CONTRACT.md");
   } else {
     path = rest2[0];
   }
@@ -141,7 +147,7 @@ function cmdFreeze(rawArgs) {
   const runRoot = dir || resolveRunRoot(path);
   const isV3Run = runRoot !== null;
   if (runRoot) {
-    const st = readState(runRoot);
+    const st = readState(runRoot, runSlug);
     if (draft) {
       // v4 D-B4 (C-E7-05): --draft skips casesReviewed (nothing to review yet)
       // but refuses when nothing was actually defaulted.
@@ -152,7 +158,7 @@ function cmdFreeze(rawArgs) {
     } else if (st?.casesReviewed !== true) {
       // C-W1-03 (Epic A4) — additive: no freeze before the FD-2 case review
       // has landed in the run state.
-      fail(`C-W1-03: casesReviewed !== true in ${join(runRoot, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
+      fail(`C-W1-03: casesReviewed !== true in ${resolveStateFile(runRoot, runSlug) ?? join(runRoot, ".plan-it", "state.json")} — the Test Contract case review must land before the contract freezes`);
     }
   }
   // v3 D11 (W3/G1) [T-B2-04]: a frozen package must carry its RUN-POLICY —
@@ -535,18 +541,25 @@ export function checkAdversarialDepth({ contractText = "", epicText = "", waiver
 
 function cmdAdversary(rawArgs) {
   const label = "adversarial-depth (D4: failure-mode coverage)";
-  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  const { dir, rest: restRaw, dirErr } = parseDirFlag(rawArgs);
   if (dirErr) {
     fail(`adversary: ${dirErr}`);
     return finish(label);
   }
+  // v4 D-B6: --run <slug> resolves the package dir from that run's
+  // run.deliveryRoot (fixes F-B14 false greens).
+  const { run: runSlug, rest, runErr } = parseRunFlag(restRaw);
+  if (runErr) {
+    fail(`adversary: ${runErr}`);
+    return finish(label);
+  }
   let deliveryDir;
   if (dir) {
-    deliveryDir = existsSync(join(dir, "delivery")) ? join(dir, "delivery") : dir;
+    deliveryDir = resolveDeliveryDir(dir, runSlug);
   } else {
     deliveryDir = rest[0];
     if (!deliveryDir) {
-      fail("adversary: usage: gate-check adversary <delivery-dir> | gate-check adversary --dir <repo-root>");
+      fail("adversary: usage: gate-check adversary <delivery-dir> | gate-check adversary --dir <repo-root> [--run <slug>]");
       return finish(label);
     }
   }
@@ -554,8 +567,7 @@ function cmdAdversary(rawArgs) {
     fail(`adversary: delivery dir not found: ${deliveryDir}`);
     return finish(label);
   }
-  const cands = [join(deliveryDir, "CONTRACT.md"), join(deliveryDir, "v3", "CONTRACT.md")];
-  const contractPath = cands.find(existsSync) || cands[0];
+  const contractPath = join(deliveryDir, "CONTRACT.md");
   let contractText;
   try {
     contractText = readFileSync(contractPath, "utf8");
@@ -657,7 +669,9 @@ export function checkEpicTierTable(epicText) {
   // body to its first line (it matches every line end).
   const sections = [...String(epicText).matchAll(/^##\s+(?!#)([^\n]+)\n([\s\S]*?)(?=\n##\s|(?![\s\S]))/gm)]
     .map(([, title, body]) => ({ title: title.trim(), body }))
-    .filter((s) => /^(epic\b|[A-Z]{1,3}\d+\b)/i.test(s.title));
+    // v4 D-B13: epic-heading grammar widened [A-Z]\d+ -> [A-Z]{1,3}\d+[A-Z]?\d*
+    // so a bare "V4B1" id (no leading "Epic" word) is recognized too.
+    .filter((s) => /^(epic\b|[A-Z]{1,3}\d+[A-Z]?\d*\b)/i.test(s.title));
   if (sections.length === 0) {
     out.push("no epic sections (## Epic … / ## <ID> …) found — nothing to tier-check");
     return out;
@@ -705,14 +719,21 @@ function collectMdFiles(dir, out = []) {
 }
 
 function cmdHandoff(rawArgs) {
-  const { dir: rootFlag, rest, dirErr } = parseDirFlag(rawArgs);
+  const { dir: rootFlag, rest: restRaw, dirErr } = parseDirFlag(rawArgs);
   if (dirErr) {
     fail(`handoff: ${dirErr}`);
     return finish("pre-handoff lint");
   }
+  // v4 D-B6: --run <slug> resolves the package dir from that run's
+  // run.deliveryRoot, and is threaded to the embedded reconcile scan below.
+  const { run: runSlug, rest, runErr } = parseRunFlag(restRaw);
+  if (runErr) {
+    fail(`handoff: ${runErr}`);
+    return finish("pre-handoff lint");
+  }
   // --dir <repo-root> (Epic A4): lint <root>/delivery and run the embedded
   // reconcile scan against the root. Positional callers keep v2 behavior.
-  const dir = rootFlag ? (existsSync(join(rootFlag, "delivery")) ? join(rootFlag, "delivery") : rootFlag) : rest[0];
+  const dir = rootFlag ? resolveDeliveryDir(rootFlag, runSlug) : rest[0];
   if (!dir || !existsSync(dir)) {
     fail(`handoff: delivery dir not found: ${dir ?? "(none given)"}`);
     return finish("pre-handoff lint");
@@ -779,9 +800,10 @@ function cmdHandoff(rawArgs) {
     //    PRDs are excluded: they carry design-area headings (`D1 — …`) that the
     //    `[A-Z]\d+ —` shorthand would misread as epics. Epics live under epics/.
     const isPrd = /\/prds?\//.test(f.replace(/\\/g, "/"));
-    const epicHeads = isPrd ? [] : [...text.matchAll(/^#{2,3}\s+([A-Z]\d+[^\n]*epic[^\n]*|epic\s+[A-Z]\d+[^\n]*|[A-Z]\d+\s+—[^\n]*)/gim)];
+    const epicHeadRe = new RegExp(`^#{2,3}\\s+(${EPIC_ID_SRC}[^\\n]*epic[^\\n]*|epic\\s+${EPIC_ID_SRC}[^\\n]*|${EPIC_ID_SRC}\\s+—[^\\n]*)`, "gim");
+    const epicHeads = isPrd ? [] : [...text.matchAll(epicHeadRe)];
     for (const eh of epicHeads) {
-      const eid = eh[1].match(/[A-Z]\d+/)[0];
+      const eid = eh[1].match(new RegExp(EPIC_ID_SRC))[0];
       const from = eh.index;
       const rest2 = text.slice(from + eh[0].length);
       const nextHead = rest2.search(new RegExp(`^#{1,${eh[0].match(/^#+/)[0].length}}\\s`, "m"));
@@ -901,7 +923,7 @@ function cmdHandoff(rawArgs) {
   // shared failures array, one finish() — never a subprocess, never
   // double-reported (PRD §5 R4). Runs when a repo root is derivable.
   const root = rootFlag ?? (basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : null);
-  if (root) reconcileScan(root);
+  if (root) reconcileScan(root, runSlug);
 
   // 7. (C-W6-04, PRD §D8) plugin↔marketplace parity — scoped: only fires when
   //    the package carries packaging files (both manifests under the dir).
@@ -977,14 +999,10 @@ function cmdState(rawArgs) {
   }
   let statePath, machinePath;
   if (rootFlag) {
-    if (runSlug) {
-      statePath = join(rootFlag, ".plan-it", `${runSlug}.state.json`);
-      if (!existsSync(statePath)) {
-        fail(`state: --run "${runSlug}" — no such state file: ${statePath}`);
-        return finish("run state valid");
-      }
-    } else {
-      statePath = join(rootFlag, ".plan-it", "state.json");
+    statePath = resolveStateFile(rootFlag, runSlug);
+    if (!statePath) {
+      fail(`state: --run "${runSlug}" — no such state file: ${join(rootFlag, ".plan-it", `${runSlug}.state.json`)}`);
+      return finish("run state valid");
     }
     machinePath = rest2[0];
   } else {
@@ -1271,13 +1289,64 @@ function parseRunFlag(args) {
 // v4 D-B3: a state-file path is no longer "bare" when it names a slug
 // (<root>/.plan-it/<slug>.state.json), not just the generic file.
 const NAMED_STATE_FILE_RE = /[\\/]\.plan-it[\\/](?:[a-z0-9][a-z0-9-]*\.)?state\.json$/;
+// A bare filename match for either shape: "state.json" (generic) or
+// "<slug>.state.json" (named). NOTE: "state.json".endsWith(".state.json") is
+// FALSE (the generic name is one character shorter than the suffix) — a
+// naive endsWith(".state.json") filter silently drops the generic file from
+// every directory listing. This regex is the one correct test, used
+// everywhere a .plan-it/ directory is scanned for state files.
+const STATE_FILE_NAME_RE = /^(?:[a-z0-9][a-z0-9-]*\.)?state\.json$/;
 
-function readState(root) {
+// v4 D-B5: resolveStateFile(root, slug) — resolution order: explicit slug ->
+// that named file (missing -> null; a missing explicit slug is reported by
+// the caller, never silently swapped for the generic file); else exactly one
+// *.state.json and no generic -> that one; else the generic path (ambiguous
+// — two or more named files and no generic — or nothing at all: never
+// guessed). Exported so the harness can unit-test it without a subprocess
+// (same pattern as checkMachineAdditive).
+export function resolveStateFile(root, slug) {
+  const planItDir = join(root, ".plan-it");
+  const genericPath = join(planItDir, "state.json");
+  if (slug) {
+    const p = join(planItDir, `${slug}.state.json`);
+    return existsSync(p) ? p : null;
+  }
+  let entries = [];
   try {
-    return JSON.parse(readFileSync(join(root, ".plan-it", "state.json"), "utf8"));
+    entries = readdirSync(planItDir).filter((e) => STATE_FILE_NAME_RE.test(e));
+  } catch {
+    entries = [];
+  }
+  if (entries.includes("state.json")) return genericPath;
+  const named = entries.filter((e) => e !== "state.json");
+  if (named.length === 1) return join(planItDir, named[0]);
+  return genericPath;
+}
+
+function readState(root, slug) {
+  const p = resolveStateFile(root, slug);
+  if (!p) return null;
+  try {
+    return JSON.parse(readFileSync(p, "utf8"));
   } catch {
     return null;
   }
+}
+
+// v4 D-B6: package directory from run.deliveryRoot (fixes F-B14 false greens
+// where reconcile/contract/adversary/freeze --dir hardcoded delivery/v3/).
+// <root>/<deliveryRoot> when the (optionally --run-resolved) state sets one;
+// else <root>/delivery/ when that carries CONTRACT.md/prds/epics (a real
+// project); else <root>/delivery/v3/ (plan-it's own dogfood layout) — v3
+// packages with no deliveryRoot stay byte-identical either way.
+function resolveDeliveryDir(root, slug) {
+  const dr = readState(root, slug)?.run?.deliveryRoot;
+  if (dr) return join(root, dr);
+  const def = join(root, "delivery");
+  if (existsSync(join(def, "CONTRACT.md")) || existsSync(join(def, "prds")) || existsSync(join(def, "epics"))) {
+    return def;
+  }
+  return join(root, "delivery", "v3");
 }
 
 // W3.1-2: a positional `freeze <CONTRACT.md>` is v3-backed when the contract
@@ -1295,6 +1364,38 @@ function resolveRunRoot(contractPath) {
       const root = p.slice(0, -suffix.length);
       return existsSync(join(root, ".plan-it", "state.json")) ? root : null;
     }
+  }
+  // v4 D-B5: a CONTRACT at <root>/<deliveryRoot>/CONTRACT.md — climb from the
+  // contract's directory looking for a .plan-it/ whose named state file
+  // (excluding archived done/, never descended by a plain readdir) carries a
+  // run.deliveryRoot that resolves to this exact directory. Bounded climb
+  // (repo trees are shallow); a freestanding contract with no matching run
+  // stays v2 byte-identical (returns null).
+  const contractDir = dirname(p);
+  let cur = contractDir;
+  for (let i = 0; i < 8; i++) {
+    const planItDir = join(cur, ".plan-it");
+    if (existsSync(planItDir)) {
+      let entries = [];
+      try {
+        entries = readdirSync(planItDir).filter((e) => STATE_FILE_NAME_RE.test(e));
+      } catch {
+        entries = [];
+      }
+      for (const e of entries) {
+        let st;
+        try {
+          st = JSON.parse(readFileSync(join(planItDir, e), "utf8"));
+        } catch {
+          continue;
+        }
+        const dr = st?.run?.deliveryRoot;
+        if (dr && resolve(cur, dr) === contractDir) return cur;
+      }
+    }
+    const parent = dirname(cur);
+    if (parent === cur) break;
+    cur = parent;
   }
   return null;
 }
@@ -1354,7 +1455,14 @@ function cmdContract(rawArgs) {
     fail(`contract: ${dirErr}`);
     return finish(label);
   }
-  const contractPath = dir ? join(dir, "delivery", "v3", "CONTRACT.md") : rest[0];
+  // v4 D-B6: --run <slug> resolves the package dir from that run's
+  // run.deliveryRoot (fixes F-B14 false greens on a delivery/v4/-only tree).
+  const { run: runSlug, rest: restNoRun, runErr } = parseRunFlag(rest);
+  if (runErr) {
+    fail(`contract: ${runErr}`);
+    return finish(label);
+  }
+  const contractPath = dir ? join(resolveDeliveryDir(dir, runSlug), "CONTRACT.md") : restNoRun[0];
   if (!contractPath) {
     fail("contract: usage: gate-check contract --dir <repo-root> [--override-manual] | gate-check contract <CONTRACT.md>");
     return finish(label);
@@ -1447,26 +1555,37 @@ function cmdContract(rawArgs) {
 // delivery/decisions.md 2026-07-08); 1 = usage/structural failure.
 function cmdTestconv(rawArgs) {
   const label = "test-conventions discovery (FD-1)";
-  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  const { dir, rest: restRaw, dirErr } = parseDirFlag(rawArgs);
   if (dirErr || !dir) {
-    fail(`testconv: ${dirErr ?? "usage: gate-check testconv --dir <repo-root> [--register [text] | --decline]"}`);
+    fail(`testconv: ${dirErr ?? "usage: gate-check testconv --dir <repo-root> [--run <slug>] [--register [text] | --decline]"}`);
+    return finish(label);
+  }
+  const { run: runSlug, rest, runErr } = parseRunFlag(restRaw);
+  if (runErr) {
+    fail(`testconv: ${runErr}`);
     return finish(label);
   }
   const claudePath = join(dir, "CLAUDE.md");
   const claudeRaw = existsSync(claudePath) ? readFileSync(claudePath, "utf8") : "";
   const blockPresent = stripCode(claudeRaw).includes(CONVENTIONS_OPEN);
-  const state = readState(dir) ?? {};
+  const state = readState(dir, runSlug) ?? {};
   const now = new Date().toISOString();
+
+  // v4 D-B5 (C-E9-02): an explicit --run always writes that named file; else
+  // resolveStateFile's existing resolution (never creates a generic file
+  // beside a lone named one — legacy two-file/fresh-project behavior when no
+  // named file is unambiguous).
+  const targetPath = runSlug ? join(dir, ".plan-it", `${runSlug}.state.json`) : resolveStateFile(dir, null) ?? join(dir, ".plan-it", "state.json");
 
   const writeReceipt = (receipt) => {
     state.testConventions = receipt;
     mkdirSync(join(dir, ".plan-it"), { recursive: true });
-    writeFileSync(join(dir, ".plan-it", "state.json"), JSON.stringify(state, null, 2) + "\n");
+    writeFileSync(targetPath, JSON.stringify(state, null, 2) + "\n");
   };
 
   if (rest.includes("--decline")) {
     if (state.testConventions?.declined !== true) writeReceipt({ declined: true, by: "user", at: now });
-    ok(`declined-by-user receipt in ${join(dir, ".plan-it", "state.json")} — a valid FD-1 disposition (case A4)`);
+    ok(`declined-by-user receipt in ${targetPath} — a valid FD-1 disposition (case A4)`);
     return finish(label);
   }
 
@@ -1487,7 +1606,7 @@ function cmdTestconv(rawArgs) {
 
   if (blockPresent) {
     if (state.testConventions?.registered !== true) writeReceipt({ registered: true, source: "found", at: now });
-    ok(`conventions block present in ${claudePath}; receipt in .plan-it/state.json (case A1)`);
+    ok(`conventions block present in ${claudePath}; receipt in ${targetPath} (case A1)`);
     return finish(label);
   }
   if (state.testConventions?.declined === true) {
@@ -1506,15 +1625,21 @@ function cmdTestconv(rawArgs) {
 // Epic A4 — W5 orphan detection (C-W5-02/03) + FD-2 draft→binding case map
 // (case B3). reconcileScan pushes into the shared failures array so cmdHandoff
 // can embed it (C-W5-04) with one finish() and no double-reporting (PRD §5 R4).
-function reconcileScan(root) {
+function reconcileScan(root, slug) {
+  // v4 D-B6: resolve the package dir from the (optionally --run-resolved)
+  // run's run.deliveryRoot — fixes F-B14 false greens where a package at
+  // delivery/v4/ scanned an empty delivery/v3/ and reported clean.
+  const deliveryDir = resolveDeliveryDir(root, slug);
+  const epicsDir = join(deliveryDir, "epics");
+  const prdsDir = join(deliveryDir, "prds");
   const mdUnder = (d) => (existsSync(d) ? collectMdFiles(d) : []);
-  const epicTexts = mdUnder(join(root, "delivery", "v3", "epics")).map((f) => [f, readFileSync(f, "utf8")]);
+  const epicTexts = mdUnder(epicsDir).map((f) => [f, readFileSync(f, "utf8")]);
 
   // C-W5-02 — PRD requirement with no covering epic (orphan). Requirement IDs
   // are collected per section, skipping risk-register / assumption / out-of-
   // scope sections: an `R3` under `## Risks` is a risk register entry, not a
   // requirement that an epic must cover.
-  for (const f of mdUnder(join(root, "delivery", "v3", "prds"))) {
+  for (const f of mdUnder(prdsDir)) {
     const raw = stripCode(readFileSync(f, "utf8"));
     const reqs = new Set();
     for (const sec of raw.split(/^(?=#{2,3}\s)/m)) {
@@ -1524,7 +1649,7 @@ function reconcileScan(root) {
     }
     for (const r of reqs) {
       if (!epicTexts.some(([, t]) => new RegExp(`\\b${r}\\b`).test(t))) {
-        fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under delivery/v3/epics (orphan)`);
+        fail(`C-W5-02: requirement ${r} in ${f} has no covering epic under ${epicsDir} (orphan)`);
       }
     }
   }
@@ -1537,7 +1662,7 @@ function reconcileScan(root) {
   // reported. A package with NO central policy (e.g. the no-tier fixture, which
   // has no CONTRACT.md) still fails closed.
   const centralTierPolicy = (() => {
-    const cpath = join(root, "delivery", "v3", "CONTRACT.md");
+    const cpath = join(deliveryDir, "CONTRACT.md");
     if (!existsSync(cpath)) return false;
     // end-of-string spelled (?![\s\S]): a bare $ under /m matches every line end
     // and would truncate the section to its heading line (table unseen).
@@ -1554,24 +1679,30 @@ function reconcileScan(root) {
 
   // C-W5-03 — epic heading with zero Binding Test Contract case rows
   // (generalizes cmdHandoff's presence-check to a row-count check).
+  const epicHeadingRe = new RegExp(`^(#{2,3})\\s+(?:[Ee]pic\\s+)?(${EPIC_ID_SRC})\\b[^\\n]*`, "gm");
   for (const [f, text] of epicTexts) {
-    for (const eh of text.matchAll(/^(#{2,3})\s+(?:[Ee]pic\s+)?([A-Z]\d+)\b[^\n]*/gm)) {
+    for (const eh of text.matchAll(epicHeadingRe)) {
       const rest = text.slice(eh.index + eh[0].length);
       const nextHead = rest.search(new RegExp(`^#{1,${eh[1].length}}\\s`, "m"));
       const section = nextHead === -1 ? rest : rest.slice(0, nextHead);
       // A binding row is any of the package's sanctioned case grammars: the
       // synthetic `T-A4-01` form, the FD-2 B-series `T-A4-B1` form that keeps
-      // the draft-ID letter, OR a direct CONTRACT enforcement ID (`C-W1-04` /
-      // `C-META-01`) — epics that bind straight to contract rows (e.g. A2) use
-      // the latter (decisions.md 2026-07-07/-08).
-      const rows = (section.match(/\|\s*(?:T-[A-Z]\d+[A-Za-z0-9.]*-(?:[A-Z]\d+|\d{2})|C-(?:W\d+|META)-\d{2})\s*\|/g) || []).length;
+      // the draft-ID letter, a direct CONTRACT enforcement ID (`C-W1-04` /
+      // `C-META-01`), or the v4 enhancement-scoped form (`C-E7-01`) — epics
+      // that bind straight to contract rows (e.g. A2, or any v4 epic) use
+      // one of the C-* forms (decisions.md 2026-07-07/-08; v4 D-B13).
+      const rows = (section.match(/\|\s*(?:T-[A-Z]\d+[A-Za-z0-9.]*-(?:[A-Z]\d+|\d{2})|C-(?:W\d+|META|E\d+)-\d{2})\s*\|/g) || []).length;
       if (rows === 0) fail(`C-W5-03: epic ${eh[2]} in ${f} has zero Binding Test Contract case rows`);
     }
   }
 
   // Case B3 (FD-2) — every draft case ID in TEST-CONTRACT-REVIEW.md maps to
-  // ≥1 epic binding row OR a dated delivery/decisions.md drop entry.
-  const reviewPath = join(root, "delivery", "TEST-CONTRACT-REVIEW.md");
+  // ≥1 epic binding row OR a dated delivery/decisions.md drop entry. Same
+  // deliveryRoot convention as cmdState check 5: directly in deliveryRoot
+  // when set, else the legacy <root>/delivery/ (never the v3-nested dir).
+  const runDeliveryRoot = readState(root, slug)?.run?.deliveryRoot;
+  const reviewDir = runDeliveryRoot ? join(root, runDeliveryRoot) : join(root, "delivery");
+  const reviewPath = join(reviewDir, "TEST-CONTRACT-REVIEW.md");
   if (existsSync(reviewPath)) {
     // Draft cases are DECLARED as list items ("- A1, A2 — ..." / "- F1 [REAL] ...");
     // prose citations elsewhere ("per case B3") are not declarations.
@@ -1593,7 +1724,7 @@ function reconcileScan(root) {
       if (!head) continue;
       for (const m of head[1].matchAll(/[A-Z]\d+/g)) drafts.add(m[0]);
     }
-    const decisionsPath = join(root, "delivery", "decisions.md");
+    const decisionsPath = join(reviewDir, "decisions.md");
     const decisions = existsSync(decisionsPath) ? readFileSync(decisionsPath, "utf8") : "";
     for (const id of drafts) {
       // Bound = the ID appears in a |-table row of some epic file (a Binding
@@ -1610,12 +1741,17 @@ function reconcileScan(root) {
 
 function cmdReconcile(rawArgs) {
   const label = "reconcile (W5 orphan scan + FD-2 draft→binding map)";
-  const { dir, dirErr } = parseDirFlag(rawArgs);
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
   if (dirErr || !dir) {
-    fail(`reconcile: ${dirErr ?? "usage: gate-check reconcile --dir <repo-root>"}`);
+    fail(`reconcile: ${dirErr ?? "usage: gate-check reconcile --dir <repo-root> [--run <slug>]"}`);
     return finish(label);
   }
-  reconcileScan(dir);
+  const { run: runSlug, runErr } = parseRunFlag(rest);
+  if (runErr) {
+    fail(`reconcile: ${runErr}`);
+    return finish(label);
+  }
+  reconcileScan(dir, runSlug);
   if (failures.length === 0) ok(`no orphan requirements, no zero-case epics, draft→binding map closed under ${dir}`);
   finish(label);
 }
@@ -1801,6 +1937,139 @@ function cmdMirrorCheck(rawArgs) {
   process.exit(2); // distinct drift exit, per T-C3-06
 }
 
+// ---------------------------------------------------------------- v4: archive, runs (D-B8, E9)
+const TERMINAL_RUN_STATES = ["done", "closedWithoutPlan"];
+
+// `archive <slug> [--dir root]` puts the positional slug BEFORE --dir, unlike
+// every other verb's `<verb> --dir root [rest]` — parseDirFlag only looks at
+// argv[0], so archive needs its own anywhere-in-argv extraction.
+function extractFlag(args, flag, takesValue) {
+  const args2 = [...args];
+  const i = args2.indexOf(flag);
+  if (i === -1) return { value: takesValue ? null : false, rest: args2 };
+  if (takesValue) {
+    const value = args2[i + 1] ?? null;
+    args2.splice(i, 2);
+    return { value, rest: args2 };
+  }
+  args2.splice(i, 1);
+  return { value: true, rest: args2 };
+}
+
+function cmdArchive(rawArgs) {
+  const label = "archive run";
+  const { value: dirRaw, rest: rest1 } = extractFlag(rawArgs, "--dir", true);
+  const { value: force, rest } = extractFlag(rest1, "--force", false);
+  if (force) {
+    fail("archive: no --force: finish the run or record a triage verdict, then retry");
+    return finish(label);
+  }
+  const root = dirRaw ? resolve(dirRaw) : process.cwd();
+  const slug = rest[0];
+  if (!slug) {
+    fail("archive: usage: gate-check archive <slug> [--dir <repo-root>]");
+    return finish(label);
+  }
+  const srcPath = join(root, ".plan-it", `${slug}.state.json`);
+  if (!existsSync(srcPath)) {
+    fail(`archive: no such state file: ${srcPath}`);
+    return finish(label);
+  }
+  let state;
+  try {
+    state = JSON.parse(readFileSync(srcPath, "utf8"));
+  } catch (e) {
+    fail(`archive: cannot read/parse ${srcPath}: ${e.message}`);
+    return finish(label);
+  }
+  if (!TERMINAL_RUN_STATES.includes(state.state)) {
+    fail(`ARCHIVE_REFUSED: refuses to archive a run in state ${state.state} (C-E9-05)`);
+    return finish(label);
+  }
+  const doneDir = join(root, ".plan-it", "done");
+  const destPath = join(doneDir, `${slug}.state.json`);
+  if (existsSync(destPath)) {
+    fail(`ARCHIVE_REFUSED: ${destPath} exists`);
+    return finish(label);
+  }
+  mkdirSync(doneDir, { recursive: true });
+  renameSync(srcPath, destPath);
+  state.archive = { archivedAt: new Date().toISOString(), from: join(".plan-it", `${slug}.state.json`) };
+  writeFileSync(destPath, JSON.stringify(state, null, 2) + "\n");
+  ok(`${slug}: moved to ${destPath}`);
+  finish(label);
+}
+
+function cmdRuns(rawArgs) {
+  const label = "runs";
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`runs: ${dirErr}`);
+    return finish(label);
+  }
+  const root = dir ?? process.cwd();
+  const jsonMode = rest.includes("--json");
+  const planItDir = join(root, ".plan-it");
+  const doneDir = join(planItDir, "done");
+  const rows = [];
+  const errors = [];
+  const listDir = (d, archived) => {
+    let entries = [];
+    try {
+      entries = readdirSync(d).filter((e) => STATE_FILE_NAME_RE.test(e));
+    } catch {
+      entries = [];
+    }
+    for (const e of entries) {
+      const p = join(d, e);
+      const slug = e.replace(/\.state\.json$/, "");
+      let st;
+      try {
+        st = JSON.parse(readFileSync(p, "utf8"));
+      } catch (err) {
+        errors.push(`ERROR ${p}: ${err.message}`);
+        continue;
+      }
+      const last = Array.isArray(st.history) && st.history.length ? st.history[st.history.length - 1] : null;
+      rows.push({
+        slug,
+        state: st.state ?? null,
+        mode: st.run?.mode ?? null,
+        contract: st.contract?.version ?? null,
+        lastTransition: last ? `${last.state}.${last.event}` : null,
+        deliveryRoot: st.run?.deliveryRoot ?? null,
+        archived,
+      });
+    }
+  };
+  listDir(planItDir, false);
+  listDir(doneDir, true);
+
+  const archivedCount = rows.filter((r) => r.archived).length;
+  const liveCount = rows.length - archivedCount;
+  if (jsonMode) {
+    // Pure JSON on stdout for machine consumers — no PASS/FAIL banner line
+    // (finish() would append one) and no error text mixed in.
+    console.log(JSON.stringify({ runs: rows, counts: { live: liveCount, archived: archivedCount } }, null, 2));
+    for (const e of errors) console.error(e);
+    process.exit(errors.length > 0 ? 1 : 0);
+  }
+  if (rows.length === 0 && errors.length === 0) {
+    console.log(`no plan-it runs under ${root}`);
+  } else {
+    console.log("slug | state | mode | contract | last transition | deliveryRoot | archived");
+    for (const r of rows) {
+      console.log(
+        `${r.slug} | ${r.state ?? "?"} | ${r.mode ?? "?"} | ${r.contract ?? "null"} | ${r.lastTransition ?? "-"} | ${r.deliveryRoot ?? "-"} | ${r.archived ? "yes" : "no"}`
+      );
+    }
+    for (const e of errors) console.log(e);
+    console.log(`${rows.length} run(s) (${archivedCount} archived)`);
+  }
+  if (errors.length > 0) fail(`runs: ${errors.length} unparseable state file(s) named above`);
+  finish(label);
+}
+
 // ---------------------------------------------------------------- main
 const commands = {
   verify: cmdVerify,
@@ -1815,6 +2084,8 @@ const commands = {
   adversary: cmdAdversary,
   pluginlint: cmdPluginlint,
   "mirror-check": cmdMirrorCheck,
+  archive: cmdArchive,
+  runs: cmdRuns,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -1823,7 +2094,7 @@ const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(imp
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -1836,6 +2107,8 @@ if (isMain) {
     console.error("  adversary <delivery-dir|--dir root>  failure-mode depth gate (D4): declared machine models failures+recovery; cascade classes covered-or-waived (N/A when no machine)");
     console.error("  pluginlint <plugin-root|--dir plugin-root>  loader/metadata lint (frontmatter, plugin.json, marketplace source, name↔dir)");
     console.error("  mirror-check [--dir fixture-root]    PRD §D7 mirror parity — exit 2 on drift");
+    console.error("  archive <slug> [--dir repo-root]     move a done/closedWithoutPlan run to .plan-it/done/ (1 = refused)");
+    console.error("  runs [--dir repo-root] [--json]      list every plan-it run (live + archived), computed counts");
     process.exit(1);
   }
   commands[cmd](args);

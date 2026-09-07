@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "deliveryRoot": "delivery/v4/", "goal": "fixture: adversary reads the deliveryRoot-resolved CONTRACT, not delivery/v3/", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "verify",
+  "gates": {},
+  "contract": { "version": "1.0", "path": "delivery/v4/CONTRACT.md", "frozenAt": "2026-09-07T11:00:00Z" },
+  "history": []
+}
