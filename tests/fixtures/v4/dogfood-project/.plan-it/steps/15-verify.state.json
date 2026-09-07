@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "dogfood",
+    "mode": "autonomous-draft",
+    "topology": "solo",
+    "deliveryRoot": "delivery/",
+    "goal": "fixture: the 4.0.0 plugin dogfoods its own autonomous-draft package",
+    "startedAt": "2026-09-07T10:00:00Z"
+  },
+  "state": "verify",
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-09-07"
+    },
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-09-07",
+      "decisions": {
+        "tiering": "mid for dogfood fixture work"
+      }
+    },
+    "G2": {
+      "pendingReview": true,
+      "defaults": [
+        {
+          "id": "D1",
+          "question": "Which package shape?",
+          "default": "single",
+          "rationale": "smallest coherent shape",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ]
+    }
+  },
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-09-07",
+    "measurements": []
+  },
+  "casesReviewed": true,
+  "contract": {
+    "version": "1.0-draft",
+    "path": "delivery/CONTRACT.md",
+    "frozenAt": "2026-09-07T13:00:00Z"
+  },
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-09-07T10:00:00Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-09-07T10:15:00Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-09-07T10:30:00Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-09-07T10:45:00Z"
+    },
+    {
+      "state": "scopeBrief",
+      "event": "BRIEF_RENDERED",
+      "at": "2026-09-07T11:00:00Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_APPROVED",
+      "at": "2026-09-07T11:15:00Z"
+    },
+    {
+      "state": "preGround",
+      "event": "GROUNDED",
+      "at": "2026-09-07T11:30:00Z"
+    },
+    {
+      "state": "discovery",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-09-07T11:45:00Z"
+    },
+    {
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-09-07T12:00:00Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-09-07T12:15:00Z"
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED_AUTONOMOUS",
+      "at": "2026-09-07T12:30:00Z"
+    },
+    {
+      "state": "defaultsApplied",
+      "event": "DEFAULTS_APPLIED",
+      "at": "2026-09-07T12:45:00Z"
+    },
+    {
+      "state": "coherencePass",
+      "event": "COHERENT_AUTONOMOUS",
+      "at": "2026-09-07T13:00:00Z"
+    },
+    {
+      "state": "backboneFreeze",
+      "event": "CONTRACT_FROZEN",
+      "at": "2026-09-07T13:15:00Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "SQUADS_COMPLETE",
+      "at": "2026-09-07T13:30:00Z"
+    }
+  ]
+}

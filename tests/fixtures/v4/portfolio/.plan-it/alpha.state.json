@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "alpha", "mode": "guided", "goal": "fixture: a finished run", "startedAt": "2026-09-01T10:00:00Z" },
+  "state": "done",
+  "gates": {},
+  "contract": { "version": "1.0", "path": "delivery/CONTRACT.md", "frozenAt": "2026-09-01T12:00:00Z" },
+  "history": [
+    { "state": "handoff", "event": "HANDED_OFF", "at": "2026-09-01T18:00:00Z" }
+  ]
+}

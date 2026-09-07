@@ -171,12 +171,17 @@ T4 ─► T5 ─► T7
 (T4/T6 infra run in parallel with T1–T3 app/DB)
 ```
 
-## 7. DoD ladder (three rungs, not one flat list)
+## 7. DoD ladder (four rungs, not one flat list)
 
 ```
-Task DoD:   the task's Acceptance assertion passes.
-Epic exit gate E#:  <exact /full-qa scope> all green + merged.
-Release DoD:  coverage-map target met, governance negatives green, board at Done.
+rung 1 — Task DoD:   the task's Acceptance assertion passes.
+rung 2 — Epic exit gate E#:  <exact /full-qa scope> all green + merged.
+rung 3 — Release DoD:  coverage-map target met, governance negatives green, board at Done.
+rung 4 — Residual disposition:  everything still open at close is disposed
+  as `backlog-with-reason` / `owner-gated` / `IMPLEMENTED-NOT-VERIFIED` —
+  additive to rungs 1–3, never a replacement for them. A binding Test
+  Contract case is barred from `backlog-with-reason` — it stays
+  `IMPLEMENTED-NOT-VERIFIED` with its reason until re-verified (G-9).
 ```
 Phrase every DoD criterion as a **falsifiable assertion with the verifying test
 named inline**. Honest status vocabulary, used everywhere:
@@ -204,6 +209,42 @@ Program-level `DELIVERY-LOG.md` (richer than a kanban STATUS):
 ```
 Keep the Verification column brutally honest (record when a "green" was caught as
 false; record IMPLEMENTED-NOT-VERIFIED stops).
+
+## 9. §9 ENV-PROBES (`ENV-FACTS.md` row format)
+
+Closes LG-6 (`gate-check preflight` already cited this section before it
+existed). Read-only facts about the target environment, probed once at
+`preflight`, never guessed and never re-typed by hand elsewhere:
+```
+| id | check | status | evidence | tool |
+|----|-------|--------|----------|------|
+| E1 | repo has a package.json | present | `ls package.json` → exit 0 | ls |
+| E2 | staging DB reachable | absent | `psql ...` → connection refused | psql |
+```
+`status ∈ present|absent|unknown`; `unknown` requires an `evidence` line
+naming what blocked the check — never a bare guess. `tool` is optional
+(G-12): it names the exact `argv[0]` (or the probe's own declared `tool`
+field) that an ABSENT/unreachable check blacklists, so one broken probe
+never marks an unrelated case unrunnable just because it also happens to
+invoke the same interpreter.
+
+## 10. Triage verdict + measurement block grammar (E6 — prose pointer only;
+the machine state itself is `machine.json`'s job, this is the grammar the
+triage phase quotes)
+
+Verdict set (closed): `plan` · `build-instead` · `owner-decision` · `skip`.
+
+Measurement block:
+```
+Measured: <value> · where: <source> · when: <date> · read-only: yes-verified|assumed|idempotent-writes-accepted · moved: <verdict before> -> <verdict after>
+```
+`read-only` states which of three honest positions the measurement itself
+occupies — `yes-verified` (confirmed no write path), `assumed` (probably
+read-only, not independently confirmed), or `idempotent-writes-accepted`
+(the read path itself writes, but the writes are idempotent and accepted).
+A measurement with `read_only:false` in a rendered manifest is a render
+error (G-12) — this grammar never lets an unverified-write measurement
+move a verdict silently.
 
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._

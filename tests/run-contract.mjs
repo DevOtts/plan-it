@@ -9,7 +9,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { execSync } from "node:child_process";
-import { parseContractCases, mechanismGap } from "./v3/lib/contract-cases.mjs";
+import { parseContractCases, parseAllContractCases, mechanismGap } from "./v3/lib/contract-cases.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const GC = join(ROOT, "scripts", "gate-check.mjs");
@@ -105,14 +105,30 @@ t("T-E1-04", "no dangling transition targets; initial state exists", () => {
   }
 });
 
-t("T-E1-05", "exactly 3 human gate states (G1, G2, G3)", () => {
-  const gates = Object.values(machine.states)
+// AMD-4 (delivery/decisions.md, ratified at PLAN-REVIEW, R11; executed here
+// in V4B5): the "exactly 3 gate states" assertion binds to the byte-pinned
+// v2 baseline, not the live 4.0.0 machine — v4 additively inserts G0
+// (anamnesis) and G4 (planReview) alongside the original G1/G2/G3, so a
+// live-machine exact-3 count would be a false regression. The live machine
+// is instead checked for CONTAINING G1/G2/G3 and for every meta.gate state
+// (5 in 4.0.0) carrying meta.human:true — the property AMD-4 actually cares
+// about (every gate is a human gate) survives verbatim.
+t("T-E1-05", "exactly 3 human gate states on the v2 baseline (G1, G2, G3); every live meta.gate state is human (AMD-4)", () => {
+  const base = JSON.parse(readFileSync(V2_BASELINE, "utf8"));
+  const baseGates = Object.values(base.states)
     .filter((n) => n.meta?.gate)
     .map((n) => ({ gate: n.meta.gate, human: n.meta.human }));
-  assert(gates.length === 3, `expected 3 gate states, got ${gates.length}`);
-  const names = gates.map((g) => g.gate).sort();
-  assert(JSON.stringify(names) === JSON.stringify(["G1", "G2", "G3"]), `gates are ${names}`);
-  for (const g of gates) assert(g.human === true, `gate ${g.gate} not marked human`);
+  assert(baseGates.length === 3, `expected 3 gate states on the v2 baseline, got ${baseGates.length}`);
+  const baseNames = baseGates.map((g) => g.gate).sort();
+  assert(JSON.stringify(baseNames) === JSON.stringify(["G1", "G2", "G3"]), `v2 baseline gates are ${baseNames}`);
+  for (const g of baseGates) assert(g.human === true, `v2 baseline gate ${g.gate} not marked human`);
+
+  const liveGates = Object.values(machine.states)
+    .filter((n) => n.meta?.gate)
+    .map((n) => ({ gate: n.meta.gate, human: n.meta.human }));
+  const liveNames = new Set(liveGates.map((g) => g.gate));
+  for (const g of ["G1", "G2", "G3"]) assert(liveNames.has(g), `live machine dropped baseline gate ${g}`);
+  for (const g of liveGates) assert(g.human === true, `live gate ${g.gate} not marked human`);
 });
 
 // ---------- E2: state subcommand ----------
@@ -279,26 +295,30 @@ t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => 
 });
 
 // ---------- E5: packaging ----------
-t("T-E5-01", "plugin.json version is 3.0.1 and hooks.json is valid", () => {
+t("T-E5-01", "plugin.json version is 4.0.0 and hooks.json is valid", () => {
   const pj = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/.claude-plugin/plugin.json"), "utf8"));
-  assert(pj.version === "3.0.1", `version is ${pj.version}`);
+  assert(pj.version === "4.0.0", `version is ${pj.version}`);
   const hooks = JSON.parse(readFileSync(join(ROOT, "plugins/plan-it/hooks/hooks.json"), "utf8"));
   const pre = hooks.hooks?.PreToolUse;
   assert(Array.isArray(pre) && pre.length > 0, "no PreToolUse hooks declared");
   assert(pre[0].hooks[0].command.includes("${CLAUDE_PLUGIN_ROOT}"), "hook command not plugin-root-relative");
 });
 
-t("T-E5-02", "root and plugin copies are byte-identical", () => {
-  const pairs = [
-    ["SKILL.md", "plugins/plan-it/skills/plan-it/SKILL.md"],
-    ["machine.json", "plugins/plan-it/skills/plan-it/machine.json"],
-    ["scripts/gate-check.mjs", "plugins/plan-it/skills/plan-it/scripts/gate-check.mjs"],
-    ["references/formats.md", "plugins/plan-it/skills/plan-it/references/formats.md"],
-    ["references/templates.md", "plugins/plan-it/skills/plan-it/references/templates.md"],
-    ["references/playbooks.md", "plugins/plan-it/skills/plan-it/references/playbooks.md"],
-    ["references/machine.md", "plugins/plan-it/skills/plan-it/references/machine.md"],
-    ["scripts/hooks/planit-guard.mjs", "plugins/plan-it/scripts/hooks/planit-guard.mjs"],
-  ];
+// AMD-5 (delivery/decisions.md; executed here in V4B5): 8 -> 11 pairs
+// (SQ-A's renderer). COMPUTED from gate-check.mjs's own MIRROR_PAIRS source
+// (adversarial-verify, T-V4B5-03) — never a second hand-typed list that can
+// drift from the one gate-check mirror-check actually enforces.
+export function parseMirrorPairsFromSource(gcSrc) {
+  const m = gcSrc.match(/const MIRROR_PAIRS\s*=\s*\[([\s\S]*?)\n\];/);
+  if (!m) return [];
+  const pairs = [];
+  for (const pm of m[1].matchAll(/\[\s*"([^"]+)"\s*,\s*"([^"]+)"\s*\]/g)) pairs.push([pm[1], pm[2]]);
+  return pairs;
+}
+
+t("T-E5-02", "root and plugin copies are byte-identical (11 pairs, AMD-5)", () => {
+  const pairs = parseMirrorPairsFromSource(readFileSync(GC, "utf8"));
+  assert(pairs.length === 11, `expected 11 mirror pairs (AMD-5), computed ${pairs.length}`);
   for (const [a, b] of pairs) {
     assert(existsSync(join(ROOT, b)), `missing plugin copy: ${b}`);
     const ba = readFileSync(join(ROOT, a));
@@ -480,33 +500,98 @@ t("T-ADV-04", "adversary PASSES via explicit waivers (v2 CB-1 pattern) recorded 
   }
 });
 
-// ---------- v3 (Wave 0+) ----------
-// Binding cases are discovered from delivery/v3/CONTRACT.md's own "## Cases"
-// table (COMPUTED, W5 — never a hand-copied list of the 26 enforcement rows)
-// via the shared parser in tests/v3/lib/contract-cases.mjs — the same module
-// tests/v3/fail-closed-sweep.mjs (C-META-01) uses, so there is exactly one
-// parsing mechanism, not two. A row whose Wave-1 mechanism (fixture/script/
-// verb/--dir support) doesn't exist yet is reported PENDING — never silently
-// passed, and never counted as a v2-regression FAIL either. Once a squad's
-// epic lands the missing piece, the very same row starts executing for real
-// here with zero further edits to this file.
-const v3Pending = [];
-const v3Results = [];
-for (const row of parseContractCases()) {
-  if (row.id === "C-META-01") continue; // self — verified directly via `node tests/v3/fail-closed-sweep.mjs`
-  const gap = mechanismGap(row);
-  if (gap) {
-    v3Pending.push({ id: row.id, reason: gap });
-    continue;
-  }
-  try {
+// ---------- v3/v4 sections (D-B13, C-E9-10) ----------
+// Binding cases are discovered from each CONTRACT's own "## Cases" table
+// (COMPUTED, W5 — never a hand-copied list) via parseAllContractCases(), the
+// same shared parser tests/v3/fail-closed-sweep.mjs (C-META-01) uses for its
+// v3-only default (parseContractCases()) — one parsing mechanism, not two.
+//
+// POLARITY (AMD-5): a `run:` cell is POSITIVE (a harness script proving its
+// own mechanism — exit 0 = PASS, non-zero = FAIL) when it starts with
+// `node tests/` or its case description contains "(positive)"; every other
+// `gate-check.mjs <verb> …` row is NEGATIVE (v3-style: it must exit non-zero
+// against its named violating fixture — exit 0 = FAIL, "fail-closed
+// broken"). `manual:` rows are skipped and listed separately. A row whose
+// Wave-1 mechanism (fixture/script/verb/--dir support) doesn't exist yet is
+// PENDING — never silently passed, never counted as a regression FAIL.
+// Polarity is source-aware, not just shape-aware: EVERY v3 row is negative
+// by 3.0.1 design (all 26 rows name a violating fixture), even the ones
+// whose run: happens to be a `node tests/v3/*.mjs` wrapper script (e.g. the
+// inverted-exit-convention checks like machine-shape.mjs) — those scripts
+// are still testing a violating condition, not asserting a positive truth.
+// v4 rows are different: several reuse existing v3-authored validators as
+// genuinely POSITIVE checks (C-E11-01 -> tests/v3/version-triple-match.mjs,
+// C-E11-02 -> tests/v3/changelog-shape.mjs, C-E9-09 ->
+// tests/v3/mirror-wired-into-release.mjs — corrections item 5, prd-b-core.md
+// §9), alongside the new `node tests/v4/core/*.mjs` harness scripts. A row
+// tagged "(positive)" in its description is always positive, in either CONTRACT.
+export function isPositiveRow(row) {
+  if (/\(positive\)/i.test(row.desc ?? "")) return true;
+  if (row.source && /\bdelivery\/v3\/CONTRACT\.md$/.test(row.source)) return false;
+  return /^node\s+tests\//.test(row.run);
+}
+
+export function runContractSection(rows, { skipIds = new Set(), cwd = ROOT } = {}) {
+  const pending = [];
+  const manual = [];
+  const outcomes = [];
+  for (const row of rows) {
+    if (skipIds.has(row.id)) continue;
+    if (row.run.startsWith("manual:")) {
+      manual.push(row);
+      continue;
+    }
+    const gap = mechanismGap(row);
+    if (gap) {
+      pending.push({ id: row.id, reason: gap });
+      continue;
+    }
+    const positive = isPositiveRow(row);
     const [bin, ...cmdArgs] = row.run.split(/\s+/);
-    execFileSync(bin, cmdArgs, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
-    // Mechanism exists but exited 0 against what should be a VIOLATING fixture.
-    v3Results.push({ id: row.id, pass: false, err: `exited 0 against its violating fixture — fail-closed broken (run: ${row.run})` });
-  } catch {
-    v3Results.push({ id: row.id, pass: true });
+    let exitedZero = true;
+    let out = "";
+    try {
+      out = execFileSync(bin, cmdArgs, { cwd, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    } catch (e) {
+      exitedZero = false;
+      out = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+    }
+    if (positive) {
+      outcomes.push(
+        exitedZero
+          ? { id: row.id, pass: true }
+          : { id: row.id, pass: false, err: `positive harness script exited non-zero (run: ${row.run}):\n      ${out}` }
+      );
+    } else {
+      outcomes.push(
+        exitedZero
+          ? { id: row.id, pass: false, err: `exited 0 against its violating fixture — fail-closed broken (run: ${row.run})` }
+          : { id: row.id, pass: true }
+      );
+    }
   }
+  return { pending, manual, outcomes };
+}
+
+function printSection(label, { pending, manual, outcomes }) {
+  if (pending.length === 0 && manual.length === 0 && outcomes.length === 0) return { failCount: 0, printed: false };
+  console.log(`\n-- ${label} --`);
+  for (const p of pending) console.log(`PEND    ${p.id}  ${p.reason}`);
+  for (const m of manual) console.log(`MANUAL  ${m.id}  ${m.run}`);
+  let failCount = 0;
+  for (const o of outcomes) {
+    if (o.pass) {
+      console.log(`PASS    ${o.id}`);
+    } else {
+      failCount++;
+      console.log(`FAIL    ${o.id}  ${o.err}`);
+    }
+  }
+  const passCount = outcomes.filter((o) => o.pass).length;
+  console.log(
+    `${passCount}/${outcomes.length} mechanism-ready cases correct; ${pending.length} pending mechanism(s); ${manual.length} manual (not silently passed)`
+  );
+  return { failCount, printed: true };
 }
 
 // ---------- report ----------
@@ -521,24 +606,33 @@ for (const r of results) {
 }
 console.log(`\n${passCount}/${results.length} passed`);
 
-let v3FailCount = 0;
-if (v3Pending.length > 0 || v3Results.length > 0) {
-  console.log(`\n-- v3 (Wave 0+, from delivery/v3/CONTRACT.md's Cases table) --`);
-  for (const p of v3Pending) console.log(`PEND  ${p.id}  ${p.reason}`);
-  for (const r of v3Results) {
-    if (r.pass) {
-      console.log(`PASS  ${r.id}  fail-closed against its violating fixture`);
-    } else {
-      v3FailCount++;
-      console.log(`FAIL  ${r.id}  ${r.err}`);
-    }
-  }
-  const v3PassCount = v3Results.filter((r) => r.pass).length;
-  console.log(`${v3PassCount}/${v3Results.length} v3 mechanism-ready cases fail-closed; ${v3Pending.length} pending Wave 1 mechanism(s) (not silently passed)`);
-}
+const V3_CONTRACT_PATH = join(ROOT, "delivery", "v3", "CONTRACT.md");
+const V4_CONTRACT_PATH = join(ROOT, "delivery", "v4", "CONTRACT.md");
+const allRows = parseAllContractCases();
 
-// v3 pending rows never block this harness's exit code (that is
-// tests/v3/fail-closed-sweep.mjs's job, C-META-01) — only an actual
-// regression (a landed mechanism that stops being fail-closed) does, same as
-// any v2 T-E* failure.
-process.exit(passCount === results.length && v3FailCount === 0 ? 0 : 1);
+const v3Section = runContractSection(
+  allRows.filter((r) => r.source === V3_CONTRACT_PATH),
+  { skipIds: new Set(["C-META-01"]) } // self — verified directly via `node tests/v3/fail-closed-sweep.mjs`
+);
+const v4Section = runContractSection(
+  allRows.filter((r) => r.source === V4_CONTRACT_PATH),
+  // C-E9-10's own run: (tests/v4/core/contract-cases-v4.mjs) shells out to
+  // THIS file to assert the "-- v4 --" section header — executing it from
+  // inside this file's own v4 section would recurse (each nested run
+  // re-executes the v4 section, which re-invokes contract-cases-v4.mjs,
+  // ad infinitum). Same self-reference class as C-META-01 above — skipped
+  // here, verified directly via `node tests/v4/core/contract-cases-v4.mjs`.
+  { skipIds: new Set(["C-E9-10"]) }
+);
+
+const v3Report = printSection("v3 (Wave 0+, from delivery/v3/CONTRACT.md's Cases table)", v3Section);
+const v4Report = printSection("v4 (from delivery/v4/CONTRACT.md's Cases table)", v4Section);
+const v3FailCount = v3Report.failCount;
+const v4FailCount = v4Report.failCount;
+
+// Pending rows never block this harness's exit code (that is
+// tests/v3/fail-closed-sweep.mjs's job for v3, C-META-01) — only an actual
+// regression (a landed mechanism that fails its polarity check) does, same
+// as any v2 T-E* failure. D-B13: the v4 section is fully wired now — a v4
+// FAIL blocks exit 0 exactly like a v3 one.
+process.exit(passCount === results.length && v3FailCount === 0 && v4FailCount === 0 ? 0 : 1);

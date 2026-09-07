@@ -1,0 +1,1 @@
+# X — malformed stamp fixture

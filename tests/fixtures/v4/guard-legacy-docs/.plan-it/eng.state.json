@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "3.0.1",
+  "run": { "goal": "fixture: legacy docs/implementation/<name>/ match, no deliveryRoot at all", "startedAt": "2026-07-01T10:00:00Z" },
+  "state": "backboneFreeze",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": []
+}

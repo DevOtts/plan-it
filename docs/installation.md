@@ -94,6 +94,27 @@ claude plugin validate .                    # the marketplace
 claude plugin validate ./plugins/plan-it    # the plugin
 ```
 
+## Cleaning up a stale install (owner action)
+
+If you've had `plan-it` installed since before the `devotts` marketplace
+rename (3.0.1, see [CHANGELOG.md](../CHANGELOG.md)), you may still be carrying
+a **stale** copy: an old `plan-it@plan-it` marketplace namespace pointed at a
+pre-3.0.1 (or pre-rename) version, or a user-level skill copy that predates
+this repo's version and silently serves stale prose (e.g. pre-rename
+`/fable-it` references) into a live session even after you've upgraded the
+project-level install. This is not something the code detects or fixes for
+you — it's a one-time cleanup on your machine:
+
+1. Remove the stale marketplace entry: `/plugin marketplace remove plan-it`
+   (the old `plan-it@plan-it` namespace), then re-add under the current name
+   per [above](#claude-code-native): `/plugin marketplace add DevOtts/plan-it`.
+2. Remove any stale user-level skill copy (outside this repo's plugin
+   install) that still reports an older `version:` in its `SKILL.md`
+   frontmatter, and reinstall from `plan-it@devotts`.
+3. Confirm with `/plugin` that only the current `plan-it@devotts` entry is
+   listed, and that `SKILL.md`'s frontmatter `version:` matches this repo's
+   release.
+
 ---
 
 _Built by [DevOtts](https://github.com/DevOtts)._

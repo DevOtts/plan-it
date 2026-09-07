@@ -34,6 +34,7 @@
 |---|---|---|---|
 | O-1 | Remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 (case C-E11-07) | Fernando | before the 4.0.0 tag |
 | O-2 | Read `delivery/v4/QA-REPORT.md`, then give the tag/push go (A-2) | Fernando | after W3 |
+| O-5 | Confirm the relabel of this run's recorded `run.mode` from `autonomous-draft` to `guided` in `.plan-it/v4.state.json` (W2): the state history is the 3.0.1 guided path (decisionGate, freezeGate) because the run executed on the 3.0.1 machine; the autonomous-draft behaviours (draft contract, one review round) were emulated and are recorded under gates.G4. Alternative if you prefer the `autonomous-draft` label: rewrite the history to the 4.0.0 autonomous path (defaultsApplied → render → planReview → freeze) — a history rewrite the orchestrator declined to make on its own | Fernando | any time; not blocking |
 | O-4 | Decide whether the six literal model-ID citations in the research records (`docs/research/v3/stream-A-pxpipe.md`, `docs/research/v3/stream-B-damonade.md`, `docs/v4/research/stream-A-renderer.md`) should be redacted to placeholders or stay as quoted evidence (AMD-6 excluded them from the T-V4C3-08 sweep; the plan artifacts and twins are clean either way) | Fernando | any time; not blocking |
 | O-3 | Ratify R7 (brand contrast deviation) — RATIFIED with R1–R12 at PLAN-REVIEW 2026-09-07 (send exact colours later only if the default twins look wrong) | Fernando | closed |
 

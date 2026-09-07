@@ -132,10 +132,16 @@ Three autonomous bursts, three human gates, one frozen contract.
 1. **Intake & DoD lock (Phases 0–1).** Accept the demand in any form — brain-dump,
    transcription, one-liner, pointers to sessions and repos. Restructure it into a
    numbered, individually verifiable Definition of Done *for the planning job itself*.
-2. **Scope governor (Phase 2, ⏸ G1).** Pick size (S/M/L) **and** shape (from 5+
+   Right after intake, one batched **anamnesis** questionnaire (gate G0) asks
+   everything the run needs from you up front — access, fences, naming, topology
+   preference, live-probe authorization, decisions already known — instead of
+   dribbling it out gate by gate.
+2. **Scope governor (Phase 2, ⏸ G1).** Pick size (S/M/L), shape (from 5+
    packaging shapes: multi-doc program, single-file PRD, research→locked-architecture,
-   numbered PRD platform, refactor catalog…). A feature doesn't get a 4-squad org;
-   a brownfield refactor doesn't get a greenfield vision doc. Confirm before burning effort.
+   numbered PRD platform, refactor catalog…), **and topology** — `solo`,
+   `orchestrator+squads`, or `headless` — how the run itself is executed. A feature
+   doesn't get a 4-squad org; a brownfield refactor doesn't get a greenfield vision
+   doc. Confirm before burning effort.
 3. **Pre-ground + discovery (Phases 3–5).** Locate exact paths first, then fan out
    parallel research teams — one non-overlapping slice each, every claim cited to
    `path:line`, findings staged to disk immediately. For plans touching a running
@@ -162,6 +168,14 @@ work** · **batch human decisions into ONE gate** · **idle ≠ delivered — ve
 every agent's output on disk** · **ground on the live system before the freeze**
 · **run the machine, not the prose**.
 Full methodology in [docs/methodology.md](docs/methodology.md).
+
+**Two postures.** Guided mode stops at the three gates above (G1/G2/G3). The
+default is **autonomous-draft**: the anamnesis questionnaire replaces
+gate-by-gate interruptions, every judgment call in between is applied as a
+marked, contradictable default, and the decision round + freeze collapse into
+a single review-and-contradict stop — **PLAN-REVIEW** (gate G4) — at the end.
+Pick your topology (`solo` · `orchestrator+squads` · `headless`) at G1;
+`headless` implies autonomous-draft with no chat stops until G4.
 
 ## The deterministic core (v2)
 
@@ -261,6 +275,16 @@ build — independent verification with an 11-rule gate catalog (no self-graded
 green), closing the plan → build → review triangle.
 
 ## Status
+
+`4.0.0` — the **autonomous-draft** release. An up-front **anamnesis**
+questionnaire (gate G0) replaces gate-by-gate interruptions; a **topology**
+axis (`solo` · `orchestrator+squads` · `headless`) picks how the run itself is
+executed, alongside size and shape; and in the new default autonomous-draft
+mode, the decision round and backbone freeze collapse into one
+review-and-contradict stop — **PLAN-REVIEW** (gate G4) — with every
+in-between judgment call applied as a marked, contradictable default. Guided
+mode (three human gates: G1/G2/G3) is unchanged and still available. See
+[docs/usage.md](docs/usage.md) for both postures side by side.
 
 `3.0.1` — packaging patch: the plugin now installs from the shared **DevOtts**
 marketplace (`/plugin install plan-it@devotts`, alongside `build-it`) and the

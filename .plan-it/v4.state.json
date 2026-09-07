@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "machineVersion": "3.0.1",
+  "machineVersion": "4.0.0",
   "run": {
     "name": "v4",
-    "goal": "plan-it v4: make the run legible to the human (HTML report layer, scope brief, decision queue, glossary, readable acronyms) and autonomous end to end (anamnesis + one review-and-contradict round, build topology with sessions + GATE autonomy contract, triage, residual disposition, named runs) \u2014 additive over the v2/v3 core",
+    "goal": "plan-it v4: make the run legible to the human (HTML report layer, scope brief, decision queue, glossary, readable acronyms) and autonomous end to end (anamnesis + one review-and-contradict round, build topology with sessions + GATE autonomy contract, triage, residual disposition, named runs) — additive over the v2/v3 core",
     "startedAt": "2026-09-07T00:00:00Z",
     "inputs": [
       "delivery/v4/resources/V3-VS-V4-CORE-ENHANCEMENTS.html",
@@ -33,9 +33,10 @@
         "committed": false
       }
     ],
-    "mode": "autonomous-draft",
+    "mode": "guided",
     "deliveryRoot": "delivery/v4/",
-    "topology": "orchestrator+squads"
+    "topology": "orchestrator+squads",
+    "modeNote": "Recorded history is the 3.0.1 guided path (decisionGate, freezeGate): this run executed on the 3.0.1 machine, which had no autonomous-draft path, while the coordinator emulated autonomous-draft behaviour (draft CONTRACT v1.0-draft/v1.1-draft, one review-and-contradict round recorded as gates.G4). Relabelled from \"autonomous-draft\" at W2 (2026-09-07) so the file validates under the 4.0.0 machine (C-E7-06); see STATUS.md ## Log and GATE.md."
   },
   "state": "done",
   "size": "L",
@@ -46,8 +47,8 @@
       "owner": "Fernando Ott",
       "date": "2026-09-07",
       "decisions": {
-        "size_shape": "L, shape 3 (research \u2192 locked design \u2192 CONTRACT + 3 PRDs/epic sets), package home delivery/v4/, docs in docs/v4/",
-        "topology_for_build": "orchestrator + 3 squads (renderer \u00b7 statechart+gate-check+guard \u00b7 SKILL/references/docs/packaging) + QA",
+        "size_shape": "L, shape 3 (research → locked design → CONTRACT + 3 PRDs/epic sets), package home delivery/v4/, docs in docs/v4/",
+        "topology_for_build": "orchestrator + 3 squads (renderer · statechart+gate-check+guard · SKILL/references/docs/packaging) + QA",
         "mode": "autonomous-draft: no chat gate until the draft is complete; one review-and-contradict round replaces G2+G3 chat prompts (both still recorded in state)",
         "tiering": "coordinator = top tier; design-bearing research streams (renderer, statechart) = top; mapping streams (prose, precedents) = mid; PRD/epic authoring and spec'd implementation = mid; mechanical work (fixture scaffolds, manifest authoring, mirror copies, version bumps) = low; judgment slices (guard/statechart semantics, escaping, adversarial verify) = top review; escalate-on-struggle one tier up (stated at G1 2026-09-07; global tiering rule)"
       }
@@ -128,7 +129,7 @@
       "owner": "Fernando Ott (ratified at PLAN-REVIEW 2026-09-07; applied as coordinator defaults per ruling D1)",
       "date": "2026-09-07",
       "pendingReview": false,
-      "note": "FD-2 review file delivery/v4/TEST-CONTRACT-REVIEW.md (coordinator review; the 3.0.1 state verb reads delivery/TEST-CONTRACT-REVIEW.md, the v3 file \u2014 R10)",
+      "note": "FD-2 review file delivery/v4/TEST-CONTRACT-REVIEW.md (coordinator review; the 3.0.1 state verb reads delivery/TEST-CONTRACT-REVIEW.md, the v3 file — R10)",
       "ratifiedBy": "Fernando Ott",
       "ratifiedAt": "2026-09-07"
     },
@@ -152,12 +153,20 @@
   },
   "contract": {
     "path": "delivery/v4/CONTRACT.md",
-    "version": "1.0",
+    "version": "1.4",
     "draft": false,
     "frozenAt": "2026-09-07",
-    "sha256": "a7f28d034b789907e4f1dbabe26786a66ac7ed01073c3fa7b4af8171aca865f3",
+    "sha256": "67d8f28b3f915f71e4d68f0476d7ce19ba7dca1b0ad0f6d14b70289d15d4edde",
     "amendedAt": "2026-09-07",
-    "ratifiedAt": "2026-09-07"
+    "ratifiedAt": "2026-09-07",
+    "amendments": [
+      "AMD-6",
+      "AMD-7",
+      "AMD-8",
+      "AMD-9",
+      "AMD-10",
+      "AMD-11"
+    ]
   },
   "artifacts": [
     {
@@ -194,7 +203,7 @@
       "path": "ENV-FACTS.md",
       "phase": "preflight",
       "verifiedAt": "2026-09-07T18:30:00Z",
-      "note": "9/9 PRESENT after W0-in-planning guard mirror fix (uncommitted cp root\u2192plugin)"
+      "note": "9/9 PRESENT after W0-in-planning guard mirror fix (uncommitted cp root→plugin)"
     },
     {
       "path": "docs/v4/01-findings.md",
@@ -345,13 +354,13 @@
       "event": "CONTRACT_FROZEN",
       "at": "2026-09-07T19:10:00Z",
       "guard": "contractFrozen",
-      "result": "PASS (draft freeze; 3.0.1 freeze verb positional \u2014 v3 run-root demands N/A for delivery/v4/, see R10)"
+      "result": "PASS (draft freeze; 3.0.1 freeze verb positional — v3 run-root demands N/A for delivery/v4/, see R10)"
     },
     {
       "state": "parallelPlanning",
       "event": "AMENDMENT",
       "at": "2026-09-07T19:40:00Z",
-      "note": "v1.0-draft \u2192 v1.1-draft: 21 squad corrections folded (prd-a \u00a79, prd-b \u00a79, prd-c \u00a710); 0 cases added/removed"
+      "note": "v1.0-draft → v1.1-draft: 21 squad corrections folded (prd-a §9, prd-b §9, prd-c §10); 0 cases added/removed"
     },
     {
       "state": "parallelPlanning",
@@ -402,5 +411,9 @@
     "source": "registered",
     "at": "2026-09-07T18:09:48.028Z"
   },
-  "casesReviewed": true
+  "casesReviewed": true,
+  "meta": {
+    "stateFile": ".plan-it/v4.state.json",
+    "renamedAt": "2026-09-07"
+  }
 }

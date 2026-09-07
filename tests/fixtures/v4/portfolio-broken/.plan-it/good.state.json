@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "good", "mode": "guided", "goal": "fixture: the one parseable run beside a broken one", "startedAt": "2026-09-06T10:00:00Z" },
+  "state": "discovery",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": [
+    { "state": "preGround", "event": "GROUNDED", "at": "2026-09-06T11:00:00Z" }
+  ]
+}

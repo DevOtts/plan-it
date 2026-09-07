@@ -182,6 +182,13 @@ Beyond `KICKOFF.md` + the next-session prompt:
 - **`AS-BUILT.md`** — post-build truth doc; and the reverse-doc mode: run
   `/understand` on a finished build then emit `technical-overview.md` (a `plan-it`
   sibling mode for documenting/auditing an already-built system).
+- **`SESSIONS.md`** — when topology = orchestrator+squads, the per-session
+  launch-prompt set (one per session) plus the orchestrator runbook
+  pointer — same family as the README consolidation hub, one file per
+  concern instead of bloating KICKOFF.md's single prompt.
+- **`PLAN-REVIEW.md`** — the one-screen defaults-and-states summary for
+  gate G4 (autonomous-draft mode); read alongside GATE.md rather than
+  instead of it.
 
 ---
 
@@ -234,14 +241,58 @@ difference between "looks complete" and "builds unattended."
    adversarial-verify — are each **covered-or-waived** (a case, or a one-line
    waiver with a reason; silent absence is a defect). Case count is a floor;
    this is the depth. See `templates.md` PART B, adversarial-depth profile.
+12. **First-use acronym lint (G-8).** every acronym or per-run ID token used
+   on a human-facing surface (a gate prompt, DECISIONS.md/GATE.md rows, the
+   Phase 10 final report) is expanded on first use, and every ID used is
+   present in `GLOSSARY.md` — a package shipping an unexpanded or
+   unglossaried ID fails handoff. (An unglossaried `T-<EID>-NN` reference
+   left three readers guessing which ID family it even belonged to.)
 
 > **Mechanizable half:** items 1 (counts), 4 (grammar), 7 (IDs), and 8 (tokens)
 > are enforced by `node scripts/gate-check.mjs handoff <delivery-dir>`; item 11
 > (failure-mode depth) is enforced by `node scripts/gate-check.mjs adversary
-> <delivery-dir>` — the `ADVERSARY_CLEAN` transition (verify → adversaryGate →
-> handoff) is guarded by its exit code. Run both; the `LINT_CLEAN` and
-> `ADVERSARY_CLEAN` transitions gate on them. Items 2, 3, 5, 6, 9, 10 need
-> judgment: they stay yours.
+> <delivery-dir>`; item 12 (first-use acronym lint) is enforced by
+> `node scripts/gate-check.mjs glossary <delivery-dir>` — the
+> `ADVERSARY_CLEAN` transition (verify → adversaryGate → handoff) is guarded
+> by its exit code. Run all three; the `LINT_CLEAN` and `ADVERSARY_CLEAN`
+> transitions gate on them. Items 2, 3, 5, 6, 9, 10 need judgment: they stay
+> yours.
+
+---
+
+## G. The orchestrator runbook (topology = orchestrator+squads)
+
+The standing sequence every multi-session build repeats, proven across two
+field-precedent overnight runs
+(`docs/v4/research/stream-D-precedents.md` F-D2/F-D3/F-D6). `SESSIONS.md`'s
+"Orchestrator runbook" pointer names this section as its mechanics.
+
+1. **Dispatch** — send each due session its wave-start signal; record it in
+   STATUS.md's Log the moment it's sent.
+2. **Verify on disk, not on "done."** After any session reports, re-check
+   its branches/commits/files and its epic's local gate exist before
+   advancing STATUS. Idle ≠ delivered.
+3. **Merge per lane** — one batched merge per lane where possible, never
+   co-editing another session's owned files.
+4. **Usage-limit resilience** — a session hitting a usage/session limit
+   never parks the run: persist state to disk, schedule a wakeup chain
+   (≤3600s hops, chained), resume from the state files the moment the
+   reset lands. Never park the run waiting on the owner.
+5. **Domain boundary** — the run's own external-side-effect boundary (a
+   dummy-objects-only account, a named spend cap, a sandbox tenant) is
+   enforced at every session, not just the orchestrator's.
+6. **Worktrees-only (G-10)** — every session works in its own git
+   worktree, never the shared checkout; this is a standing plan-it/build-it
+   convention (owner ruling P2-11), not a per-run judgment call.
+7. **Reap** each session's subagents when its wave closes; the final
+   close-out (`/conclude-it` or equivalent) writes the ledger card + report.
+8. **Incidental channel** — anything found but not asked for is logged in
+   STATUS.md's Log with its own `[incidental]`-tagged bullet — never folded
+   silently into the Test Contract tally, and never dropped.
+
+**Escalation rule** — rule yourself only if: it applies an existing
+answer, its blast radius is capped, and it is reversible; else escalate —
+your word, not ours.
 
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "t2", "mode": "autonomous-draft", "goal": "fixture: invalid triage verdict", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "anamnesis",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "defer", "measuredAt": "2026-09-07", "measurements": [] },
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T10:01:00Z" },
+    { "state": "triage", "event": "TRIAGE_PLAN", "at": "2026-09-07T10:02:00Z" }
+  ]
+}
