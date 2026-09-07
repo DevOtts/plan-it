@@ -37,7 +37,7 @@ for (const [what, re] of [
   ["'0. Pinning' opening block", /^0\. Pinning/m],
   ["absolute repo path placeholder", /absolute repo path/],
   ["full 40-hex git SHA placeholder", /full 40-hex git SHA/],
-  ["`.plan-it/state.json` path", /\.plan-it\/state\.json/],
+  ["`.plan-it/state.json` path (incl. named-run form)", /\.plan-it\/(?:[a-z0-9-]+\.)?state\.json/],
   ["64-hex CONTRACT SHA-256 placeholder", /sha256=<64-hex SHA-256/],
 ]) {
   if (!re.test(block)) fails.push(`template KICKOFF block missing ${what}`);

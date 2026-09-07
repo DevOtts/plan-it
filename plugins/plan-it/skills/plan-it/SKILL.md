@@ -17,7 +17,7 @@ description: >-
   exit codes gate advancement.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 3.0.1
+version: 4.0.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it

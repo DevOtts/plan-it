@@ -22,10 +22,11 @@ baselines.
   mode (G1/G2/G3, unchanged from v3) remains available and is picked at
   anamnesis.
 - **Ruling D6 — all ten enhancements ship together in 4.0.0.** No enhancement
-  is scope-cut to a later release; the ten E1–E10 areas (prose/packaging,
-  renderer block catalogue, decisions/rulings, sessions/orchestrator,
-  adversarial mockups, triage/closed-without-plan, statechart/draft-contract,
-  disposition vocabulary, named runs, glossary/first-use) land as one release.
+  is scope-cut to a later release; all ten areas land as one release: E1
+  (prose/packaging), E2 (renderer block catalogue), E3 (decisions/rulings), E4
+  (sessions/orchestrator), E5 (adversarial mockups), E6
+  (triage/closed-without-plan), E7 (statechart/draft-contract), E8
+  (disposition vocabulary), E9 (named runs), E10 (glossary/first-use).
 - Ratified at **PLAN-REVIEW** (gate G4) by Fernando Ott: defaults R1–R12
   confirmed as applied, authorizations A-1/A-3/A-4 granted, A-2 held until
   owner action O-2 — no contradictions raised.
