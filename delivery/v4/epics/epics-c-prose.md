@@ -104,7 +104,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (judgment collisions — e.g. wording the G1/G-1 legend line, deciding which sentence to cut from the description) | `build-it:V4C1` |
+| mid | xhigh | escalate to top on struggle (judgment collisions — e.g. wording the G1/G-1 legend line, deciding which sentence to cut from the description) | build-it:iteration-impl#slice=V4C1 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 12 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -194,7 +194,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (porting field-precedent schemas faithfully — GATE.md/SESSIONS.md/DECISIONS.md shape fidelity to the two precedents read in full) | `build-it:V4C2` |
+| mid | xhigh | escalate to top on struggle (porting field-precedent schemas faithfully — GATE.md/SESSIONS.md/DECISIONS.md shape fidelity to the two precedents read in full) | build-it:iteration-impl#slice=V4C2 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 12 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -253,7 +253,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (narrative coherence across README/docs — keeping the "three shifts" story consistent without contradicting SQ-A/SQ-B's mechanisms) | `build-it:V4C3` |
+| mid | xhigh | escalate to top on struggle (narrative coherence across README/docs — keeping the "three shifts" story consistent without contradicting SQ-A/SQ-B's mechanisms) | build-it:iteration-impl#slice=V4C3 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 10 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed
@@ -312,7 +312,7 @@ Tasks:
 
 | tier | effort | escalation | scaffold-pointer |
 |---|---|---|---|
-| mid | xhigh | escalate to top on struggle (cross-squad version-integration sequencing at W2) | `build-it:V4C4` |
+| mid | xhigh | escalate to top on struggle (cross-squad version-integration sequencing at W2) | build-it:iteration-impl#slice=V4C4 |
 
 ### Test Contract — Binding (100% pass or /iterate)
 Types: [prose][packaging] · Count: 10 (0 [REAL]) · counted by `gate-check handoff`, never hand-typed

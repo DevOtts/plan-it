@@ -9,7 +9,7 @@ Legend: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTR
 ```
 Repo:     /Users/macbook/Workspace/Devotts/plan-it @ ab0c192ccad05e1a6374d9c79abbd7cdfac82f2d
 State:    /Users/macbook/Workspace/Devotts/plan-it/.plan-it/state.json   (run "v4"; legacy generic name until V4B3 lands — see W2)
-Contract: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/CONTRACT.md sha256=a7f28d034b789907e4f1dbabe26786a66ac7ed01073c3fa7b4af8171aca865f3   (v1.0 — ratified at PLAN-REVIEW 2026-09-07)
+Contract: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/CONTRACT.md sha256=c81cb7634c6224e312540460bbe624dd7dbf3635d867e0b097741acd9321b4c2   (v1.1 — v1.0 ratified at PLAN-REVIEW 2026-09-07 + AMD-7 during W1)
 ```
 Re-pinned at W0 (2026-09-07): `ab0c192` is the commit that landed the planning package, `docs/v4/`, the guard mirror copy and `.plan-it/state.json`; `51e46c0` added the byte-pinned 3.0.1 machine. Later commits are board/status updates and lane merges recorded in `STATUS.md ## Log`.
 

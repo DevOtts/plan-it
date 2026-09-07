@@ -66,6 +66,7 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | V4A<n> · V4B<n> · V4C<n> | epic IDs per squad | delivery/v4/epics/ |
 | C-E<n>-NN | enforcement case for enhancement n (60 in the CONTRACT, computed) | CONTRACT ## Cases |
 | T-<EID>-NN | per-epic Test Contract case | delivery/v4/epics/ |
+| AMD-7 | orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17 | delivery/decisions.md |
 | AMD-6 | orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion) | delivery/decisions.md |
 | O-4 | owner action: redact-or-keep the model-ID citations in research records | GATE.md |
 | AMD-4 · AMD-5 | harness amendments: gate count bound to the v2 baseline; mirror pairs 8 → 11 | delivery/decisions.md |
