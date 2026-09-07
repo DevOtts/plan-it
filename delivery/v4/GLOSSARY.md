@@ -116,6 +116,7 @@ Every ID and acronym used in this package, one line each. Static plan-it vocabul
 | T-E*-NN | v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs) | tests/run-contract.mjs |
 | C-W*-NN · C-META-NN | v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist) | delivery/v3/CONTRACT.md |
 | SHA-256 | the hash function behind every pin and stamp (`sha256=<64-hex>`) | CONTRACT §4.3 |
+| AMD-12 | orchestrator amendment 2026-09-07 (CONTRACT v1.5): embed-block prose gets first-use expansion; case T-V4A3-13 | delivery/decisions.md |
 | AMD-11 | orchestrator amendment 2026-09-07 (CONTRACT v1.4): literal-first glossary lookup, no range expansion; glossary table excluded from first-use scan | delivery/decisions.md |
 | AMD-10 | orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12 | delivery/decisions.md |
 | AMD-9 | orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14 | delivery/decisions.md |
