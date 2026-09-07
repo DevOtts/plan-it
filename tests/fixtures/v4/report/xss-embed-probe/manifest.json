@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "XSS Embed Probe",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "embed", "path": "probe.md", "label": "Probe"}
+    ]}
+  ]
+}

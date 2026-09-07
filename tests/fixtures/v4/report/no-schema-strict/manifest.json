@@ -1,0 +1,7 @@
+{
+  "title": "No Schema Manifest",
+  "output": "out.html",
+  "sections": [
+    {"heading": "Body", "table": {"headers": ["A"], "rows": [["1"]]}}
+  ]
+}

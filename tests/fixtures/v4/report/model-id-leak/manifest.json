@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Model ID Leak",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "cards", "items": [{"id": "E1", "title": "Note", "body_html": "<p>rendered by claude-sonnet-5 today.</p>"}]}
+    ]}
+  ]
+}

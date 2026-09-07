@@ -1,0 +1,13 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Check Stale Fixture",
+  "output": "out.html",
+  "source": {"path": "source.md"},
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "table", "headers": ["A"], "rows": [["1"]]}
+    ]}
+  ]
+}

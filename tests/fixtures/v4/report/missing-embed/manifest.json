@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "SCOPE-BRIEF",
+  "title": "Missing Embed",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Embeds", "blocks": [
+      {"type": "embed", "path": "missing.md", "label": "Ghost"}
+    ]}
+  ]
+}

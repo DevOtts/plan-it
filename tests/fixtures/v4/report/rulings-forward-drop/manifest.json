@@ -1,0 +1,15 @@
+{
+  "schema": "planit-report/1",
+  "kind": "DECISIONS",
+  "title": "Rulings Forward Drop",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Your rulings", "blocks": [
+      {"type": "rulings-forward", "from": "EARLIER-DECISIONS.md", "rows": [
+        {"id": "D1", "your_call": "agree", "state": "ratified"},
+        {"id": "D2", "your_call": "agree", "state": "ratified"}
+      ]}
+    ]}
+  ]
+}
