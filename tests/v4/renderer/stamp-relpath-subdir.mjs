@@ -4,11 +4,16 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { runRenderer, fixturesRoot, repoRoot, assert, report } from './lib/helpers.mjs';
+import { runRenderer, repoRoot, tmpDir, copyFixture, assert, report } from './lib/helpers.mjs';
 
-const manifest = path.join(fixturesRoot, 'manifest-in-subdir', 'manifests', 'report.manifest.json');
-const outHtml = path.join(fixturesRoot, 'manifest-in-subdir', 'REPORT.html');
-try { fs.unlinkSync(outHtml); } catch (e) { /* ok if absent */ }
+// Render into a tmp copy of the fixture, never the tracked fixture dir itself — the
+// manifest's output path is relative ("../REPORT.html"), so copying the whole
+// manifest-in-subdir/ tree (manifests/ subfolder + siblings) preserves that relative
+// layout while keeping the real tests/fixtures/ tree clean (no stray untracked file).
+const dir = tmpDir('stamp-relpath-subdir');
+copyFixture('manifest-in-subdir', dir);
+const manifest = path.join(dir, 'manifests', 'report.manifest.json');
+const outHtml = path.join(dir, 'REPORT.html');
 
 const r = runRenderer([manifest]);
 assert(r.status <= 2, `renders, got ${r.status} ${r.stderr}`);
@@ -55,7 +60,7 @@ function findGateCheck() {
 
 const gateCheckPath = findGateCheck();
 if (gateCheckPath) {
-  const mr = spawnSync(process.execPath, [gateCheckPath, 'mirror', path.join(fixturesRoot, 'manifest-in-subdir', 'REPORT.md'), outHtml], { encoding: 'utf-8' });
+  const mr = spawnSync(process.execPath, [gateCheckPath, 'mirror', path.join(dir, 'REPORT.md'), outHtml], { encoding: 'utf-8' });
   assert(mr.status === 0, `gate-check mirror REPORT.md REPORT.html exits 0 (fresh pair), got ${mr.status}: ${mr.stdout}${mr.stderr}`);
 } else {
   console.log('INV: gate-check mirror verb (V4B4) not found on main or in .claude/worktrees/v4b-lints — sub-assertion skipped until that lane merges');
