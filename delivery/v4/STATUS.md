@@ -15,8 +15,8 @@ Program totals (computed by `gate-check handoff delivery/v4/`): 13 epics · 166 
 | V4B3 | Named runs: state-file resolution, deliveryRoot-aware verbs, `archive`, `runs`, guard resolution in both copies, grammar widening | SQ-B | W1 | IN-PROGRESS | 0/17 | `epic/v4b-named-runs` | |
 | V4B4 | `mirror`, `glossary`, disposition counting in `reconcile`, ENV-FACTS tool-only fix, embedded in `handoff` | SQ-B | W1 | IN-PROGRESS | 0/16 | `epic/v4b-lints` | |
 | V4B5 | Harness: AMD-4, AMD-5, exit polarity, `tests/v4/core/*` wiring, fixture index, dogfood fixture | SQ-B | W1→W2 | IN-PROGRESS | 0/12 | `epic/v4b-harness` | |
-| V4C1 | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | W1 | NOT-STARTED | 0/12 | `epic/v4c-skill-prose` | |
-| V4C2 | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | W1 | NOT-STARTED | 0/12 | `epic/v4c-references` | |
+| V4C1 | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | W1 | VERIFIED | 12/12 | `epic/v4c-skill-prose` @ 31edb78 (lane merge pending) | |
+| V4C2 | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | W1 | IN-PROGRESS | 0/12 | `epic/v4c-references` | |
 | V4C3 | docs + README + CHANGELOG 4.0.0 + installation note on stale installs | SQ-C | W1 | NOT-STARTED | 0/10 | `epic/v4c-docs-release` | |
 | V4C4 | Versions 4.0.0 across six sites + harness literals + `kickoff-pinning`/`changelog-shape` updates + `tests/v4/prose/*` | SQ-C | W1→W2 | NOT-STARTED | 0/10 | `epic/v4c-versions` | |
 
@@ -31,6 +31,7 @@ No residuals at handoff. Rows appear here only when an epic closes with a non-gr
 
 ## Log
 
+- 2026-09-07 21:55 — V4C1 VERIFIED on disk by the orchestrator in `.claude/worktrees/v4c-skill-prose` @ 31edb78: 12/12 (`tests/v4/prose/{skill-sections,description-budget,local-html-rule,anamnesis-section,posture-tables}.mjs` exit 0 + 7 grep/diff cases), mirror-check 8/8, SKILL description 1,021 chars (G-15 budget 1,024 — 3 chars of headroom, note for V4C3/V4C4 edits). SQ-C lane merges as one batch at lane close (V4C4 = the W2 merge). V4C2 in progress.
 - 2026-09-07 21:40 — V4B1 VERIFIED on disk by the orchestrator in `.claude/worktrees/v4b-machine-superset` @ ebfa067: 14/14 (`tests/v4/core/{machine-additive,machine-negatives,machine-pin,guided-unchanged}.mjs` all exit 0), `machine-diff` PASS vs both pins, mirror-check 8/8, pin sha unchanged, machine 4.0.0 with 25 states. Merge policy: SQ-B lands as ONE batched lane merge after V4B5 (runbook §3.3) — on the branch, `run-contract` is 50/51 (T-E1-05 red until AMD-4 in V4B5) and `version-triple-match` red until W2; both are expected intermediate reds, not residuals. SQ-B started V4B2.
 - 2026-09-07 21:05 — W0 CLOSED. Package + guard mirror fix committed `ab0c192` (A-4). Byte-pin `tests/fixtures/v3/machine.v3.7fcff27.json` sha256 `05d2147b…074eb` (== live 3.0.1 machine.json). 13 worktrees `.claude/worktrees/<branch-slug>` on `epic/v4{a,b,c}-*`. Tally re-derived from disk: `gate-check contract` 60 case rows (computed 60); `gate-check handoff` PASS 13 epics declared == counted, 173 distinct IDs; `node tests/run-contract.mjs` **51/51 + 25/25**; `gate-check mirror-check` **8/8**. CONTRACT sha256 matches the KICKOFF pin. W1 signalled to SQ-A/SQ-B/SQ-C via SendMessage.
 
