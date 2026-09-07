@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "build-instead", "mode": "autonomous-draft", "goal": "fixture: build-instead verdict, memo present", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "closedWithoutPlan",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "build-instead", "measuredAt": "2026-09-07", "measurements": [], "memo": "memos/build-instead.md" },
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T10:01:00Z" },
+    { "state": "triage", "event": "TRIAGE_BUILD_INSTEAD", "at": "2026-09-07T10:02:00Z" }
+  ]
+}

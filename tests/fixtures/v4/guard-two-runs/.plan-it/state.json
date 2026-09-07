@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "goal": "fixture: unfrozen generic run governs everything not claimed by a deliveryRoot", "startedAt": "2026-09-01T10:00:00Z" },
+  "state": "discovery",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": []
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "g1", "mode": "guided", "goal": "fixture: a guided run resumes at freezeGate exactly as 3.0.1 recorded it", "startedAt": "2026-09-07T14:00:00Z" },
+  "state": "freezeGate",
+  "size": "M",
+  "shape": 2,
+  "gates": {
+    "G0": { "approved": true, "owner": "Fernando", "date": "2026-09-07" },
+    "G1": { "approved": true, "owner": "Fernando", "date": "2026-09-07" },
+    "G2": { "approved": true, "owner": "Fernando", "date": "2026-09-07" },
+    "G3": { "approved": false }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "plan", "measuredAt": "2026-09-07", "measurements": [] },
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T14:05:00Z" },
+    { "state": "triage", "event": "TRIAGE_PLAN", "at": "2026-09-07T14:06:00Z" },
+    { "state": "anamnesis", "event": "G0_ANSWERED", "at": "2026-09-07T14:10:00Z" },
+    { "state": "dodLock", "event": "DOD_LOCKED", "at": "2026-09-07T14:12:00Z" },
+    { "state": "scopeBrief", "event": "BRIEF_RENDERED", "at": "2026-09-07T14:15:00Z" },
+    { "state": "scopeGate", "event": "G1_APPROVED", "at": "2026-09-07T14:20:00Z" },
+    { "state": "preGround", "event": "GROUNDED", "at": "2026-09-07T14:40:00Z" },
+    { "state": "discovery", "event": "FANOUT_COMPLETE", "at": "2026-09-07T15:00:00Z" },
+    { "state": "preflight", "event": "PREFLIGHT_VERIFIED", "at": "2026-09-07T15:05:00Z" },
+    { "state": "synthesis", "event": "SYNTHESIZED", "at": "2026-09-07T15:10:00Z" },
+    { "state": "specAuthoring", "event": "SPECS_DRAFTED", "at": "2026-09-07T15:30:00Z" },
+    { "state": "decisionGate", "event": "G2_ANSWERED", "at": "2026-09-07T15:45:00Z" },
+    { "state": "coherencePass", "event": "COHERENT", "at": "2026-09-07T15:50:00Z" }
+  ]
+}

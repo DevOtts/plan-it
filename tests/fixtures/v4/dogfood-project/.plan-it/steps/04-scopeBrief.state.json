@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "dogfood",
+    "mode": "autonomous-draft",
+    "topology": "solo",
+    "deliveryRoot": "delivery/",
+    "goal": "fixture: the 4.0.0 plugin dogfoods its own autonomous-draft package",
+    "startedAt": "2026-09-07T10:00:00Z"
+  },
+  "state": "scopeBrief",
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-09-07"
+    },
+    "G2": {
+      "pendingReview": true,
+      "defaults": [
+        {
+          "id": "D1",
+          "question": "Which package shape?",
+          "default": "single",
+          "rationale": "smallest coherent shape",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ]
+    }
+  },
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-09-07",
+    "measurements": []
+  },
+  "casesReviewed": false,
+  "contract": {
+    "version": null,
+    "path": "delivery/CONTRACT.md",
+    "frozenAt": null
+  },
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-09-07T10:00:00Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-09-07T10:15:00Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-09-07T10:30:00Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-09-07T10:45:00Z"
+    }
+  ]
+}

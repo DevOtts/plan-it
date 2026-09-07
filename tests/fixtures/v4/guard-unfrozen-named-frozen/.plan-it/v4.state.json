@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "deliveryRoot": "delivery/v4/", "goal": "fixture: same run, recovery — contract.version now recorded", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "parallelPlanning",
+  "gates": {},
+  "contract": { "version": "1.0-draft", "path": "delivery/v4/CONTRACT.md", "frozenAt": "2026-09-07T11:00:00Z" },
+  "history": []
+}

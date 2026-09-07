@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "v4",
+    "mode": "autonomous-draft",
+    "goal": "fixture: PRD cites recorded defaults R2/R10 as rationale, plus a real orphan R99"
+  },
+  "state": "coherencePass",
+  "gates": {
+    "G2": {
+      "defaults": [
+        {
+          "id": "R1",
+          "question": "q1",
+          "default": "d1",
+          "rationale": "r1",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R2",
+          "question": "q2",
+          "default": "d2",
+          "rationale": "r2",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R3",
+          "question": "q3",
+          "default": "d3",
+          "rationale": "r3",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R4",
+          "question": "q4",
+          "default": "d4",
+          "rationale": "r4",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R5",
+          "question": "q5",
+          "default": "d5",
+          "rationale": "r5",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R6",
+          "question": "q6",
+          "default": "d6",
+          "rationale": "r6",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R7",
+          "question": "q7",
+          "default": "d7",
+          "rationale": "r7",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R8",
+          "question": "q8",
+          "default": "d8",
+          "rationale": "r8",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R9",
+          "question": "q9",
+          "default": "d9",
+          "rationale": "r9",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R10",
+          "question": "q10",
+          "default": "d10",
+          "rationale": "r10",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R11",
+          "question": "q11",
+          "default": "d11",
+          "rationale": "r11",
+          "source": "recommended",
+          "contradicted": false
+        },
+        {
+          "id": "R12",
+          "question": "q12",
+          "default": "d12",
+          "rationale": "r12",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ]
+    }
+  },
+  "contract": {
+    "version": null,
+    "path": null,
+    "frozenAt": null
+  },
+  "history": []
+}

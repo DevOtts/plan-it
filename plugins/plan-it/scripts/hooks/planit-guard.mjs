@@ -15,10 +15,15 @@
  *
  * Authored by DevOtts (https://github.com/DevOtts).
  */
-import { readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 const DELIVERABLE_RE = /(^|[\\/])(prds?|epics?)[\\/]|(^|[\\/])(prd|epics?)-[^\\/]*\.md$/i;
+// A bare filename match for either shape: "state.json" (generic) or
+// "<slug>.state.json" (named). NOTE: "state.json".endsWith(".state.json") is
+// FALSE (the generic name is one character shorter than the suffix) — a
+// naive endsWith(".state.json") filter silently drops the generic file.
+const STATE_FILE_NAME_RE = /^(?:[a-z0-9][a-z0-9-]*\.)?state\.json$/;
 
 function allow() {
   process.exit(0);
@@ -104,19 +109,57 @@ try {
 
   const cwd = input.cwd ?? process.cwd();
 
-  // Resolve the NAMED run's state file when the deliverable path names a program
-  // (docs/implementation/<name>/...), falling back to the generic state.json.
-  // Fixes: generic-file resolution denied legitimate writes for a named run
-  // whenever the project also carries an unrelated, unfrozen generic/other-named
-  // run (docs/implementation/open-sessions-closeout/backlog/
-  // plan-it-guard-hook-wrong-state-file-on-named-runs.md).
-  const programMatch = filePath.match(/(^|[\\/])docs[\\/]implementation[\\/]([^\\/]+)[\\/]/i);
-  const namedStatePath = programMatch
-    ? join(cwd, ".plan-it", `${programMatch[2]}.state.json`)
-    : null;
-  const statePath =
-    namedStatePath && existsSync(namedStatePath) ? namedStatePath : join(cwd, ".plan-it", "state.json");
-  if (!existsSync(statePath)) allow();
+  // v4 D-B7: resolve the GOVERNING run by longest run.deliveryRoot path-prefix
+  // across every named state file in .plan-it/ (excluding archived
+  // .plan-it/done/, a plain non-recursive readdir never descends there
+  // anyway); falls back to the legacy docs/implementation/<name>/ match, then
+  // the generic file, then allow. Fixes: a write under a named run's
+  // deliveryRoot was denied by an unrelated unfrozen run's generic file
+  // (docs/implementation/open-sessions-closeout/backlog/
+  // plan-it-guard-hook-wrong-state-file-on-named-runs.md) — the resolution is
+  // asserted identical in BOTH shipped copies of this file (adversarial-verify).
+  function resolveGoverningStateFile() {
+    const planItDir = join(cwd, ".plan-it");
+    const absFile = resolve(cwd, filePath);
+    let best = null;
+    let bestLen = -1;
+    let entries;
+    try {
+      entries = readdirSync(planItDir).filter((e) => STATE_FILE_NAME_RE.test(e));
+    } catch {
+      entries = [];
+    }
+    for (const e of entries) {
+      const p = join(planItDir, e);
+      let st;
+      try {
+        st = JSON.parse(readFileSync(p, "utf8"));
+      } catch {
+        continue; // unparseable named file — skip it, never crash the resolution
+      }
+      const dr = st?.run?.deliveryRoot;
+      if (!dr) continue;
+      const prefix = resolve(cwd, dr);
+      const prefixWithSlash = prefix.endsWith("/") ? prefix : `${prefix}/`;
+      if ((absFile === prefix || absFile.startsWith(prefixWithSlash)) && prefix.length > bestLen) {
+        best = p;
+        bestLen = prefix.length;
+      }
+    }
+    if (best) return best;
+
+    const programMatch = filePath.match(/(^|[\\/])docs[\\/]implementation[\\/]([^\\/]+)[\\/]/i);
+    if (programMatch) {
+      const namedStatePath = join(cwd, ".plan-it", `${programMatch[2]}.state.json`);
+      if (existsSync(namedStatePath)) return namedStatePath;
+    }
+
+    const genericPath = join(cwd, ".plan-it", "state.json");
+    return existsSync(genericPath) ? genericPath : null;
+  }
+
+  const statePath = resolveGoverningStateFile();
+  if (!statePath) allow();
 
   const state = JSON.parse(readFileSync(statePath, "utf8"));
   const version = state?.contract?.version ?? null;
@@ -124,10 +167,10 @@ try {
 
   deny(
     `plan-it Rule 1 (hard-enforced): "${filePath}" looks like a PRD/epic deliverable, ` +
-      `but this run's CONTRACT is not frozen (.plan-it/state.json contract.version is null, ` +
+      `but the governing run's CONTRACT is not frozen (${statePath} contract.version is null, ` +
       `current state: ${state?.state ?? "unknown"}). Freeze the contract first — write ` +
       `delivery/CONTRACT.md, run \`node scripts/gate-check.mjs freeze <CONTRACT.md>\`, record ` +
-      `contract.version in .plan-it/state.json — then retry. No frozen contract → no parallel planning.`
+      `contract.version in the state file — then retry. No frozen contract → no parallel planning.`
   );
 } catch {
   allow(); // fail-open, always

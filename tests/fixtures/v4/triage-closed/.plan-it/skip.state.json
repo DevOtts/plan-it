@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "skip", "mode": "autonomous-draft", "goal": "fixture: skip verdict, memo present", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "closedWithoutPlan",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "skip", "measuredAt": "2026-09-07", "measurements": [], "memo": "memos/skip.md" },
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T10:01:00Z" },
+    { "state": "triage", "event": "TRIAGE_SKIP", "at": "2026-09-07T10:02:00Z" }
+  ]
+}

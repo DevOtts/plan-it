@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "r", "mode": "guided", "deliveryRoot": "delivery/", "goal": "fixture: re-render produced the same stale bytes — ESCALATED" },
+  "state": "handoff",
+  "gates": {},
+  "contract": { "version": "1.0", "path": "delivery/CONTRACT.md", "frozenAt": null },
+  "render": {
+    "manifest": "delivery/kickoff.manifest.json",
+    "outputs": [
+      { "md": "delivery/KICKOFF.md", "html": "delivery/KICKOFF.html", "sha256": "fe7aa3886a91fb052cbcd72a8a8d33c57d5d48c48ce8dc77ae3f3125ed7bcec8" }
+    ]
+  },
+  "history": []
+}

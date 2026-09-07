@@ -1,0 +1,179 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": {
+    "name": "dogfood",
+    "mode": "autonomous-draft",
+    "topology": "solo",
+    "deliveryRoot": "delivery/",
+    "goal": "fixture: the 4.0.0 plugin dogfoods its own autonomous-draft package",
+    "startedAt": "2026-09-07T10:00:00Z"
+  },
+  "state": "planReview",
+  "gates": {
+    "G0": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-09-07"
+    },
+    "G1": {
+      "approved": true,
+      "owner": "Fernando Ott",
+      "date": "2026-09-07",
+      "decisions": {
+        "tiering": "mid for dogfood fixture work"
+      }
+    },
+    "G2": {
+      "pendingReview": true,
+      "defaults": [
+        {
+          "id": "D1",
+          "question": "Which package shape?",
+          "default": "single",
+          "rationale": "smallest coherent shape",
+          "source": "recommended",
+          "contradicted": false
+        }
+      ]
+    }
+  },
+  "triage": {
+    "verdict": "plan",
+    "measuredAt": "2026-09-07",
+    "measurements": []
+  },
+  "casesReviewed": true,
+  "contract": {
+    "version": "1.0-draft",
+    "path": "delivery/CONTRACT.md",
+    "frozenAt": "2026-09-07T13:00:00Z"
+  },
+  "history": [
+    {
+      "state": "intake",
+      "event": "INTAKE_CAPTURED",
+      "at": "2026-09-07T10:00:00Z"
+    },
+    {
+      "state": "triage",
+      "event": "TRIAGE_PLAN",
+      "at": "2026-09-07T10:15:00Z"
+    },
+    {
+      "state": "anamnesis",
+      "event": "G0_ANSWERED",
+      "at": "2026-09-07T10:30:00Z"
+    },
+    {
+      "state": "dodLock",
+      "event": "DOD_LOCKED",
+      "at": "2026-09-07T10:45:00Z"
+    },
+    {
+      "state": "scopeBrief",
+      "event": "BRIEF_RENDERED",
+      "at": "2026-09-07T11:00:00Z"
+    },
+    {
+      "state": "scopeGate",
+      "event": "G1_APPROVED",
+      "at": "2026-09-07T11:15:00Z"
+    },
+    {
+      "state": "preGround",
+      "event": "GROUNDED",
+      "at": "2026-09-07T11:30:00Z"
+    },
+    {
+      "state": "discovery",
+      "event": "FANOUT_COMPLETE",
+      "at": "2026-09-07T11:45:00Z"
+    },
+    {
+      "state": "preflight",
+      "event": "PREFLIGHT_VERIFIED",
+      "at": "2026-09-07T12:00:00Z"
+    },
+    {
+      "state": "synthesis",
+      "event": "SYNTHESIZED",
+      "at": "2026-09-07T12:15:00Z"
+    },
+    {
+      "state": "specAuthoring",
+      "event": "SPECS_DRAFTED_AUTONOMOUS",
+      "at": "2026-09-07T12:30:00Z"
+    },
+    {
+      "state": "defaultsApplied",
+      "event": "DEFAULTS_APPLIED",
+      "at": "2026-09-07T12:45:00Z"
+    },
+    {
+      "state": "coherencePass",
+      "event": "COHERENT_AUTONOMOUS",
+      "at": "2026-09-07T13:00:00Z"
+    },
+    {
+      "state": "backboneFreeze",
+      "event": "CONTRACT_FROZEN",
+      "at": "2026-09-07T13:15:00Z"
+    },
+    {
+      "state": "parallelPlanning",
+      "event": "SQUADS_COMPLETE",
+      "at": "2026-09-07T13:30:00Z"
+    },
+    {
+      "state": "verify",
+      "event": "LINT_CLEAN",
+      "at": "2026-09-07T13:45:00Z"
+    },
+    {
+      "state": "adversaryGate",
+      "event": "ADVERSARY_CLEAN",
+      "at": "2026-09-07T14:00:00Z"
+    },
+    {
+      "state": "render",
+      "event": "REVIEW_READY",
+      "at": "2026-09-07T14:15:00Z"
+    }
+  ],
+  "render": {
+    "manifest": "delivery/manifest.json",
+    "outputs": [
+      {
+        "md": "delivery/KICKOFF.md",
+        "html": "delivery/KICKOFF.html",
+        "sha256": "e378aab1ac479c2a7e2dc82f14e7afe377af24a3d46ecc5adb62a53f7b63d913"
+      },
+      {
+        "md": "delivery/DECISIONS.md",
+        "html": "delivery/DECISIONS.html",
+        "sha256": "9d0ac7a30e822f0197095197261dde5c2a04b51b1f2aa839a329c199243a6c3f"
+      },
+      {
+        "md": "delivery/GLOSSARY.md",
+        "html": "delivery/GLOSSARY.html",
+        "sha256": "892a46fbd72fd42eed124e5f974634dac1bd428d345f7dcb40f8cce7d15a78e8"
+      },
+      {
+        "md": "delivery/PLAN-REVIEW.md",
+        "html": "delivery/PLAN-REVIEW.html",
+        "sha256": "69ddaae47fc86d4317a3019b81c7136bf3fe2406cc38432edfb91256c946132b"
+      },
+      {
+        "md": "delivery/SCOPE-BRIEF.md",
+        "html": "delivery/SCOPE-BRIEF.html",
+        "sha256": "8a183b549bc5db14bb730d16ff589d1314569e9c5a9932519a8f6cffe4051f4a"
+      },
+      {
+        "md": "delivery/CONTRACT.md",
+        "html": "delivery/CONTRACT.html",
+        "sha256": "80638312feb11ec89c6e25ad24199de6846032257cf16fd4d7ff0b44d89f530b"
+      }
+    ]
+  }
+}

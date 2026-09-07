@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "good", "mode": "autonomous-draft", "goal": "fixture: every default row source:\"recommended\"", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "coherencePass",
+  "gates": {
+    "G0": { "approved": true, "owner": "Fernando", "date": "2026-09-07" },
+    "G1": { "approved": true, "owner": "Fernando", "date": "2026-09-07" },
+    "G2": {
+      "defaults": [
+        { "id": "D1", "question": "Which package shape?", "default": "single", "rationale": "smallest coherent shape", "source": "recommended", "contradicted": false },
+        { "id": "D2", "question": "Which topology?", "default": "solo", "rationale": "no squads needed", "source": "recommended", "contradicted": false }
+      ]
+    }
+  },
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "triage": { "verdict": "plan", "measuredAt": "2026-09-07", "measurements": [] },
+  "history": [
+    { "state": "intake", "event": "INTAKE_CAPTURED", "at": "2026-09-07T10:01:00Z" },
+    { "state": "triage", "event": "TRIAGE_PLAN", "at": "2026-09-07T10:02:00Z" },
+    { "state": "anamnesis", "event": "G0_ANSWERED", "at": "2026-09-07T10:05:00Z" },
+    { "state": "dodLock", "event": "DOD_LOCKED", "at": "2026-09-07T10:06:00Z" },
+    { "state": "scopeBrief", "event": "BRIEF_RENDERED", "at": "2026-09-07T10:07:00Z" },
+    { "state": "scopeGate", "event": "G1_APPROVED", "at": "2026-09-07T10:10:00Z" },
+    { "state": "preGround", "event": "GROUNDED", "at": "2026-09-07T10:20:00Z" },
+    { "state": "discovery", "event": "FANOUT_COMPLETE", "at": "2026-09-07T10:30:00Z" },
+    { "state": "preflight", "event": "PREFLIGHT_VERIFIED", "at": "2026-09-07T10:35:00Z" },
+    { "state": "synthesis", "event": "SYNTHESIZED", "at": "2026-09-07T10:40:00Z" },
+    { "state": "specAuthoring", "event": "SPECS_DRAFTED_AUTONOMOUS", "at": "2026-09-07T10:50:00Z" },
+    { "state": "defaultsApplied", "event": "DEFAULTS_APPLIED", "at": "2026-09-07T10:55:00Z" }
+  ]
+}

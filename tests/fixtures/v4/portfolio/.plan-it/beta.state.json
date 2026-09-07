@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "beta", "mode": "autonomous-draft", "goal": "fixture: a run mid-discovery", "startedAt": "2026-09-05T10:00:00Z" },
+  "state": "discovery",
+  "gates": {},
+  "contract": { "version": null, "path": null, "frozenAt": null },
+  "history": [
+    { "state": "preGround", "event": "GROUNDED", "at": "2026-09-05T11:00:00Z" }
+  ]
+}

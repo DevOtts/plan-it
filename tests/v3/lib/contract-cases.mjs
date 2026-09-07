@@ -21,6 +21,12 @@ export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", ".
 export const CONTRACT_PATH = join(ROOT, "delivery/v3/CONTRACT.md");
 export const GATECHECK_PATH = join(ROOT, "scripts/gate-check.mjs");
 
+// v4 D-B13: the v4 CONTRACT joins the v3 one as a second discoverable source.
+// parseContractCases() keeps its v3-only default (so fail-closed-sweep.mjs,
+// v3-scoped, stays byte-identical); parseAllContractCases() below is the new
+// multi-source entry point (run-contract's v4 section, C-E9-10).
+export const CONTRACT_PATHS = [CONTRACT_PATH, join(ROOT, "delivery/v4/CONTRACT.md")];
+
 /** Parse every `| ID | @tag | desc | \`run:\` |` row out of CONTRACT.md's "## Cases" table. */
 export function parseContractCases(contractText) {
   const text = contractText ?? readFileSync(CONTRACT_PATH, "utf8");
@@ -51,9 +57,28 @@ export function supportsDirFlag(gcSrc) {
   return /--dir\b/.test(src);
 }
 
-/** Every tests/fixtures/... , tests/v3/... , or scripts/gate-check.mjs path literal referenced by a run: cell. */
+/** Every tests/fixtures/..., tests/v3/..., tests/v4/..., or scripts/gate-check.mjs path literal referenced by a run: cell. */
 export function refPaths(cmd) {
-  return [...cmd.matchAll(/(tests\/fixtures\/[^\s`]+|tests\/v3\/[^\s`]+|scripts\/gate-check\.mjs)/g)].map((x) => x[1]);
+  return [...cmd.matchAll(/(tests\/fixtures\/[^\s`]+|tests\/v3\/[^\s`]+|tests\/v4\/[^\s`]+|scripts\/gate-check\.mjs)/g)].map((x) => x[1]);
+}
+
+/**
+ * v4 D-B13 (C-E9-10) — parses every CONTRACT_PATHS file's "## Cases" table
+ * and returns the combined rows, each tagged with the source file it came
+ * from. The v4 ID grammar (C-E<n>-NN) needs no change to the row regex
+ * above (already a generic `[A-Z][A-Z0-9-]*`); this function's only job is
+ * discovering the v4 file alongside the v3 one and tagging provenance.
+ */
+export function parseAllContractCases() {
+  const rows = [];
+  for (const p of CONTRACT_PATHS) {
+    if (!existsSync(p)) continue;
+    const text = readFileSync(p, "utf8");
+    for (const row of parseContractCases(text)) {
+      rows.push({ ...row, source: p });
+    }
+  }
+  return rows;
 }
 
 /**

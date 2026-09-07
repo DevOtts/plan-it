@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "machineVersion": "4.0.0",
+  "run": { "name": "v4", "mode": "autonomous-draft", "goal": "fixture: a draft contract reaching handoff", "startedAt": "2026-09-07T10:00:00Z" },
+  "state": "handoff",
+  "gates": {},
+  "contract": { "version": "1.0-draft", "path": "delivery/v4/CONTRACT.md", "frozenAt": "2026-09-07T11:00:00Z" },
+  "history": [
+    { "state": "freeze", "event": "CONTRACT_FINAL", "at": "2026-09-07T13:00:00Z" }
+  ]
+}
