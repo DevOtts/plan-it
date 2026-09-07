@@ -22,10 +22,14 @@ XState v5-compatible JSON, restricted to the JSON-config subset
 the free Stately visualizer (stately.ai/viz) to see the pipeline.
 
 ```
-intake → dodLock → scopeGate(G1) → preGround → discovery → synthesis
-  → specAuthoring → decisionGate(G2) → coherencePass → freezeGate(G3)
-  → backboneFreeze → parallelPlanning ⟲AMENDMENT → verify → handoff → done
+intake → dodLock → scopeGate(G1) → preGround → discovery → preflight
+  → synthesis → specAuthoring → decisionGate(G2) → coherencePass
+  → freezeGate(G3) → backboneFreeze → parallelPlanning ⟲AMENDMENT → verify
+  → adversaryGate → handoff → done
 ```
+(fixes a pre-existing v3.0.1 diagram bug, independent of v4: `preflight` and
+`adversaryGate` already exist in `machine.json` but were missing from this
+printed chain.)
 
 - **Gate states** carry `meta.gate` (`G1`/`G2`/`G3`) + `meta.human: true` — the
   machine stops there until the human answers, and the approval is recorded.
@@ -45,6 +49,39 @@ intake → dodLock → scopeGate(G1) → preGround → discovery → synthesis
 **Small shapes (S):** every state is still *traversed and recorded*, but
 pass-through states (e.g. `parallelPlanning` with a single inline "squad") may
 take seconds. The machine scales down; it never gets skipped.
+
+## 1b. The v4 pipeline (additive superset — `CONTRACT.md` §3.1 is authoritative)
+
+v4 adds 8 states ahead of and inside the v3.0.1 chain above; all 17
+baseline states, events and guards keep their names and meanings unchanged
+(G-1). Full v4 state set: `intake, triage, anamnesis, dodLock, scopeBrief,
+scopeGate, preGround, discovery, preflight, synthesis, specAuthoring,
+decisionGate, defaultsApplied, coherencePass, freezeGate, backboneFreeze,
+parallelPlanning, verify, adversaryGate, render, planReview, freeze,
+handoff, done, CLOSED_WITHOUT_PLAN`.
+
+```
+intake → triage → anamnesis[G0,human] → dodLock → scopeBrief → scopeGate(G1)
+  → preGround → discovery → preflight → synthesis → specAuthoring
+    guided:      → decisionGate(G2) → coherencePass → freezeGate(G3) → backboneFreeze
+    autonomous:  → defaultsApplied  → coherencePass → backboneFreeze (skips freezeGate)
+  → parallelPlanning ⟲AMENDMENT → verify → adversaryGate
+    guided:      → render → handoff → done
+    autonomous:  → render → planReview[G4,human] → freeze → handoff → done
+  (freeze → parallelPlanning on REVIEW_CONTRADICTED — recovery loop, then
+   verify → adversaryGate → render → planReview again)
+
+non-plan exit: triage → CLOSED_WITHOUT_PLAN
+  (a memo must be on disk, else the `state` guard REJECTS the transition)
+```
+
+Named failure/recovery states: `CLOSED_WITHOUT_PLAN` is the honest terminal
+for a non-plan triage verdict (`build-instead` / `owner-decision` /
+`skip`); `REVIEW_CONTRADICTED` is the recovery loop after a human
+contradicts the plan-review round — a *second* contradiction of the same
+default is written as an open decision card for the owner, never
+re-defaulted. See CONTRACT §3.1 for the full guard-by-guard transition
+table; this file documents the shape, CONTRACT is the frozen source.
 
 ## 2. The run state (`.plan-it/state.json`)
 
@@ -88,6 +125,35 @@ the registry of what is actually on disk.
 2. If it doesn't exist → this is a fresh run: create it in `intake`.
 3. If it's invalid (bad state, unrecorded gate) → surface the error to the user;
    never silently reset it.
+
+## 2b. v4 state-file additions (additive; `state` tolerates extra keys)
+
+All optional, layered onto the same `.plan-it/state.json` shape above:
+`run.name`, `run.mode`, `run.topology`, `run.deliveryRoot`, `run.anamnesis`,
+`triage{verdict, measuredAt, measurements[], memo}`, `gates.G0`,
+`gates.G2.defaults[]{id, question, default, rationale,
+source:"recommended", contradicted}`, `gates.G2.pendingReview`,
+`gates.G4{approved, owner, date, contradictions[]}`, `contract.draft`,
+`render{manifest, outputs[]{md, html, sha256}}`,
+`archive{archivedAt, from}`. CONTRACT §4.6 is the authoritative schema;
+this section only orients the reader to what each key is for.
+
+**Named runs.** A run identified by a slug persists at
+`.plan-it/<slug>.state.json` instead of the generic `.plan-it/state.json`
+— this is what lets more than one plan-it run live in the same repo at
+once (`gate-check state --run <slug>`, `gate-check runs` lists the whole
+portfolio). `meta.stateFile` names the resolved path;
+`meta.stateFileFallback` is always the generic file, for a run that never
+adopted a name.
+
+**Draft semantics.** `contract.version` carries a `-draft` suffix (e.g.
+`v1.0-draft`) from `backboneFreeze` through `parallelPlanning` in
+autonomous-draft mode — the CONTRACT is frozen *for squads* but not yet
+ratified by the human. A draft contract never reaches `handoff` (G-13):
+`freeze` without `--draft` refuses a `-draft` header, and `state` rejects
+`state:handoff` while `contract.version` still carries `-draft`. The
+human's plan-review round (`planReview`, G4) is what strips the suffix —
+`freeze -> handoff` (`CONTRACT_FINAL`) moves `v1.0-draft` to `v1.0`.
 
 ## 3. The guards (`scripts/gate-check.mjs`)
 

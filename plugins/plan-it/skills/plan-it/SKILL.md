@@ -1,32 +1,23 @@
 ---
 name: plan-it
 description: >-
-  Turn a fuzzy idea, brain-dump, or transcription into a COMPLETE spec set + agile
-  delivery package, ready to hand to /build-it. The front-end to /build-it: plan-it
-  plans it, build-it builds it. Runs a ~10-phase discovery → spec → agile-split
-  pipeline — pre-grounds the codebase, fans out parallel Claude teams (xhigh) to
-  research independent subsystems, authors the design docs in dependency order,
-  pauses at ONE batched human-decision gate, then freezes a shared CONTRACT and
-  fans out squad teams to write PRDs + epics against it — each epic ending in a
-  BINDING Test Contract (up to ~20 type-selected use-cases/scenarios the build must
-  pass 100% before "done", per Specification by Example / Eval-Driven Development).
-  Auto-sizes from a single feature (1 design note + 1 PRD + 1 epic set) to a from-scratch
-  program (full 7-doc set + 4 squads + waves). Use when the user says "/plan-it",
-  "plan this", "plan-it this", "spec this out", "turn this into a delivery package",
-  "create the PRDs/epics", "do discovery and planning", "scope this project/feature",
-  "act like a PM and break this down", or pastes a vision/transcription and expects
-  a buildable plan. Built for BOTH humans AND
-  conductor agents: a conductor that
-  receives a new demand runs /plan-it to produce the package before dispatching
-  workers. The inverse of /build-it (which builds) and predecessor to
-  /next-session-prompt (which hands off the finished plan). v2 adds a
-  deterministic core: the pipeline is an explicit statechart (machine.json), every
-  run persists its position in .plan-it/state.json (crash/compaction-resumable),
-  and guarded transitions run executable checks (scripts/gate-check.mjs) whose
-  exit code — not prose discipline — decides whether the pipeline advances.
+  Turn a fuzzy idea, brain-dump, or transcription into a COMPLETE spec set +
+  agile delivery package for /build-it. /plan-it plans it, build-it builds it:
+  pre-grounds the codebase, fans out parallel Claude teams, authors design docs
+  in order, runs one up-front anamnesis questionnaire (access, fences, naming,
+  topology, live-probes, known decisions), pauses at ONE batched human-decision
+  gate, then freezes a shared CONTRACT so squads write PRDs + epics — each
+  ending in a BINDING Test Contract the build must pass 100% before "done".
+  Picks a topology (solo · orchestrator+squads · headless) and renders an HTML
+  twin of each doc. Use when the user says "/plan-it", "plan this", "spec this
+  out", "create the PRDs/epics", "scope this project/feature", or pastes a
+  vision expecting a buildable plan. Built for humans and conductor agents.
+  Inverse of /build-it; predecessor to /next-session-prompt. Deterministic core:
+  an explicit statechart (machine.json), a resumable state file, gate-check.mjs
+  exit codes gate advancement.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 3.0.1
+version: 4.0.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
@@ -107,8 +98,9 @@ discipline across a long, summarization-prone context, and sometimes the model
 won't follow it. v2 inverts that at the right altitude — *non-determinism at the
 edges, determinism at the core*:
 
-- **`machine.json`** — XState v5-compatible statechart of the pipeline: 15 states,
-  the three human gates (`meta.gate` + `meta.human`), guarded transitions, and an
+- **`machine.json`** — XState v5-compatible statechart of the pipeline: 25 states
+  (17 baseline + 8 new in v4), the human gates across both modes (`meta.gate` +
+  `meta.human`: G0–G4), guarded transitions, and an
   `AMENDMENT` self-loop on `parallelPlanning`. Paste into stately.ai/viz to see it.
 - **`.plan-it/state.json`** — the persisted run: current state, gate approvals
   (owner + date), contract version, verified-artifact registry, history. This is
@@ -161,7 +153,7 @@ Rules of the Test Contract:
    skill/feature, S/M) author **~20 cases total across the package** (a handful per
    epic). Never both at once — pick by shape so a reviewer doesn't flag a correct
    small package as under-tested.
-3. **Binding** — DoD = **100% of the contract passes**; until then, `/iterate`. No
+3. **Binding** — DoD (Definition of Done) = **100% of the contract passes**; until then, `/iterate`. No
    partial ship; no VERIFIED-on-a-mock (a `[REAL]` case whose target is unreachable
    → IMPLEMENTED-NOT-VERIFIED, never a fake green).
 4. **Pick the test types by implementation** (one or more of unit / e2e / use-cases
@@ -185,18 +177,58 @@ block + §4–5).
 
 ---
 
-## Autonomy posture (guided with autonomous bursts)
+## Autonomy posture — guided mode
 
 Run research and authoring autonomously at high effort, but **stop at three gates**:
 
+| Gate | Machine state | When | What you ask |
+|------|---------------|------|--------------|
+| **G1 — Scope** | `scopeGate` | after intake (Phase 2) | confirm the sizing (feature vs program) + the numbered DoD before burning effort |
+| **G2 — Decisions** | `decisionGate` | after specs drafted (Phase 7) | the batched "decisions only you can make," each with a recommendation |
+| **G3 — Delivery** | `freezeGate` | before the agile split (Phase 8) | "specs look aligned — proceed to PRDs/epics?" |
+
+`scopeGate`, `decisionGate` and `freezeGate` are the exact `machine.json` state
+names for these three gates (CONTRACT §3.1) — never renamed. Everything between
+gates runs unattended. Recommend `/effort xhigh` at the start (you cannot set
+it yourself — tell the user to run `/effort xhigh` if they haven't).
+
+## Autonomy posture — autonomous-draft mode
+
+The default mode (ruling R1). Fewer stops — one up-front questionnaire, one
+review-and-contradict round at the end — with every irreversible-but-guessable
+call applied as a marked, contradictable default in between:
+
 | Gate | When | What you ask |
 |------|------|--------------|
-| **G1 — Scope** | after intake (Phase 2) | confirm the sizing (feature vs program) + the numbered DoD before burning effort |
-| **G2 — Decisions** | after specs drafted (Phase 7) | the batched "decisions only you can make," each with a recommendation |
-| **G3 — Delivery** | before the agile split (Phase 8) | "specs look aligned — proceed to PRDs/epics?" |
+| **G0 — Anamnesis** | at intake, before Phase 1 | the one up-front questionnaire: access & credentials the run may probe, fences, naming conventions, topology preference, live-probe authorization, decisions already known |
+| **G1 — Scope** | after intake (Phase 2) | confirm the sizing + numbered DoD — same as guided mode |
+| **G4 — Plan review** | after `adversaryGate`/`render` | the single PLAN-REVIEW round: every `[default — contradict if wrong]` decision plus the frozen backbone, reviewed together — replaces guided mode's separate G2 + G3 stops |
 
-Everything between gates runs unattended. Recommend `/effort xhigh` at the start
-(you cannot set it yourself — tell the user to run `/effort xhigh` if they haven't).
+`anamnesis`, `scopeGate` and `planReview` are the exact `machine.json` state
+names (CONTRACT §3.1) — never renamed. A contradiction at G4 that changes the
+CONTRACT re-enters `parallelPlanning` as an `AMENDMENT` and runs the
+verify → adversaryGate → render → planReview loop again.
+
+---
+
+## Output discipline for humans
+
+**First-use rule (G-8):** every acronym or per-run ID this run mints or reuses
+is expanded on first use in any human-facing surface — a decision-round table,
+a KICKOFF doc, a launch prompt. Every package carries `GLOSSARY.md`; an ID used
+in a package but absent from its glossary row fails `gate-check handoff`.
+
+**Legend line:** wherever three or more per-run ID prefixes (governance rules,
+test cases, waves, defaults, rulings) appear together in one artifact, carry
+this line verbatim so a reader never has to guess which grammar an ID belongs
+to:
+
+```
+Legend: G-n governance rule · T-<EID>-NN test case · Wn wave · Rn default · Dn ruling — see GLOSSARY.md
+```
+
+This is a legend line, never a renamed ID grammar — the fix for a `G1`-vs-`G-1`
+or `W0`-vs-`W1` collision is one line of disambiguation, not a format change.
 
 ---
 
@@ -226,6 +258,27 @@ Capture up front:
 If the demand is genuinely one fuzzy paragraph with no pointers and an existing
 repo, that's fine — pre-grounding (Phase 3) will find the targets.
 
+### Anamnesis — gate G0
+
+Immediately after capturing the raw vision above, and before Phase 1's DoD
+lock, run the one batched **anamnesis** questionnaire — everything the run
+needs from the human up front, asked once instead of dribbled out gate by
+gate:
+
+1. **Access & credentials** the run may probe (repos, live systems, secrets vaults).
+2. **Fences** — what's out of bounds (files, systems, decisions not to touch).
+3. **Naming conventions** — repo/branch/doc naming the run should follow.
+4. **Topology preference** — `solo` · `orchestrator+squads` · `headless` (or "recommend one" and get a yes).
+5. **Live-probe authorization** — is the run allowed to hit live systems/credentials (Rule 4), or stay read-only/repo-only.
+6. **Decisions already known** — anything the human has already decided, so the run doesn't re-litigate it at a later gate.
+
+Record the answers as `gates.G0` in `.plan-it/state.json` (the `G0_ANSWERED`
+transition is guarded by `gateRecorded`) and machine-transition into state
+**`anamnesis`** (CONTRACT §3.1 — this is the exact state name; do not invent
+another). The answers seed Phase 1's Assumptions list and, where topology
+warrants it, `DECISIONS.md`'s Ruled table directly — this is intake
+enrichment, not a new decision round.
+
 ---
 
 ## Phase 1 — DoD lock
@@ -248,8 +301,8 @@ Assumptions: <list>
 
 ## Phase 2 — Scope & shape governor  ⏸ GATE G1
 
-Pick **size** (how much) *and* **shape** (what form) before spending effort.
-Confirm both with the user.
+Pick **size** (how much), **shape** (what form), *and* **topology** (how it's
+run) before spending effort. Confirm all three with the user.
 
 **Size** scales the artifact count:
 
@@ -269,10 +322,21 @@ Confirm both with the user.
 5. **Refactor/debt workstream catalog** — brownfield in-place.
    (+ research-spike, executable-board, and reverse-doc modes — see PART D.)
 
+**Topology** decides how the run is executed, independent of size/shape
+(CONTRACT §1; ruling D4 — the human picks, plan-it's recommendation shown):
+
+| Signal | Topology | Recommendation |
+|--------|----------|-----------------|
+| Small/solo feature; one agent can hold the whole plan in context | **solo** | run single-threaded, no fan-out |
+| Program-sized work with disjoint repo/file lanes, parallel squads needed | **orchestrator+squads** | one orchestrator + a worktree per squad (G-10 worktrees-only) |
+| No human present to answer a chat gate — scheduled or unattended | **headless** | autonomous-draft mode; `--open` suppressed; decisions default-applied and reviewed at G4 |
+
 Same phases regardless — only the artifact count and form change. **Don't give a
 feature a 4-squad org; don't give a brownfield refactor a greenfield vision doc.**
-Present the chosen size + shape + the numbered DoD and get a yes before proceeding.
-On yes, record `G1 = {approved, owner, date}` plus the chosen size/shape in
+Present the **SCOPE-BRIEF** (what each size/shape/topology produces, costs, and
+is wrong for — skeleton in `references/templates.md`), then the chosen size +
+shape + topology + the numbered DoD and get a yes before proceeding. On yes,
+record `G1 = {approved, owner, date}` plus the chosen size/shape/topology in
 `.plan-it/state.json` — the `G1_APPROVED` transition is guarded by `gateRecorded`.
 
 ---
@@ -406,24 +470,28 @@ decisions/sessions → the vault.
 
 ---
 
-## Phase 7 — Decision round  ⏸ GATE G2
+## Phase 7 — Decision round  ⏸ GATE G2 (guided mode)
 
 Collect every genuine judgment call into a single **"Decisions only you can make"**
-section (lives in the roadmap doc `06 §4`). For each: state it, attach a
+section — written to **`DECISIONS.md`** (skeleton in `references/templates.md`),
+not only inline in the roadmap doc `06 §4`. For each: state it, attach a
 **recommendation**, but **do not pre-decide** the irreversible ones. Present them
 numbered. The user answers numbered.
 
 Then:
-- **Lock** each answer into the docs, marked "locked," with **owner + date** —
-  and record `G2 = {approved, owner, date}` in `.plan-it/state.json`
-  (`G2_ANSWERED` is guarded by `gateRecorded`).
+- **Lock** each answer into `DECISIONS.md`'s Ruled table, marked "locked," with
+  **owner + date** — and record `G2 = {approved, owner, date}` in
+  `.plan-it/state.json` (`G2_ANSWERED` is guarded by `gateRecorded`).
 - If the user introduced a *new concept* (they often do here), thread it through —
   add/rewrite the affected doc (e.g. a new `07`) and **run a coherence pass**
   (grep for now-stale terms the new decision invalidated; fix them).
 
+**Autonomous-draft mode:** this phase's chat stop is skipped — see "Phases 7 + 8
+collapse into PLAN-REVIEW" at the end of Phase 8.
+
 ---
 
-## Phase 8 — Backbone freeze  ⏸ GATE G3
+## Phase 8 — Backbone freeze  ⏸ GATE G3 (guided mode)
 
 Ask "specs are aligned — proceed to the delivery package?" On yes, write the
 backbone **first**, because squads build their PRDs against it:
@@ -443,12 +511,26 @@ file carrying the inlined contract section) — the `CONTRACT_FROZEN` transition
 guarded by it, and Rule 1 is now an exit code, not a plea. Record the contract
 version + path in `.plan-it/state.json` → `contract`.
 
+### Autonomous-draft mode — Phases 7 + 8 collapse into PLAN-REVIEW
+
+`specAuthoring` transitions straight to `defaultsApplied`
+(`SPECS_DRAFTED_AUTONOMOUS`): every decision from Phase 7's list gets plan-it's
+own recommendation applied and written into `DECISIONS.md`, each marked
+`[default — contradict if wrong]` inline — **no chat stop**. `coherencePass`
+still runs the same coherence check as guided mode, and `COHERENT_AUTONOMOUS`
+transitions straight to `backboneFreeze`, which freezes the CONTRACT as a
+**draft** (`freeze --draft`, ruling R1) instead of stopping for G3. Both rounds
+are reviewed together, once, at gate **G4** — Phase 10's `planReview` — where
+any default can still be contradicted before the CONTRACT becomes final.
+
 ---
 
 ## Phase 9 — Parallel planning (autonomous burst)
 
 Fan out **one squad team per repo lane** (disjoint files — no co-editing). Each
 writes its `prds/prd-N-*.md` + `epics/epics-N-*.md` **against the frozen CONTRACT**.
+When topology = `orchestrator+squads`, record each squad's session name in SESSIONS.md as it's dispatched —
+the orchestrator's only way to find and message a squad again is by that name (G-10).
 
 - **PRD** per squad: summary, problem & goals, users & jobs, solution design
   (numbered decisions D1–DN, citing `file:line`), epics table, acceptance criteria,
@@ -508,11 +590,24 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   dry-run shipped — don't hand off without it.)
 - **Assemble:** `delivery/README.md` (index) + `delivery/KICKOFF.md` (orientation:
   one-liner, first slice, repo map, locked decisions, gotchas, handoff state).
-  KICKOFF is *generated*, never copied stale: it MUST open with the "0. Pinning"
+  When topology warrants it, add `SESSIONS.md` (squad session names), `GATE.md`
+  (the answered decision/authorization/owner-action log) and `GLOSSARY.md` (the
+  static seed plus every ID this run minted) to the file list. KICKOFF is
+  *generated*, never copied stale: it MUST open with the "0. Pinning"
   block (absolute repo path @ full git SHA, `.plan-it/state.json` path, CONTRACT
   SHA-256) and make "re-derive tally + reconcile from disk, stop-and-report on
   mismatch" the builder's first numbered step (`references/templates.md`
   KICKOFF block, PRD §D4–D5).
+- **Every twin is local, not a published artifact:** each md file's `<NAME>.html`
+  twin is rendered and created locally by default, and is never published as a
+  claude.ai artifact; it is opened (`--open`) only at human gates, and that
+  opening is suppressed entirely in headless runs (G-7 prose).
+- **Residual-disposition pass** (before filling the board): for every epic whose
+  Test Contract is not 100% passing, tag each non-green case one of
+  `backlog-with-reason` · `owner-gated` · `IMPLEMENTED-NOT-VERIFIED`, and record
+  it in `STATUS.md`'s Disposition column. A binding contract case may never move
+  to `backlog-with-reason` — it stays `IMPLEMENTED-NOT-VERIFIED` with a reason
+  instead; only work beyond the case set may go to backlog (G-9).
 - **Fill the board:** `STATUS.md` rows reflect Wave-0 in-progress, rest backlog.
 - **Hand off** (the terminal phase — the build runs in a *fresh* session):
   - Wire the repo to your knowledge base (`/sync-obsidian` or equivalent), if your

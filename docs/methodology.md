@@ -4,7 +4,7 @@ Why the pipeline is shaped the way it is. Every rule below was
 reverse-engineered from real multi-squad planning runs — including the failure
 each one exists to prevent.
 
-## The four non-negotiable rules
+## The five non-negotiable rules
 
 ### 1. Freeze a shared CONTRACT before any parallel planning
 
@@ -59,6 +59,22 @@ deployed reality is the truth, and they drift. Before the contract freezes:
 **Failure it prevents:** in one program, *every* mid-flight correction traced
 to a repo-inferred assumption reality contradicted.
 
+### 5. Run the machine, not the prose
+
+The pipeline's control flow lives in `machine.json` (an explicit statechart),
+not in this document or the skill's own prose — the prose *explains* the
+machine, it doesn't drive it. The run resumes from a persisted state file
+(`.plan-it/state.json`, or a named `.plan-it/<slug>.state.json`) and every
+guarded transition runs its guard as an exit code (`gate-check.mjs`); a
+non-zero exit blocks the transition until fixed. Degrading gracefully (no
+Node available) means performing the same checks by hand and recording them —
+never skipping them.
+
+**Failure it prevents:** a model quietly skipping or reordering a step because
+the instruction was one sentence in a long document instead of something the
+harness itself enforces — the exact "prose control flow" failure mode a
+statechart core is built to close.
+
 ## The Test Contract
 
 The quality differentiator. The **last** step of writing every epic is
@@ -100,12 +116,17 @@ Full definitions live in the skill's `references/templates.md` (PART D).
 
 ## Autonomy posture
 
-Guided, with autonomous bursts: research and authoring run unattended at high
-reasoning effort; the pipeline stops only at G1 (scope), G2 (decisions), G3
-(delivery approval). This is the inverse of
-[`build-it`](https://github.com/DevOtts/build-it), which runs fully unattended
-— because planning is where the human's judgment is *the* input, and building
-is where it mostly isn't.
+Research and authoring always run unattended at high reasoning effort; what
+varies is how many chat stops the human sees. **Autonomous-draft** (the
+default) front-loads one anamnesis questionnaire (gate G0) and back-loads one
+PLAN-REVIEW round (gate G4), with every in-between judgment call applied as a
+marked, contradictable default. **Guided** mode keeps the original three
+stops — G1 (scope), G2 (decisions), G3 (delivery approval) — for a human who
+wants to be asked at each gate rather than review everything together at the
+end. Full comparison: [docs/usage.md](usage.md). Both postures are the
+inverse of [`build-it`](https://github.com/DevOtts/build-it), which runs
+fully unattended — because planning is where the human's judgment is *the*
+input, and building is where it mostly isn't.
 
 ## Roadmap
 

@@ -3,6 +3,111 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 4.0.0 — 2026-09-07
+
+The **autonomous-draft** release — the pipeline gains a default unattended
+posture (opt out to guided mode), a topology axis for choosing how a run is
+executed, a rendered HTML twin for every canonical markdown artifact, and
+named concurrent runs. All v3.0.1 verbs and statechart states are strictly
+**additive** — the protected v2/v3 core (freeze mechanism, closed status
+vocabulary, existing `gate-check` verb semantics, KICKOFF read-order, batched
+decision gate, byte-pinned statechart) is untouched, verified additive-only by
+`gate-check machine-diff` against both the v2 `fc6abc8` and v3 `7fcff27`
+baselines.
+
+### Founder mandates
+- **Ruling D1 — autonomous-draft is the default mode.** A run defaults to one
+  up-front anamnesis questionnaire (gate G0) plus a single end-of-run
+  PLAN-REVIEW round (gate G4) instead of three separate chat stops; guided
+  mode (G1/G2/G3, unchanged from v3) remains available and is picked at
+  anamnesis.
+- **Ruling D6 — all ten enhancements ship together in 4.0.0.** No enhancement
+  is scope-cut to a later release; all ten areas land as one release: E1
+  (prose/packaging), E2 (renderer block catalogue), E3 (decisions/rulings), E4
+  (sessions/orchestrator), E5 (adversarial mockups), E6
+  (triage/closed-without-plan), E7 (statechart/draft-contract), E8
+  (disposition vocabulary), E9 (named runs), E10 (glossary/first-use).
+- Ratified at **PLAN-REVIEW** (gate G4) by Fernando Ott: defaults R1–R12
+  confirmed as applied, authorizations A-1/A-3/A-4 granted, A-2 held until
+  owner action O-2 — no contradictions raised.
+
+### Write-time invariants (all hard-enforced, G-1…G-15)
+- **G-7 — twins stay local.** Every canonical markdown artifact's `<NAME>.html`
+  twin is rendered and created locally by default and never published as a
+  claude.ai artifact; `--open` fires only at human gates and is suppressed
+  entirely in headless runs.
+- **G-8 — first-use rule.** Every acronym or per-run ID is expanded on first
+  use on any human-facing surface; every package carries `GLOSSARY.md`, and an
+  ID used but absent from it fails `handoff`.
+- **G-9 — contract cases never move to backlog.** A binding Test Contract case
+  that fails or cannot run stays `IMPLEMENTED-NOT-VERIFIED` with a reason;
+  only work beyond the case set may be `backlog-with-reason`.
+- **G-10 / G-11 — worktrees-only, poll-never-wait.** Every squad launch prompt
+  states the worktrees-only rule (owner ruling P2-11) and never says "wait
+  for" a notification — it says poll.
+- **G-12 — facts are probed, never guessed.** A `measurement` block with
+  `read_only:false` is a render error; an absent probe blacklists only its own
+  tool, not every token that happens to share an argv[0].
+- **G-13 — a draft contract never hands off.** `freeze` without `--draft`
+  refuses a `-draft` header; `state` rejects `handoff` on a draft contract.
+- **G-14 — mirror integrity 11/11 before any release** (up from 8/8 in
+  3.0.1) — `scripts/build-report.mjs`, `scripts/report-template.html` and
+  `assets/brand/default.brand.json` join the eight existing root↔plugin
+  pairs.
+- **G-15 — description budget.** The SKILL frontmatter `description` is
+  ≤1,024 characters with the trigger phrases inside the first 250.
+- G-1…G-6 (additive core, zero dependencies, closed status vocabulary, no
+  hardcoded model IDs, computed-never-typed counts, markdown-canonical/
+  HTML-derived) carry forward from v3 unchanged.
+
+### Enforcement reach
+- **Named runs.** `.plan-it/<slug>.state.json` lets two or more plan-it runs
+  coexist in one repo without clobbering each other's state; every
+  `gate-check` verb resolves the package dir from `run.deliveryRoot`
+  (longest-prefix match), and the write guard (`planit-guard.mjs`, both
+  copies) denies writes to an unfrozen *named* run's deliverables, not just
+  the generic one.
+- **Draft contracts.** A CONTRACT frozen mid-run in autonomous-draft mode
+  carries a `-draft` header (`v1.0-draft`) until the human ratifies it at
+  PLAN-REVIEW; a draft can never reach `handoff`, and a second contradiction
+  of the same default is recorded as an open, escalated decision card rather
+  than re-defaulted silently.
+- **Disposition vocabulary.** `STATUS.md` gains a `Disposition` column plus
+  `## Residuals` and `## Log`; a non-`VERIFIED` row without a disposition, or
+  a typed `Dispositions:` tally that disagrees with the computed count, fails
+  `reconcile`.
+
+### Additive tooling
+- New `gate-check` verbs: `archive`, `runs`, `glossary`, `mirror` (now with
+  `--dir`/`--require-html`), `state --run`.
+- New renderer: `scripts/build-report.mjs` turns a `planit-report/1` manifest
+  into a stamped, brand-tokenized HTML twin — 17 block types (tables, cards,
+  decision cards, embeds, mockups with provenance, flow diagrams, states
+  triptychs, measurements, tallies, a glossary panel, and more), byte-
+  deterministic given the same inputs.
+- `references/templates.md` gains seven new document skeletons
+  (`SCOPE-BRIEF.md`, `ANAMNESIS.md`, `DECISIONS.md`, `GATE.md`,
+  `SESSIONS.md`, `PLAN-REVIEW.md`, `GLOSSARY.md`), each field-proven and
+  mirrored root↔plugin.
+- 8 new statechart states (25 total, additive over v3's 17) for anamnesis,
+  scope brief, defaults, plan review and the draft-freeze path.
+
+### Deferred
+Nothing scope-cut for this release — ruling D6 keeps all ten E1–E10
+enhancements together in 4.0.0. As in prior releases, long-tail governance
+items and a standardized Test-Contract-review content-coverage gate remain
+out of scope (review *existence* stays gate-enforced today).
+
+### Verification
+100% binding-case pass is the Definition of SHIPPED. At release: `run-contract`
+v2 51/51 + v3 25/25 + v4 60/60 fail-closed (136/136 CONTRACT-level cases; 166
+epic-level Test Contract cases across 13 epics per `delivery/v4/STATUS.md`'s
+computed program totals); `fail-closed-sweep` 100% mechanism-ready;
+`mirror-check 11/11` byte-identical; `machine-diff` additive-only against both
+the v2 `fc6abc8` and v3 `7fcff27` baselines; `version-triple-match` = 4.0.0
+across six sites + CHANGELOG; `changelog-shape` green.
+IMPLEMENTED-NOT-VERIFIED ships nothing.
+
 ## 3.0.1 — 2026-07-09
 
 Packaging patch — no pipeline or enforcement changes. Aligns plan-it with the

@@ -4,8 +4,8 @@
  *
  * Asserts CHANGELOG.md's TOP (most recent) versioned section is dated
  * `## N.N.N — YYYY-MM-DD` and enumerates each shipped item by ID. The required
- * ID set tracks the current release: the 3.0.1 packaging patch ships the
- * marketplace-namespace rename (M1) and the version-parity bump (M2).
+ * ID set tracks the current release: the 4.0.0 release ships all ten v4
+ * enhancements (E1–E10, ruling D6).
  *
  * This is a [REAL] case against the live CHANGELOG — NOT a fail-closed sweep
  * row. NORMAL exit semantics per AMD-3: exit 0 = the section is present and
@@ -37,11 +37,11 @@ if (headIdx === -1) {
   const end = lines.findIndex((l, i) => i > headIdx && /^##\s/.test(l));
   const section = lines.slice(headIdx, end === -1 ? undefined : end).join("\n");
 
-  // Required ID set for the current (3.0.1) release. When cutting a later
+  // Required ID set for the current (4.0.0) release. When cutting a later
   // release, move these to that release's shipped IDs (same pattern as the
-  // version literal in version-triple-match.mjs). The 3.0.0 debut's IDs
-  // (D4, D-A1/D-A2, D-B1/D-B2/D-B3) now live in that release's own section.
-  const required = ["M1", "M2"];
+  // version literal in version-triple-match.mjs). The 3.0.1 patch's IDs
+  // (M1, M2) now live in that release's own section.
+  const required = ["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"];
   for (const id of required) {
     // Escape regex metachars (the W3.1-x IDs contain '.' and '-').
     const re = new RegExp(`\\b${id.replace(/[.\-]/g, "\\$&")}\\b`);
@@ -54,5 +54,5 @@ if (problems.length > 0) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log("PASS — CHANGELOG.md has a dated top section enumerating the current release's shipped IDs (M1, M2).");
+console.log("PASS — CHANGELOG.md has a dated top section enumerating the current release's shipped IDs (E1–E10).");
 process.exit(0);
