@@ -1,0 +1,12 @@
+{
+  "schema": "planit-report/1",
+  "kind": "CONTRACT",
+  "title": "CSS Token In Embed",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Body", "blocks": [
+      {"type": "embed", "path": "excerpt.md", "label": "CONTRACT excerpt"}
+    ]}
+  ]
+}

@@ -789,13 +789,13 @@ const MERMAID_SCRIPT_TAG =
   '<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>\n' +
   '<script>mermaid.initialize({securityLevel:\'strict\',startOnLoad:true,theme:document.documentElement.getAttribute(\'data-theme\')===\'dark\'?\'dark\':\'default\'});</script>';
 
-export function assembleHtml({ manifest, kind, template, brandInfo, glossaryPanelHtml, bodyHtml, needsMermaid, sourceHash, embedHashes, templateHash, htmlBlocks }) {
+export function assembleHtml({ manifest, kind, template, brandInfo, glossaryPanelHtml, bodyHtml, needsMermaid, sourceHash, sourceRel, embedHashes, templateHash, htmlBlocks }) {
   const brandCss = emitBrandCss(brandInfo.brand);
   const fontLink = emitFontLink(brandInfo.brand);
   const badge = `<p class="brand-badge">brand: ${brandInfo.source === 'default' ? 'Her0 default' : brandInfo.source}</p>`;
   const embedsStr = Object.entries(embedHashes || {}).map(([p, h]) => `${p} sha256=${h}`).join(';');
   const metaStamps = [
-    `<meta name="planit-source" content="${esc(manifest.source ? manifest.source.path : '')} sha256=${sourceHash}">`,
+    `<meta name="planit-source" content="${esc(sourceRel !== undefined ? sourceRel : (manifest.source ? manifest.source.path : ''))} sha256=${sourceHash}">`,
     `<meta name="planit-embeds" content="${esc(embedsStr)}">`,
     `<meta name="planit-brand" content="${brandInfo.source === 'default' ? `default sha256=${brandInfo.hash}` : `${brandInfo.source} sha256=${brandInfo.hash}`}">`,
     `<meta name="planit-renderer" content="build-report.mjs/${RENDERER_VERSION} template sha256=${templateHash}">`,
@@ -871,11 +871,15 @@ export function renderToBuffer(manifestPath, cliFlags) {
   const template = loadTemplate();
   const templateHash = sha256(template);
 
+  const outDir = path.dirname(resolveOutPath(manifest, manifestDir, cliFlags.out));
+
+  // AMD-9 / T-V4A1-13: every stamped relpath is relative to the TWIN's own directory
+  // (CONTRACT §4.3), never the manifest's — same rule embeds already followed below.
   const sourcePath = manifest.source && manifest.source.path ? path.join(manifestDir, manifest.source.path) : null;
   const sourceHash = sourcePath && fs.existsSync(sourcePath) ? sha256(fs.readFileSync(sourcePath)) : sha256('');
+  const sourceRel = sourcePath && fs.existsSync(sourcePath) ? toRelForward(outDir, sourcePath) : (manifest.source ? manifest.source.path : '');
 
   const embedHashes = {};
-  const outDir = path.dirname(resolveOutPath(manifest, manifestDir, cliFlags.out));
   for (const s of manifest.sections || []) {
     for (const b of s.blocks || []) {
       const p = b.path || (b.embed && b.embed.path);
@@ -896,12 +900,17 @@ export function renderToBuffer(manifestPath, cliFlags) {
     bodyHtml: bodyResult.html,
     needsMermaid: bodyResult.needsMermaid,
     sourceHash,
+    sourceRel,
     embedHashes,
     templateHash,
     htmlBlocks: bodyResult.htmlBlocks,
   });
 
-  const cssAudit = auditCssTokens(html);
+  // AMD-9 / T-V4A1-14: scan only the rendered <style> blocks — embedded content (e.g. a
+  // CONTRACT.md excerpt whose prose literally contains "var(--token)") must never trigger
+  // this build-time authoring lint.
+  const styleBlocks = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join('\n');
+  const cssAudit = auditCssTokens(styleBlocks);
   if (cssAudit.missing.length) {
     process.stderr.write(`WARNING: CSS tokens referenced but not declared in :root: ${cssAudit.missing.join(', ')}\n`);
   }
