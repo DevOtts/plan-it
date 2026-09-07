@@ -38,11 +38,6 @@
         "usage": "node scripts/gate-check.mjs state .plan-it/state.json machine.json",
         "rule": "Rule 2 — human gates are recorded with owner + date in the state file before the pipeline advances."
       },
-      "adversarialDepth": {
-        "check": "adversary",
-        "usage": "node scripts/gate-check.mjs adversary <delivery-dir>",
-        "rule": "Rule 6 (v3.2, D4) — failure-mode depth as an exit code. When the CONTRACT declares a state machine, its failure/recovery states must be modelled (D-A1/D-A2), every declared failure state must be an asserted case outcome (D-B1), every governance rule must carry a test hook (D-B2), and the five cascade classes (partial-failure, rollback/compensation, failed-recovery→escalation, recovery/resume, adversarial-verify) must each be covered-or-waived (D-B3). Linear/CRUD workflows declare no machine → N/A → pass (no over-reach)."
-      },
       "triageRecorded": {
         "check": "state",
         "usage": "node scripts/gate-check.mjs state --dir . --run <slug>",
@@ -68,7 +63,9 @@
         "does": "Capture the raw vision, pointers, and use-case. Initialize .plan-it/state.json."
       },
       "on": {
-        "INTAKE_CAPTURED": { "target": "triage" }
+        "INTAKE_CAPTURED": {
+          "target": "triage"
+        }
       }
     },
     "triage": {
@@ -78,10 +75,22 @@
         "does": "Verify a plan is warranted before starting one: record a verdict (plan, build-instead, owner-decision, skip) and, for any non-plan verdict, a memo explaining why."
       },
       "on": {
-        "TRIAGE_PLAN": { "target": "anamnesis", "guard": "triageRecorded" },
-        "TRIAGE_BUILD_INSTEAD": { "target": "closedWithoutPlan", "guard": "triageRecorded" },
-        "TRIAGE_SKIP": { "target": "closedWithoutPlan", "guard": "triageRecorded" },
-        "TRIAGE_OWNER_DECISION": { "target": "closedWithoutPlan", "guard": "triageRecorded" }
+        "TRIAGE_PLAN": {
+          "target": "anamnesis",
+          "guard": "triageRecorded"
+        },
+        "TRIAGE_BUILD_INSTEAD": {
+          "target": "closedWithoutPlan",
+          "guard": "triageRecorded"
+        },
+        "TRIAGE_SKIP": {
+          "target": "closedWithoutPlan",
+          "guard": "triageRecorded"
+        },
+        "TRIAGE_OWNER_DECISION": {
+          "target": "closedWithoutPlan",
+          "guard": "triageRecorded"
+        }
       }
     },
     "closedWithoutPlan": {
@@ -100,7 +109,10 @@
         "does": "The one up-front questionnaire covering everything the run will need from the human: mode, topology, and every fact only they can supply. Record owner + date."
       },
       "on": {
-        "G0_ANSWERED": { "target": "dodLock", "guard": "gateRecorded" }
+        "G0_ANSWERED": {
+          "target": "dodLock",
+          "guard": "gateRecorded"
+        }
       }
     },
     "dodLock": {
@@ -110,7 +122,9 @@
         "does": "Restructure the demand into a numbered, individually-verifiable Definition of Done + assumptions."
       },
       "on": {
-        "DOD_LOCKED": { "target": "scopeBrief" }
+        "DOD_LOCKED": {
+          "target": "scopeBrief"
+        }
       }
     },
     "scopeBrief": {
@@ -120,7 +134,10 @@
         "does": "Render the human-readable explanation of size, shape and topology before the G1 menu."
       },
       "on": {
-        "BRIEF_RENDERED": { "target": "scopeGate", "guard": "artifactsOnDisk" }
+        "BRIEF_RENDERED": {
+          "target": "scopeGate",
+          "guard": "artifactsOnDisk"
+        }
       }
     },
     "scopeGate": {
@@ -132,7 +149,10 @@
         "does": "Pick size (S/M/L) + packaging shape; present with the DoD; the human approves. Record owner + date."
       },
       "on": {
-        "G1_APPROVED": { "target": "preGround", "guard": "gateRecorded" }
+        "G1_APPROVED": {
+          "target": "preGround",
+          "guard": "gateRecorded"
+        }
       }
     },
     "preGround": {
@@ -142,7 +162,9 @@
         "does": "Locate exact targets (paths, sessions, live-system observations) so fan-outs never work blind. Live-grounding gate for running systems."
       },
       "on": {
-        "GROUNDED": { "target": "discovery" }
+        "GROUNDED": {
+          "target": "discovery"
+        }
       }
     },
     "discovery": {
@@ -153,7 +175,10 @@
         "llmAtTheNode": true
       },
       "on": {
-        "FANOUT_COMPLETE": { "target": "preflight", "guard": "artifactsOnDisk" }
+        "FANOUT_COMPLETE": {
+          "target": "preflight",
+          "guard": "artifactsOnDisk"
+        }
       }
     },
     "preflight": {
@@ -163,7 +188,9 @@
         "does": "Probe the real environment before synthesis locks anything in: emit ENV-FACTS.md (S-shape 6-probe minimal set; M/L full 9-probe set). Probes record PRESENT/ABSENT/TIMEOUT with evidence — never guessed."
       },
       "on": {
-        "PREFLIGHT_VERIFIED": { "target": "synthesis" }
+        "PREFLIGHT_VERIFIED": {
+          "target": "synthesis"
+        }
       }
     },
     "synthesis": {
@@ -174,7 +201,9 @@
         "llmAtTheNode": true
       },
       "on": {
-        "SYNTHESIZED": { "target": "specAuthoring" }
+        "SYNTHESIZED": {
+          "target": "specAuthoring"
+        }
       }
     },
     "specAuthoring": {
@@ -185,8 +214,18 @@
         "llmAtTheNode": true
       },
       "on": {
-        "SPECS_DRAFTED": { "target": "decisionGate", "meta": { "mode": "guided" } },
-        "SPECS_DRAFTED_AUTONOMOUS": { "target": "defaultsApplied", "meta": { "mode": "autonomous-draft" } }
+        "SPECS_DRAFTED": {
+          "target": "decisionGate",
+          "meta": {
+            "mode": "guided"
+          }
+        },
+        "SPECS_DRAFTED_AUTONOMOUS": {
+          "target": "defaultsApplied",
+          "meta": {
+            "mode": "autonomous-draft"
+          }
+        }
       }
     },
     "decisionGate": {
@@ -198,7 +237,10 @@
         "does": "Batch every human-only decision into one numbered round, each with a recommendation. Lock answers with owner + date."
       },
       "on": {
-        "G2_ANSWERED": { "target": "coherencePass", "guard": "gateRecorded" }
+        "G2_ANSWERED": {
+          "target": "coherencePass",
+          "guard": "gateRecorded"
+        }
       }
     },
     "defaultsApplied": {
@@ -208,7 +250,10 @@
         "does": "Autonomous-draft path: every G2 decision the run could not ask a human for is recorded as a default, sourced \"recommended\", pending contradiction at plan review."
       },
       "on": {
-        "DEFAULTS_APPLIED": { "target": "coherencePass", "guard": "defaultsRecorded" }
+        "DEFAULTS_APPLIED": {
+          "target": "coherencePass",
+          "guard": "defaultsRecorded"
+        }
       }
     },
     "coherencePass": {
@@ -218,8 +263,18 @@
         "does": "Thread new concepts from G2 through the docs; grep for now-stale terms the decisions invalidated; fix them."
       },
       "on": {
-        "COHERENT": { "target": "freezeGate", "meta": { "mode": "guided" } },
-        "COHERENT_AUTONOMOUS": { "target": "backboneFreeze", "meta": { "mode": "autonomous-draft" } }
+        "COHERENT": {
+          "target": "freezeGate",
+          "meta": {
+            "mode": "guided"
+          }
+        },
+        "COHERENT_AUTONOMOUS": {
+          "target": "backboneFreeze",
+          "meta": {
+            "mode": "autonomous-draft"
+          }
+        }
       }
     },
     "freezeGate": {
@@ -231,7 +286,10 @@
         "does": "Ask: specs aligned — proceed to the delivery package? Record owner + date."
       },
       "on": {
-        "G3_APPROVED": { "target": "backboneFreeze", "guard": "gateRecorded" }
+        "G3_APPROVED": {
+          "target": "backboneFreeze",
+          "guard": "gateRecorded"
+        }
       }
     },
     "backboneFreeze": {
@@ -241,7 +299,10 @@
         "does": "Write CONTRACT.md — guided freezes to v1.0 via `freeze`; autonomous-draft freezes to v1.0-draft via `freeze --draft` — plus the program plan and STATUS board; squads build against these."
       },
       "on": {
-        "CONTRACT_FROZEN": { "target": "parallelPlanning", "guard": "contractFrozen" }
+        "CONTRACT_FROZEN": {
+          "target": "parallelPlanning",
+          "guard": "contractFrozen"
+        }
       }
     },
     "parallelPlanning": {
@@ -252,8 +313,14 @@
         "llmAtTheNode": true
       },
       "on": {
-        "AMENDMENT": { "target": "parallelPlanning", "reenter": false },
-        "SQUADS_COMPLETE": { "target": "verify", "guard": "artifactsOnDisk" }
+        "AMENDMENT": {
+          "target": "parallelPlanning",
+          "reenter": false
+        },
+        "SQUADS_COMPLETE": {
+          "target": "verify",
+          "guard": "artifactsOnDisk"
+        }
       }
     },
     "verify": {
@@ -263,7 +330,10 @@
         "does": "Enforce the Test Contract gate + run the pre-handoff consistency lint; fix and re-lint until clean."
       },
       "on": {
-        "LINT_CLEAN": { "target": "adversaryGate", "guard": "handoffLintClean" }
+        "LINT_CLEAN": {
+          "target": "adversaryGate",
+          "guard": "handoffLintClean"
+        }
       }
     },
     "adversaryGate": {
@@ -273,7 +343,10 @@
         "does": "v3.2 D4 hard gate: after the lint is clean but before handoff, prove failure-mode depth. When the CONTRACT declares a state machine, the delivery must model its failure/recovery paths and cover-or-waive the five cascade classes (partial-failure, rollback/compensation, failed-recovery→escalation, recovery/resume, adversarial-verify). Silent absence fails closed; a genuinely linear workflow declares no machine and is N/A."
       },
       "on": {
-        "ADVERSARY_CLEAN": { "target": "render", "guard": "adversarialDepth" }
+        "ADVERSARY_CLEAN": {
+          "target": "render",
+          "guard": "adversarialDepth"
+        }
       }
     },
     "render": {
@@ -283,8 +356,20 @@
         "does": "Render every deliverable twin from its manifest."
       },
       "on": {
-        "RENDERED": { "target": "handoff", "guard": "artifactsOnDisk", "meta": { "mode": "guided" } },
-        "REVIEW_READY": { "target": "planReview", "guard": "artifactsOnDisk", "meta": { "mode": "autonomous-draft" } }
+        "RENDERED": {
+          "target": "handoff",
+          "guard": "artifactsOnDisk",
+          "meta": {
+            "mode": "guided"
+          }
+        },
+        "REVIEW_READY": {
+          "target": "planReview",
+          "guard": "artifactsOnDisk",
+          "meta": {
+            "mode": "autonomous-draft"
+          }
+        }
       }
     },
     "planReview": {
@@ -292,12 +377,18 @@
         "phase": 10,
         "gate": "G4",
         "human": true,
-        "records": ["G2", "G3"],
+        "records": [
+          "G2",
+          "G3"
+        ],
         "title": "Plan review",
         "does": "The single review-and-contradict round on the complete autonomous-draft package: the human reads the whole thing at once and contradicts any default. Record owner + date; records G2 and G3 answers."
       },
       "on": {
-        "REVIEW_ANSWERED": { "target": "freeze", "guard": "planReviewed" }
+        "REVIEW_ANSWERED": {
+          "target": "freeze",
+          "guard": "planReviewed"
+        }
       }
     },
     "freeze": {
@@ -307,8 +398,17 @@
         "does": "Ratify the autonomous-draft CONTRACT to final (v1.0-draft → v1.0) after plan review, or send a contradiction that changes the CONTRACT back to parallel planning as an amendment."
       },
       "on": {
-        "CONTRACT_FINAL": { "target": "handoff", "guard": "contractFrozen" },
-        "REVIEW_CONTRADICTED": { "target": "parallelPlanning", "guard": "contractFrozen", "meta": { "recovery": true } }
+        "CONTRACT_FINAL": {
+          "target": "handoff",
+          "guard": "contractFrozen"
+        },
+        "REVIEW_CONTRADICTED": {
+          "target": "parallelPlanning",
+          "guard": "contractFrozen",
+          "meta": {
+            "recovery": true
+          }
+        }
       }
     },
     "handoff": {
@@ -318,7 +418,9 @@
         "does": "Assemble README/KICKOFF, fill the board, run the embedded glossary and mirror freshness checks, produce the launch prompt for the build agent (/build-it)."
       },
       "on": {
-        "HANDED_OFF": { "target": "done" }
+        "HANDED_OFF": {
+          "target": "done"
+        }
       }
     },
     "done": {
