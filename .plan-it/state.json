@@ -6,7 +6,7 @@
     "goal": "plan-it v4: make the run legible to the human (HTML report layer, scope brief, decision queue, glossary, readable acronyms) and autonomous end to end (anamnesis + one review-and-contradict round, build topology with sessions + GATE autonomy contract, triage, residual disposition, named runs) \u2014 additive over the v2/v3 core",
     "startedAt": "2026-09-07T00:00:00Z",
     "inputs": [
-      "delivery/v4/V3-VS-V4-CORE-ENHANCEMENTS.html",
+      "delivery/v4/resources/V3-VS-V4-CORE-ENHANCEMENTS.html",
       "delivery/v4/resources/",
       "plugins/plan-it/ @ 3.0.1"
     ],

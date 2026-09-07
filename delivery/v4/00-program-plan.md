@@ -23,7 +23,7 @@
 | W3 | QA | every C-E case + every T-case run against the merged tree; dogfood run on `tests/fixtures/v4/dogfood-project/`; `QA-REPORT.md` with per-case PASS / FAIL / INV-with-reason | QA-REPORT delivered to the orchestrator; STATUS rows flipped with evidence |
 | W4 | orchestrator (after O-2 + A-2) | tag 4.0.0, marketplace entry, README install note; `/conclude-it` | tag pushed; ledger card written |
 
-Build-order notes: SQ-B's `run.deliveryRoot` resolution (V4B epics) must land before QA runs the v4 Cases, because run-contract discovers them from `delivery/v4/CONTRACT.md` (C-E9-10). SQ-A's stamp format is consumed by SQ-B's `mirror`; both read CONTRACT §4.3 and neither improvises.
+Build-order notes: SQ-B's `run.deliveryRoot` resolution (SQ-B epics V4B3–V4B5) must land before QA runs the v4 Cases, because run-contract discovers them from `delivery/v4/CONTRACT.md` (C-E9-10). SQ-A's stamp format is consumed by SQ-B's `mirror`; both read CONTRACT §4.3 and neither improvises.
 
 ## 3 · Orchestrator runbook
 
