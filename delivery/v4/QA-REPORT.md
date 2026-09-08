@@ -372,3 +372,67 @@ Confirmed by direct inspection of the live rendered artifacts, not just the isol
 | T-V4C4-09 | ✅ PASS | |
 | T-V4C4-10 | ✅ PASS | |
 
+## Re-verify after AMD-12 (main efa5bf7)
+
+AMD-12 (CONTRACT v1.5) fixed Finding 1 above: `renderEmbedBlock` now expands first-use glossary IDs inside the embed's markdown *source*, at build time, before it's placed in `<script type="text/markdown">` — outside fenced code, inline code spans, and link targets — sharing the page-global `seen` set with body prose so an ID already expanded once (either surface) isn't re-expanded. New binding case: **T-V4A3-13** (`node tests/v4/renderer/embed-first-use.mjs`).
+
+Re-verified in `.claude/worktrees/qa-w3` merged to `main @ efa5bf7` (descendant of `99a606b`, this report's first commit).
+
+### Updated tally (computed fresh, not copied from the original report)
+
+Epic case count changed: V4A3 gained 1 row (12 → 13) for the new binding case. SQ-A total 51 → 52. SQ-B and SQ-C unchanged.
+
+| Scope | Cases | Pass | Manual | Fail |
+|---|---|---|---|---|
+| CONTRACT (delivery/v4/CONTRACT.md) | 60 | 59 | 1 (C-E11-07) | 0 |
+| Epic V4A1-V4A4 (SQ-A) | 52 | 52 | 0 | 0 |
+| Epic V4B1-V4B5 (SQ-B) | 75 | 75 | 0 | 0 |
+| Epic V4C1-V4C4 (SQ-C) | 44 | 43 | 1 (T-V4C3-10) | 0 |
+| **Total** | **231** | **229** | **2** | **0** |
+
+### V4A3 — all 13 rows re-run (12 unchanged + new T-V4A3-13)
+
+| Case | Result | Note |
+|---|---|---|
+| T-V4A3-01 | ✅ PASS | |
+| T-V4A3-02 | ✅ PASS | |
+| T-V4A3-03 | ✅ PASS | |
+| T-V4A3-04 | ✅ PASS | |
+| T-V4A3-05 | ✅ PASS | |
+| T-V4A3-06 | ✅ PASS | |
+| T-V4A3-07 | ✅ PASS | |
+| T-V4A3-08 | ✅ PASS | |
+| T-V4A3-09 | ✅ PASS | |
+| T-V4A3-10 | ✅ PASS | |
+| T-V4A3-11 | ✅ PASS | |
+| T-V4A3-12 | ✅ PASS | unchanged from original report |
+| T-V4A3-13 | ✅ PASS | new binding case (AMD-12): `node tests/v4/renderer/embed-first-use.mjs` |
+
+### Full SQ-A re-run (52 cases, cheap to re-verify in full)
+
+V4A1 14/14 PASS · V4A2 15/15 PASS · V4A3 13/13 PASS · V4A4 10/10 PASS. (V4A1-02/03/04/05/07-14 and V4A2/V4A4 unchanged from the original report; re-run here for completeness, no regressions. T-V4A1-06 again needed its documented pre-render-then---check convention — not a defect — and passed: `build-report.mjs … --out /tmp/... ` then `--check --out /tmp/...` → identical, exit 0.)
+
+### Release gates re-run
+
+| Gate | Result |
+|---|---|
+| `node tests/run-contract.mjs` | PASS — 51/51 · 25/25 · 58/58 mechanism-ready + 1 manual, exit 0 |
+| `gate-check mirror-check` | PASS — 11/11 |
+| `gate-check handoff delivery/v4/` | PASS — 178 distinct case IDs, declared==counted for 13 epics, 5/5 twins MIRROR_FRESH |
+
+### Visual re-check (A-3) — KICKOFF.html and CONTRACT.html
+
+| Check | KICKOFF.html | CONTRACT.html |
+|---|---|---|
+| `--check` identical to manifest | PASS | PASS |
+| Total `<abbr>` count (occurrences, not lines) | **69** (matches orchestrator's expected order of magnitude) | **246** (matches) |
+| First-use markers (`class="gl"`) | 29 | 130 |
+| Abbr inside code spans (`<code><abbr`) | 0 | 0 |
+| Hover shows expansion | PASS — `title` attribute present and populated on every `abbr.gl`, e.g. first KICKOFF occurrence `W0` → title "orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY" | PASS — first occurrence `AMD-7` → title "orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17" |
+| Glossary panel still expands | PASS | PASS |
+| Theme toggle still cycles (auto/light/dark) | PASS | not re-tested independently (same shared mechanism, already proven working here and in the original A-3 pass) |
+
+**Note on the visible `.gl-x` expansion span:** embed-sourced first-use markers get `<abbr class="gl" title="…">` (tooltip) only, deliberately — `build-report.mjs` (`expandFirstUseInMarkdown`, ~line 455) documents this as an intentional lighter-weight treatment for the collapsed embed surface; T-V4A3-13's own Expected column only requires the `abbr class="gl"` itself, not a visible span. Regular (non-embed) body prose, e.g. DECISIONS.html's table cells, still gets both the abbr and the visible `.gl-x` span as before. This is a design choice, not a gap — confirmed by reading the implementation, not assumed.
+
+**Verdict: Finding 1 is closed. 229/231 cases pass; the 2 non-pass cases remain the same genuinely-manual items as the original report (owner action O-1, and the human visual/prose read for T-V4C3-10) — never silently marked PASS. No fake green, no regressions found in the re-run.**
+
