@@ -249,7 +249,7 @@ Repo:     /Users/macbook/Workspace/Devotts/plan-it @ ab0c192ccad05e1a6374d9c79ab
 State:    /Users/macbook/Workspace/Devotts/plan-it/.plan-it/v4.state.json   (run "v4"; renamed from the generic state.json at W2)
 Contract: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/CONTRACT.md sha256=3d06f59e3a2f116d653b7b8833b53f75f3702775ffeaec221ee60a038c6bbcb5   (v1.5 — v1.0 ratified at PLAN-REVIEW 2026-09-07 + AMD-7/8/10/11 during W1, AMD-12 at W3)
 ```
-Re-pinned at W0 (2026-09-07): `ab0c192` is the commit that landed the planning package, `docs/v4/`, the guard mirror copy and `.plan-it/state.json`; `51e46c0` added the byte-pinned 3.0.1 machine. Later commits are board/status updates and lane merges recorded in `STATUS.md ## Log`.
+Re-pinned at <abbr class="gl" title="orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY">W0</abbr> (2026-09-07): `ab0c192` is the commit that landed the planning package, `docs/v4/`, the guard mirror copy and `.plan-it/state.json`; `51e46c0` added the byte-pinned 3.0.1 machine. Later commits are board/status updates and lane merges recorded in `STATUS.md ## Log`.
 
 ## 1. Re-derive tally + reconcile from disk (the orchestrator's first instruction)
 
@@ -257,14 +257,14 @@ Recompute the board from `.plan-it/state.json` + the CONTRACT `## Cases` table +
 
 ## 2. What you are building
 
-Ten enhancements (E1–E10) across three lanes: a zero-dependency renderer and report family (SQ-A), the additive statechart, verbs, guard and harness (SQ-B), and the prose, templates, docs and 4.0.0 packaging (SQ-C). The v4 CONTRACT is the law; `docs/v4/02-v4-design.md` is the design; `docs/v4/01-findings.md` is the evidence.
+Ten enhancements (<abbr class="gl" title="scope brief: the human-readable explanation of size, shape and topology rendered before gate G1">E1</abbr>–<abbr class="gl" title="readable acronyms: the glossary seed copied at intake; every acronym explained on first use">E10</abbr>) across three lanes: a zero-dependency renderer and report family (SQ-A), the additive statechart, verbs, guard and harness (SQ-B), and the prose, templates, docs and 4.0.0 packaging (SQ-C). The v4 CONTRACT is the law; `docs/v4/02-v4-design.md` is the design; `docs/v4/01-findings.md` is the evidence.
 
-## 3. First concrete slice (W0, orchestrator alone)
+## 3. First concrete slice (<abbr>W0</abbr>, orchestrator alone)
 
-1. Commit the planning package and the guard mirror copy (authorization A-4): `git add delivery/v4 docs/v4 .plan-it plugins/plan-it/scripts/hooks/planit-guard.mjs CLAUDE.md delivery/decisions.md ENV-PROBES.json ENV-FACTS.md assets/brand` then one commit `chore(plan): plan-it v4 package (CONTRACT v1.0, 13 epics, 166+60 cases)`. Re-pin block 0.
-2. Byte-pin the 3.0.1 machine: `cp plugins/plan-it/skills/plan-it/machine.json tests/fixtures/v3/machine.v3.7fcff27.json` (V4B1 verifies its SHA-256 and never overwrites).
+1. Commit the planning package and the guard mirror copy (authorization <abbr class="gl" title="the orchestrator commits the guard mirror fix applied during planning as its first W0 commit">A-4</abbr>): `git add delivery/v4 docs/v4 .plan-it plugins/plan-it/scripts/hooks/planit-guard.mjs CLAUDE.md delivery/decisions.md ENV-PROBES.json ENV-FACTS.md assets/brand` then one commit `chore(plan): plan-it v4 package (CONTRACT v1.0, 13 epics, 166+60 cases)`. Re-pin block 0.
+2. Byte-pin the 3.0.1 machine: `cp plugins/plan-it/skills/plan-it/machine.json tests/fixtures/v3/machine.v3.7fcff27.json` (<abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B1</abbr> verifies its <abbr class="gl" title="the hash function behind every pin and stamp (`sha256=&lt;64-hex&gt;`)">SHA-256</abbr> and never overwrites).
 3. Create worktrees for `epic/v4a-*`, `epic/v4b-*`, `epic/v4c-*` (names in STATUS.md); squads edit only there.
-4. Record AMD-4 and AMD-5 as executed in `delivery/decisions.md` when V4B5 and W2 land them (the planned entries exist).
+4. Record <abbr class="gl" title="harness amendment: gate count bound to the v2 baseline; required for the machine-diff check">AMD-4</abbr> and <abbr class="gl" title="harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`">AMD-5</abbr> as executed in `delivery/decisions.md` when <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B5</abbr> and <abbr class="gl" title="integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0">W2</abbr> land them (the planned entries exist).
 5. Copy the GLOSSARY static seed into the package (already present as `GLOSSARY.md`; keep it current as IDs are minted).
 6. Run `node tests/run-contract.mjs` and `gate-check mirror-check`; write both tallies to `STATUS.md ## Log`. Expect 51/51 + 25/25 and 8/8 before any v4 code.
 
@@ -273,16 +273,16 @@ Ten enhancements (E1–E10) across three lanes: a zero-dependency renderer and r
 | Path | Default branch | Owner |
 |---|---|---|
 | `/Users/macbook/Workspace/Devotts/plan-it` (single repo) | `main` | orchestrator merges |
-| `plugins/plan-it/skills/plan-it/` (canonical plugin) + root mirrors (`SKILL.md`, `machine.json`, `scripts/`, `references/`, `assets/brand/default.brand.json`) | — | mirror pairs 11 after W2 |
+| `plugins/plan-it/skills/plan-it/` (canonical plugin) + root mirrors (`SKILL.md`, `machine.json`, `scripts/`, `references/`, `assets/brand/default.brand.json`) | — | mirror pairs 11 after <abbr>W2</abbr> |
 | `tests/` (`run-contract.mjs`, `v3/`, `v4/`, `fixtures/`) | — | SQ-B / SQ-C per CONTRACT §2 |
 
 ## 5. Locked decisions (each with rationale)
 
-Rulings D1–D7 (Fernando, 2026-09-07) and defaults R1–R12 (coordinator, ratified at PLAN-REVIEW 2026-09-07) with their rationale live in `DECISIONS.md`; the answered set projects into `GATE.md`. The three that shape the build most: R1 (squads build against a draft contract; the human's one review round ratifies it), R10 (every verb resolves the package folder from the state file, never a literal), R11 (two harness amendments, AMD-4 gate count and AMD-5 mirror pairs).
+Rulings <abbr class="gl" title="autonomous-draft is the default mode; guided selectable at anamnesis">D1</abbr>–<abbr class="gl" title="v4 is built by an orchestrator + three squads + QA">D7</abbr> (Fernando, 2026-09-07) and defaults <abbr class="gl" title="CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments">R1</abbr>–<abbr class="gl" title="renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb">R12</abbr> (coordinator, ratified at PLAN-REVIEW 2026-09-07) with their rationale live in `DECISIONS.md`; the answered set projects into `GATE.md`. The three that shape the build most: <abbr>R1</abbr> (squads build against a draft contract; the human's one review round ratifies it), <abbr class="gl" title="the state file names the package folder; every verb derives paths from `run.deliveryRoot`">R10</abbr> (every verb resolves the package folder from the state file, never a literal), <abbr class="gl" title="harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2">R11</abbr> (two harness amendments, <abbr>AMD-4</abbr> gate count and <abbr>AMD-5</abbr> mirror pairs).
 
 ## 6. Phase / wave order
 
-W0 orchestrator prep → W1 SQ-A ∥ SQ-B ∥ SQ-C → W2 integration (mirror pairs 11, versions 4.0.0 in one merge, state-file rename, prose-vs-machine cross-check) → W3 QA (all cases + dogfood) → W4 release (after owner action O-2 and authorization A-2). Build orders inside lanes are in STATUS.md.
+<abbr>W0</abbr> orchestrator prep → <abbr class="gl" title="three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason">W1</abbr> SQ-A ∥ SQ-B ∥ SQ-C → <abbr>W2</abbr> integration (mirror pairs 11, versions 4.0.0 in one merge, state-file rename, prose-vs-machine cross-check) → <abbr class="gl" title="QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered">W3</abbr> QA (all cases + dogfood) → <abbr class="gl" title="release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written">W4</abbr> release (after owner action <abbr class="gl" title="read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)">O-2</abbr> and authorization <abbr class="gl" title="the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green">A-2</abbr>). Build orders inside lanes are in STATUS.md.
 
 ## 7. How to run + test (prerequisites + verifiability precheck)
 
@@ -290,18 +290,18 @@ Prerequisites (probed, `ENV-FACTS.md`): node v20.19.2, sh, git, gh authenticated
 
 ## 8. Gotchas (each is a trap already seen)
 
-- The 3.0.1 epic-heading grammar cannot see `V4B1`-style IDs until V4B3 widens it; every v4 epic heading stays `## Epic V4<letter><n> — <title>` (CONTRACT §5).
-- The 3.0.1 `reconcile`, `contract --dir` and `adversary --dir` scan `delivery/v3/` by literal; run them positionally on `delivery/v4/…` until V4B3 lands (R10).
-- An ABSENT preflight probe blacklists every argv token, including `node` (C-E6-03 fixes it); do not probe with `node …` for facts that are expected to be absent.
+- The 3.0.1 epic-heading grammar cannot see `V4B1`-style IDs until <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B3</abbr> widens it; every v4 epic heading stays `## Epic V4<letter><n> — <title>` (CONTRACT §5).
+- The 3.0.1 `reconcile`, `contract --dir` and `adversary --dir` scan `delivery/v3/` by literal; run them positionally on `delivery/v4/…` until <abbr>V4B3</abbr> lands (<abbr>R10</abbr>).
+- An ABSENT preflight probe blacklists every argv token, including `node` (<abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E6-03</abbr> fixes it); do not probe with `node …` for facts that are expected to be absent.
 - The guard fix must land in BOTH the plugin copy and the root mirror; the release gate `mirror-check` fails otherwise — that is exactly how 7fcff27 stayed uninstalled for two weeks.
 - The SKILL description truncates silently past 1,024 characters (platform) and shows only 250 in listings; cut before adding.
-- Version literals live in six sites plus two harness constants; flip all in one W2 merge or `version-triple-match` is red in between.
-- The model-ID regex is duplicated in the guard and the renderer by design; change both or C-E2-09 fails.
+- Version literals live in six sites plus two harness constants; flip all in one <abbr>W2</abbr> merge or `version-triple-match` is red in between.
+- The model-ID regex is duplicated in the guard and the renderer by design; change both or <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-09</abbr> fails.
 - Headless (`claude -p`) sessions die on "wait for a notification"; every prompt says poll.
 
 ## 9. Handoff state
 
-Committed: nothing of v4 yet (the pinned SHA is 3.0.1 + the guard commit). On disk, uncommitted: the whole package (`delivery/v4/`, `docs/v4/`), `.plan-it/state.json` (state `done`, contract v1.0), the guard mirror copy, `CLAUDE.md` test-conventions block, `delivery/decisions.md` v4 section, `ENV-PROBES.json`, `ENV-FACTS.md`, `assets/brand/`. Answered: PLAN-REVIEW ratified (R1–R12), A-1/A-3/A-4 granted, A-2 held until O-2 — all in `GATE.md`. Open owner actions: O-1 (stale installs, before the tag), O-2 (read QA-REPORT.md, then decide A-2). Decisions owed by the build: none; new ones append to GATE.md.
+Committed: nothing of v4 yet (the pinned SHA is 3.0.1 + the guard commit). On disk, uncommitted: the whole package (`delivery/v4/`, `docs/v4/`), `.plan-it/state.json` (state `done`, contract v1.0), the guard mirror copy, `CLAUDE.md` test-conventions block, `delivery/decisions.md` v4 section, `ENV-PROBES.json`, `ENV-FACTS.md`, `assets/brand/`. Answered: PLAN-REVIEW ratified (<abbr>R1</abbr>–<abbr>R12</abbr>), <abbr class="gl" title="squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping">A-1</abbr>/<abbr class="gl" title="QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed">A-3</abbr>/<abbr>A-4</abbr> granted, <abbr>A-2</abbr> held until <abbr>O-2</abbr> — all in `GATE.md`. Open owner actions: <abbr class="gl" title="remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0">O-1</abbr> (stale installs, before the tag), <abbr>O-2</abbr> (read QA-REPORT.md, then decide <abbr>A-2</abbr>). Decisions owed by the build: none; new ones append to GATE.md.
 
 ## Launch prompt (the orchestrator session — open first, `/rename v4-orchestrator`, paste)
 
@@ -330,28 +330,28 @@ The four other sessions (three squads, QA) and their prompts: `SESSIONS.md`.
 Package: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/ — read KICKOFF.md (pinning block first, then re-derive the tally from disk), CONTRACT.md (the law, v1.0 after PLAN-REVIEW), GATE.md (every human input answered; the run is ungated), 00-program-plan.md (your runbook §3), STATUS.md (your board). Design context on demand: docs/v4/01-findings.md, docs/v4/02-v4-design.md.
 
 Your job, to conclusion:
-1. W0 yourself: commit the planning package and the guard mirror fix (authorization A-4); byte-pin tests/fixtures/v3/machine.v3.7fcff27.json from the 3.0.1 machine.json; create the epic/v4a-*, epic/v4b-*, epic/v4c-* worktrees; record AMD-4/AMD-5 in delivery/decisions.md; copy the GLOSSARY seed; run `node tests/run-contract.mjs` and `gate-check mirror-check` and record both tallies in STATUS.md ## Log.
-2. Squad sessions v4-sq-a-renderer, v4-sq-b-core, v4-sq-c-prose are open and polling. Signal W1 via SendMessage; verify their output ON DISK (idle ≠ delivered: branches, commits, files, each epic's local gate); merge per lane after its Test Contract is green (authorization A-1); flip STATUS.md rows with evidence; respect the build orders in KICKOFF.md.
+1. <abbr>W0</abbr> yourself: commit the planning package and the guard mirror fix (authorization <abbr>A-4</abbr>); byte-pin tests/fixtures/v3/machine.v3.7fcff27.json from the 3.0.1 machine.json; create the epic/v4a-*, epic/v4b-*, epic/v4c-* worktrees; record <abbr>AMD-4</abbr>/<abbr>AMD-5</abbr> in delivery/decisions.md; copy the GLOSSARY seed; run `node tests/run-contract.mjs` and `gate-check mirror-check` and record both tallies in STATUS.md ## Log.
+2. Squad sessions v4-sq-a-renderer, v4-sq-b-core, v4-sq-c-prose are open and polling. Signal <abbr>W1</abbr> via SendMessage; verify their output ON DISK (idle ≠ delivered: branches, commits, files, each epic's local gate); merge per lane after its Test Contract is green (authorization <abbr>A-1</abbr>); flip STATUS.md rows with evidence; respect the build orders in KICKOFF.md.
 3. Cross-cutting contradictions → amend CONTRACT.md yourself (dated AMD-n in delivery/decisions.md, version bump) and notify affected squads. New genuinely-human decisions → append to GATE.md, take the conservative reversible path, morning report. Rule yourself only if capped, reversible and covered by an existing answer — otherwise &quot;your word, not ours&quot;.
-4. W2: MIRROR_PAIRS 11, root mirrors synced, version 4.0.0 across six sites and both harness literals in ONE merge, CHANGELOG 4.0.0, `mv .plan-it/state.json .plan-it/v4.state.json` after V4B3 lands, cross-check SKILL.md posture-table state names against the live machine.json.
-5. W3: signal v4-qa to run every case (166 epic cases + 60 CONTRACT cases) and the dogfood run; IMPLEMENTED-NOT-VERIFIED with reason for anything unreachable — never a fake green.
-6. Usage-limit resilience (MANDATORY): keep a scheduled-wakeup chain alive (≤3600s hops) until W3 closes; persist state to .taskstate/v4/ + STATUS.md before every idle; on a limit, resume after reset — never park on Fernando.
-7. Worktrees-only for every squad (G-10). Any headless fallback session polls STATUS and git; it never waits on a notification (G-11). Reap each squad's agents when its wave closes.
-8. Morning deliverable: honest per-epic report (VERIFIED / IMPLEMENTED-NOT-VERIFIED with reasons), residuals with dispositions, incidental findings, and what Fernando should read first (QA-REPORT.md, then decide A-2). Do NOT tag or push 4.0.0 (A-2 is held until owner action O-2). Close with /conclude-it.</pre><button class="copy-btn" type="button" data-copy-target="prev">copy</button>
+4. <abbr>W2</abbr>: MIRROR_PAIRS 11, root mirrors synced, version 4.0.0 across six sites and both harness literals in ONE merge, CHANGELOG 4.0.0, `mv .plan-it/state.json .plan-it/v4.state.json` after <abbr>V4B3</abbr> lands, cross-check SKILL.md posture-table state names against the live machine.json.
+5. <abbr>W3</abbr>: signal v4-qa to run every case (166 epic cases + 60 CONTRACT cases) and the dogfood run; IMPLEMENTED-NOT-VERIFIED with reason for anything unreachable — never a fake green.
+6. Usage-limit resilience (MANDATORY): keep a scheduled-wakeup chain alive (≤3600s hops) until <abbr>W3</abbr> closes; persist state to .taskstate/v4/ + STATUS.md before every idle; on a limit, resume after reset — never park on Fernando.
+7. Worktrees-only for every squad (<abbr class="gl" title="a governance rule inside a CONTRACT (dash: rule; no dash: gate)">G-10</abbr><span class="gl-x">(a governance rule inside a CONTRACT (dash: rule; no dash: gate))</span>). Any headless fallback session polls STATUS and git; it never waits on a notification (<abbr class="gl" title="a governance rule inside a CONTRACT (dash: rule; no dash: gate)">G-11</abbr><span class="gl-x">(a governance rule inside a CONTRACT (dash: rule; no dash: gate))</span>). Reap each squad's agents when its wave closes.
+8. Morning deliverable: honest per-epic report (VERIFIED / IMPLEMENTED-NOT-VERIFIED with reasons), residuals with dispositions, incidental findings, and what Fernando should read first (QA-REPORT.md, then decide <abbr>A-2</abbr>). Do NOT tag or push 4.0.0 (<abbr>A-2</abbr> is held until owner action <abbr>O-2</abbr>). Close with /conclude-it.</pre><button class="copy-btn" type="button" data-copy-target="prev">copy</button>
 <h2>Sessions</h2>
 <details class="more" open><summary>Full report</summary><div class="mdout"><script type="text/markdown">
 # SESSIONS.md — plan-it v4 build topology (orchestrator + 3 squads + QA)
 
-Exact session names below are what each terminal runs `/rename` with; the orchestrator addresses squads by these names. Every squad edits in its own git worktree (governance rule G-10) and polls for its wave signal — no session waits on a notification (G-11). Package root: `/Users/macbook/Workspace/Devotts/plan-it/delivery/v4/`. Law: `CONTRACT.md` (v1.1-draft now; v1.0 after PLAN-REVIEW). Human inputs: `GATE.md` (all answered before W0).
+Exact session names below are what each terminal runs `/rename` with; the orchestrator addresses squads by these names. Every squad edits in its own git worktree (governance rule <abbr>G-10</abbr>) and polls for its wave signal — no session waits on a notification (<abbr>G-11</abbr>). Package root: `/Users/macbook/Workspace/Devotts/plan-it/delivery/v4/`. Law: `CONTRACT.md` (v1.1-draft now; v1.0 after PLAN-REVIEW). Human inputs: `GATE.md` (all answered before <abbr>W0</abbr>).
 Legend: `SQ-A/B/C` squad · `V4<letter><n>` epic · `T-<EID>-NN` epic case · `Wn` wave · `A-n` authorization — see `GLOSSARY.md`.
 
 | # | Session name | Role | Reads | Opens when |
 |---|---|---|---|---|
-| 1 | `v4-orchestrator` | conductor: W0, dispatch, verify on disk, merge per lane, amendments, wakeup chain, QA signal, morning report | KICKOFF.md · CONTRACT.md · GATE.md · 00-program-plan.md · STATUS.md | first |
-| 2 | `v4-sq-a-renderer` | SQ-A: renderer, template, brand tokens, report-family reference, renderer tests (4 epics, 48 cases) | CONTRACT.md · GATE.md · prds/prd-a-renderer.md · epics/epics-a-renderer.md | with #1; builds on the W1 signal |
-| 3 | `v4-sq-b-core` | SQ-B: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases) | CONTRACT.md · GATE.md · prds/prd-b-core.md · epics/epics-b-core.md | with #1; builds on the W1 signal |
-| 4 | `v4-sq-c-prose` | SQ-C: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases) | CONTRACT.md · GATE.md · prds/prd-c-prose.md · epics/epics-c-prose.md | with #1; builds on the W1 signal |
-| 5 | `v4-qa` | runs every CONTRACT case and every epic case against the merged tree; the dogfood run; writes QA-REPORT.md | CONTRACT.md §7 · STATUS.md · every epics/*.md Test Contract | when the orchestrator announces W3 |
+| 1 | `v4-orchestrator` | conductor: <abbr>W0</abbr>, dispatch, verify on disk, merge per lane, amendments, wakeup chain, QA signal, morning report | KICKOFF.md · CONTRACT.md · GATE.md · 00-program-plan.md · STATUS.md | first |
+| 2 | `v4-sq-a-renderer` | SQ-A: renderer, template, brand tokens, report-family reference, renderer tests (4 epics, 48 cases) | CONTRACT.md · GATE.md · prds/prd-a-renderer.md · epics/epics-a-renderer.md | with #1; builds on the <abbr>W1</abbr> signal |
+| 3 | `v4-sq-b-core` | SQ-B: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases) | CONTRACT.md · GATE.md · prds/prd-b-core.md · epics/epics-b-core.md | with #1; builds on the <abbr>W1</abbr> signal |
+| 4 | `v4-sq-c-prose` | SQ-C: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases) | CONTRACT.md · GATE.md · prds/prd-c-prose.md · epics/epics-c-prose.md | with #1; builds on the <abbr>W1</abbr> signal |
+| 5 | `v4-qa` | runs every CONTRACT case and every epic case against the merged tree; the dogfood run; writes QA-REPORT.md | CONTRACT.md §7 · STATUS.md · every epics/*.md Test Contract | when the orchestrator announces <abbr>W3</abbr> |
 
 ## Launch prompts — open each terminal, run `/rename <name>`, paste its block
 
@@ -394,7 +394,7 @@ Your package: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/prds/prd-b-co
 Your package: /Users/macbook/Workspace/Devotts/plan-it/delivery/v4/prds/prd-c-prose.md + epics/epics-c-prose.md (4 epics V4C1..V4C4, 44 binding cases). Law: delivery/v4/CONTRACT.md (never edit — contradictions go to "v4-orchestrator" via SendMessage). Lane: plugins/plan-it/skills/plan-it/SKILL.md, references/{templates,formats,playbooks,machine}.md, docs/**, README.md, CHANGELOG.md, plugins/plan-it/.claude-plugin/plugin.json, .claude-plugin/marketplace.json, tests/v3/version-triple-match.mjs, tests/v3/kickoff-pinning.mjs, tests/v3/changelog-shape.mjs, tests/v4/prose/* — nothing else (no code files of SQ-A or SQ-B). Branches epic/v4c-* in your OWN worktree. Build order V4C1 ∥ V4C2 → V4C3 → V4C4. Use the state and verb names exactly as CONTRACT §3.1 and §4.5 spell them. DoD per epic = 100% of its Test Contract; unreachable → IMPLEMENTED-NOT-VERIFIED with reason. Register (SendMessage "v4-orchestrator": "SQ-C ready") and poll STATUS.md for the W1 signal. Gotcha: the SKILL description must end ≤ 1,024 characters with the trigger phrases inside the first 250 — cut before you add; the six-site version check goes green only after SQ-B's machine.json bump lands in the same W2 merge, so report V4C4's version case as IMPLEMENTED-NOT-VERIFIED until then.
 ```
 
-### 5 · `v4-qa` (open when the orchestrator announces W3 — or with the rest; it polls)
+### 5 · `v4-qa` (open when the orchestrator announces <abbr>W3</abbr> — or with the rest; it polls)
 
 ```
 /full-qa plan-it v4, W3 verification wave.
@@ -459,7 +459,9 @@ function inline(s){
     });
 }
 function md(src){
-  var lines=esc(src).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
   function closeAll(){
     if(inList){out.push("</ul>");inList=false}
     if(inOList){out.push("</ol>");inOList=false}
@@ -499,7 +501,9 @@ function md(src){
     closeAll();out.push("<p>"+inline(l)+"</p>");i++;
   }
   closeAll(); if(inCode)out.push("</pre>");
-  return out.join("\n");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
 }
 
 /* MDPARSER-END */

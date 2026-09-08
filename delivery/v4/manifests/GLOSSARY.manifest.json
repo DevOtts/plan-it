@@ -2,7 +2,7 @@
   "schema": "planit-report/1",
   "kind": "GLOSSARY",
   "title": "GLOSSARY — plan-it v4",
-  "subtitle_html": "Static vocabulary and minted IDs — available continuously through the run",
+  "subtitle_html": "Static vocabulary and minted IDs — one row per ID; the table below is the GLOSSARY.md source rendered by the renderer's glossary block (the source is not embedded twice)",
   "source": {
     "path": "../GLOSSARY.md"
   },
@@ -12,18 +12,8 @@
   },
   "sections": [
     {
-      "id": "glossary-content",
-      "heading": "Glossary",
-      "blocks": [
-        {
-          "type": "embed",
-          "path": "../GLOSSARY.md"
-        }
-      ]
-    },
-    {
       "id": "glossary-panel",
-      "heading": "Reference",
+      "heading": "Glossary",
       "blocks": [
         {
           "type": "glossary"

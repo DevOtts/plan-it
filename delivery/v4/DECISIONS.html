@@ -331,7 +331,9 @@ function inline(s){
     });
 }
 function md(src){
-  var lines=esc(src).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
   function closeAll(){
     if(inList){out.push("</ul>");inList=false}
     if(inOList){out.push("</ol>");inOList=false}
@@ -371,7 +373,9 @@ function md(src){
     closeAll();out.push("<p>"+inline(l)+"</p>");i++;
   }
   closeAll(); if(inCode)out.push("</pre>");
-  return out.join("\n");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
 }
 
 /* MDPARSER-END */

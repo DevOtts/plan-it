@@ -236,15 +236,15 @@ pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-fam
 <tr><td>P2-11</td><td>the owner ruling (2026-08-26) that made worktrees-only a plan-it/build-it enhancement</td><td>LG-16</td></tr></table></div></details>
 <h2>Plan Review</h2>
 <details class="more" open><summary>Full report</summary><div class="mdout"><script type="text/markdown">
-# PLAN-REVIEW — plan-it v4 · the one review-and-contradict round (gate G4)
+# PLAN-REVIEW — plan-it v4 · the one review-and-contradict round (gate <abbr class="gl" title="gate: plan review — the single review-and-contradict round (new in v4)">G4</abbr>)
 
-Reviewed-by: Fernando Ott 2026-09-07 — ratified as recommended: R1–R12 confirmed as applied; A-1, A-3, A-4 granted; A-2 held until owner action O-2; no contradictions. The CONTRACT is v1.0 and the package handed off the same day.
+Reviewed-by: Fernando Ott 2026-09-07 — ratified as recommended: <abbr class="gl" title="CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments">R1</abbr>–<abbr class="gl" title="renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb">R12</abbr> confirmed as applied; <abbr class="gl" title="squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping">A-1</abbr>, <abbr class="gl" title="QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed">A-3</abbr>, <abbr class="gl" title="the orchestrator commits the guard mirror fix applied during planning as its first W0 commit">A-4</abbr> granted; <abbr class="gl" title="the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green">A-2</abbr> held until owner action <abbr class="gl" title="read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)">O-2</abbr>; no contradictions. The CONTRACT is v1.0 and the package handed off the same day.
 HTML twin: `PLAN-REVIEW.html` (hand-rendered this run; opened in Chrome). Markdown is canonical.
 Legend: `Rn` default the run applied · `A-n` authorization · `O-n` owner action · `Dn` your earlier ruling · `V4<letter><n>` epic · `C-E<n>-NN` CONTRACT case — see `GLOSSARY.md`.
 
 ## What you are looking at
 
-The complete draft package for plan-it 4.0.0, produced end to end without stopping after your rulings on the analysis report (autonomous-draft mode, D1). Everything below is on disk under `delivery/v4/` and `docs/v4/`. Every count on this page was computed by the gate-check verbs, not typed.
+The complete draft package for plan-it 4.0.0, produced end to end without stopping after your rulings on the analysis report (autonomous-draft mode, <abbr class="gl" title="autonomous-draft is the default mode; guided selectable at anamnesis">D1</abbr>). Everything below is on disk under `delivery/v4/` and `docs/v4/`. Every count on this page was computed by the gate-check verbs, not typed.
 
 ```
 docs/v4/
@@ -276,26 +276,26 @@ delivery/v4/
 
 ## Read these three first
 
-1. **R1 — how autonomous-draft keeps Rule 1.** Squads build against a contract frozen as a draft; this review ratifies it into v1.0; a contradiction that changes the CONTRACT re-enters the squads as an amendment. Alternative: review before squads write (praxya's order). This is the one default that changes how a run feels.
-2. **The guard fix that was never installed** (CONTRACT cases C-E9-07, C-E9-08). The named-run fix from commit 7fcff27 lived only in the root copy; the plugin copy Claude Code runs never had it. It is mirrored now (uncommitted, authorization A-4) and v4 makes the resolution rule robust (by the package folder, not a path convention).
-3. **The renderer's escaping case** (C-E2-12). The renderer being ported can be broken out of with an upper-case `<\/SCRIPT>`. v4 fixes it and asserts it.
+1. **<abbr>R1</abbr> — how autonomous-draft keeps Rule 1.** Squads build against a contract frozen as a draft; this review ratifies it into v1.0; a contradiction that changes the CONTRACT re-enters the squads as an amendment. Alternative: review before squads write (praxya's order). This is the one default that changes how a run feels.
+2. **The guard fix that was never installed** (CONTRACT cases <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-07</abbr>, <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-08</abbr>). The named-run fix from commit 7fcff27 lived only in the root copy; the plugin copy Claude Code runs never had it. It is mirrored now (uncommitted, authorization <abbr>A-4</abbr>) and v4 makes the resolution rule robust (by the package folder, not a path convention).
+3. **The renderer's escaping case** (<abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-12</abbr>). The renderer being ported can be broken out of with an upper-case `<\/SCRIPT>`. v4 fixes it and asserts it.
 
 ## The twelve defaults (contradict by writing `Rn: <alternative>`)
 
 | ID | Default applied | Alternative not taken |
 |---|---|---|
-| R1 | draft contract for squads → one review round → v1.0 → amendment loop on contradiction | review before squads write |
-| R2 | "owner decision" triage verdict exits to closed-without-plan with a memo + reopen condition | back into the questionnaire |
-| R3 | typed ruling tags canonical in markdown; glyphs are decoration | glyphs as source of truth |
-| R4 | optional Deadline column; owner actions with deadlines surface at close | no column |
-| R5 | orchestrator = top tier in RUN-POLICY | unspecified |
-| R6 | incidental findings in the STATUS log, tagged, never in the case tally | separate file |
-| R7 | brand accents as chip backgrounds in light mode; muted text Steel (WCAG measured) | guideline colours as text |
-| R8 | mirror pairs 8 → 11 | 9 |
-| R9 | mermaid 10.9.1 pinned on cdnjs, strict, text fallback offline | 11.x |
-| R10 | the state file names the package folder; verbs derive paths from it | keep `delivery/v3/` literals |
-| R11 | harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), like AMD-1/AMD-2 | fork the gate concept |
-| R12 | renderer is a separate script, not a gate-check verb | a gate-check verb |
+| <abbr>R1</abbr> | draft contract for squads → one review round → v1.0 → amendment loop on contradiction | review before squads write |
+| <abbr class="gl" title="&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition">R2</abbr> | "owner decision" triage verdict exits to closed-without-plan with a memo + reopen condition | back into the questionnaire |
+| <abbr class="gl" title="typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration">R3</abbr> | typed ruling tags canonical in markdown; glyphs are decoration | glyphs as source of truth |
+| <abbr class="gl" title="optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report">R4</abbr> | optional Deadline column; owner actions with deadlines surface at close | no column |
+| <abbr class="gl" title="orchestrator = top tier in RUN-POLICY">R5</abbr> | orchestrator = top tier in RUN-POLICY | unspecified |
+| <abbr class="gl" title="incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally">R6</abbr> | incidental findings in the STATUS log, tagged, never in the case tally | separate file |
+| <abbr class="gl" title="brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast">R7</abbr> | brand accents as chip backgrounds in light mode; muted text Steel (WCAG measured) | guideline colours as text |
+| <abbr class="gl" title="mirror pairs 8 → 11 (renderer, template, brand JSON)">R8</abbr> | mirror pairs 8 → 11 | 9 |
+| <abbr class="gl" title="mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline">R9</abbr> | mermaid 10.9.1 pinned on cdnjs, strict, text fallback offline | 11.x |
+| <abbr class="gl" title="the state file names the package folder; every verb derives paths from `run.deliveryRoot`">R10</abbr> | the state file names the package folder; verbs derive paths from it | keep `delivery/v3/` literals |
+| <abbr class="gl" title="harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2">R11</abbr> | harness amendments <abbr class="gl" title="harness amendment: gate count bound to the v2 baseline; required for the machine-diff check">AMD-4</abbr> (gate count) and <abbr class="gl" title="harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`">AMD-5</abbr> (11 pairs), like <abbr class="gl" title="v3 amendment (2026-07-08): T-E1-05 gate-count precedent">AMD-1</abbr>/<abbr class="gl" title="v3 amendment: mirror-pair count precedent">AMD-2</abbr> | fork the gate concept |
+| <abbr>R12</abbr> | renderer is a separate script, not a gate-check verb | a gate-check verb |
 
 Full rationale per row: `DECISIONS.md` — Defaults. Full design consequences: `docs/v4/02-v4-design.md`.
 
@@ -303,12 +303,12 @@ Full rationale per row: `DECISIONS.md` — Defaults. Full design consequences: `
 
 | ID | Question | Recommended |
 |---|---|---|
-| A-1 | squads commit to `epic/v4*`; orchestrator merges to `main` overnight | grant |
-| A-2 | orchestrator tags and pushes 4.0.0 + marketplace entry | hold until you have read QA-REPORT.md (O-2) |
-| A-3 | QA opens Chrome for rendered twins; headless fallback sessions allowed | grant |
-| A-4 | commit the guard mirror fix as the first W0 commit | grant |
+| <abbr>A-1</abbr> | squads commit to `epic/v4*`; orchestrator merges to `main` overnight | grant |
+| <abbr>A-2</abbr> | orchestrator tags and pushes 4.0.0 + marketplace entry | hold until you have read QA-REPORT.md (<abbr>O-2</abbr>) |
+| <abbr>A-3</abbr> | QA opens Chrome for rendered twins; headless fallback sessions allowed | grant |
+| <abbr>A-4</abbr> | commit the guard mirror fix as the first <abbr class="gl" title="orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY">W0</abbr> commit | grant |
 
-Owner actions (only you; none blocks the build): O-1 remove the stale installs before the tag · O-2 read QA-REPORT.md, then decide A-2 · O-3 ratify R7 or send colours.
+Owner actions (only you; none blocks the build): <abbr class="gl" title="remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0">O-1</abbr> remove the stale installs before the tag · <abbr>O-2</abbr> read QA-REPORT.md, then decide <abbr>A-2</abbr> · <abbr class="gl" title="ratify R7 (brand contrast deviation) or send the exact colours you want as text">O-3</abbr> ratify <abbr>R7</abbr> or send colours.
 
 ## What happens if you answer nothing
 
@@ -320,10 +320,10 @@ v1.0-draft → v1.1-draft on 2026-09-07: 21 corrections the three planning squad
 
 ## Known limitations of this planning run (honest states)
 
-- This run executed on the 3.0.1 machine (17 states), so G2 and G3 were recorded as coordinator defaults pending this review instead of the v4 `defaultsApplied` / `planReview` states the design adds. The state file records `pendingReview: true` on both.
-- The 3.0.1 `reconcile` embedded in `handoff` scans `delivery/v3/` by literal; the coordinator reconciled the v4 package by hand (declared == counted for all 13 epics via `handoff`'s own per-epic check). R10 fixes the literal.
+- This run executed on the 3.0.1 machine (17 states), so <abbr class="gl" title="gate: decisions — the batched judgment calls with recommendations">G2</abbr> and <abbr class="gl" title="gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;">G3</abbr> were recorded as coordinator defaults pending this review instead of the v4 `defaultsApplied` / `planReview` states the design adds. The state file records `pendingReview: true` on both.
+- The 3.0.1 `reconcile` embedded in `handoff` scans `delivery/v3/` by literal; the coordinator reconciled the v4 package by hand (declared == counted for all 13 epics via `handoff`'s own per-epic check). <abbr>R10</abbr> fixes the literal.
 - The HTML twins on this run (DECISIONS, PLAN-REVIEW, KICKOFF) are hand-rendered following the renderer's contract (stamps, brand badge, glossary panel). The v4 renderer replaces the hand render; the markdown is canonical.
-- The run's own state file has the legacy generic name; the rename to `.plan-it/v4.state.json` is a W2 step after V4B3 lands.
+- The run's own state file has the legacy generic name; the rename to `.plan-it/v4.state.json` is a <abbr class="gl" title="integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0">W2</abbr> step after <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B3</abbr> lands.
 
 ## Copy your rulings
 
@@ -387,7 +387,9 @@ function inline(s){
     });
 }
 function md(src){
-  var lines=esc(src).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
   function closeAll(){
     if(inList){out.push("</ul>");inList=false}
     if(inOList){out.push("</ol>");inOList=false}
@@ -427,7 +429,9 @@ function md(src){
     closeAll();out.push("<p>"+inline(l)+"</p>");i++;
   }
   closeAll(); if(inCode)out.push("</pre>");
-  return out.join("\n");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
 }
 
 /* MDPARSER-END */
