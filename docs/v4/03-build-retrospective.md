@@ -47,4 +47,5 @@ Planning-time gaps visible only at build: backticked scaffold pointers failed `P
 2. Dry-run every `run:` cell of every Test Contract against the pinned tree before handoff (two mechanisms were wrong before code existed).
 3. Every CONTRACT case needs exactly one owning lane by *path*, checked by a lint (C-E2-11 had none).
 4. Scope-lock the prompt of any verifier fork QA dispatches (one tried to redo the whole wave).
-5. A run executed on an older machine while emulating a newer mode leaves a state file the new `state` verb rejects (C-E7-06); decide the relabel-or-rewrite rule up front (this run: relabelled, owner action O-5).
+5. **W4 is tag AND release.** Pushing the git tag does not create a GitHub Release; the Releases page kept showing 3.0.1 as Latest until `gh release create v4.0.0 --latest --notes-file <CHANGELOG section>` ran the next morning. Make "create the Release from the CHANGELOG section, mark latest, verify with `gh release list`" an explicit W4 step next to tag + push + marketplace entry.
+6. A run executed on an older machine while emulating a newer mode leaves a state file the new `state` verb rejects (C-E7-06); decide the relabel-or-rewrite rule up front (this run: relabelled, owner action O-5).
