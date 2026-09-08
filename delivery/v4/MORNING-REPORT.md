@@ -2,7 +2,7 @@
 type: report
 title: "plan-it 4.0.0 — morning report (orchestrator, W0–W3)"
 description: "Honest per-epic outcome of the overnight v4 build: what is VERIFIED, what is not, residuals with dispositions, incidental findings, and what to read first."
-status: final (W3 closed; release held for O-2 / A-2)
+status: final (SHIPPED — v4.0.0 tagged and pushed 2026-09-07 after A-2)
 verified: 2026-09-07
 repos: [plan-it]
 tags: [plan-it, v4, release, report]
@@ -15,12 +15,12 @@ Legend: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTR
 ## Read this first
 
 1. `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree — final: **231 cases · 229 PASS · 2 MANUAL · 0 FAIL** (first pass 230 cases 228/2/0 on main 5189a04; "Re-verify after AMD-12" section on main efa5bf7).
-2. Decide **A-2** (tag + push 4.0.0 + marketplace entry): held until you read QA-REPORT.md (**O-2**). Nothing is tagged or pushed. Before the tag, do **O-1** (remove the stale installs, case C-E11-07 — the one CONTRACT case that stays MANUAL by design).
+2. **A-2 granted, v4.0.0 tagged and pushed.** Do **O-1** now: remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 — case C-E11-07, the one CONTRACT case that stays MANUAL by design, and the prod check of this release.
 3. Two small owner calls that do not block: **O-4** (redact-or-keep model-ID citations in the research records) and **O-5** (confirm the `run.mode` relabel of this run's state file). Both are in `GATE.md`.
 
 ## Outcome in one line
 
-All 13 epics are **VERIFIED** by the orchestrator on disk (every `run:` cell exit code as expected; `node tests/run-contract.mjs` exit 0 on main) and re-run on `main`; QA independently found **0 FAIL**; every release gate of CONTRACT §7 is green on `main`; the only non-green item is the owner-gated manual case C-E11-07. **Not shipped**: the tag/push waits for you (A-2).
+All 13 epics are **VERIFIED** by the orchestrator on disk (every `run:` cell exit code as expected; `node tests/run-contract.mjs` exit 0 on main) and re-run on `main`; QA independently found **0 FAIL**; every release gate of CONTRACT §7 is green on `main`; the only non-green item is the owner-gated manual case C-E11-07. **Shipped**: A-2 granted 2026-09-07; `v4.0.0` tagged on `be9cf58` and pushed with main. Still yours: **O-1** (stale installs → install `plan-it@devotts` 4.0.0), which is also the only prod verification not yet done.
 
 ## Per-epic (from STATUS.md, computed)
 

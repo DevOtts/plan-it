@@ -415,5 +415,9 @@
   "meta": {
     "stateFile": ".plan-it/v4.state.json",
     "renamedAt": "2026-09-07"
+  },
+  "archive": {
+    "archivedAt": "2026-09-08T00:34:31.365Z",
+    "from": ".plan-it/v4.state.json"
   }
 }
