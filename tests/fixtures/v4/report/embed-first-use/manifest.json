@@ -1,0 +1,15 @@
+{
+  "schema": "planit-report/1",
+  "kind": "KICKOFF",
+  "title": "Embed First Use",
+  "output": "out.html",
+  "glossary": {"path": "GLOSSARY.md"},
+  "sections": [
+    {"heading": "Recap", "blocks": [
+      {"type": "copy", "content": "Already covered G-7 above."}
+    ]},
+    {"heading": "Details", "blocks": [
+      {"type": "embed", "path": "excerpt.md", "label": "Excerpt"}
+    ]}
+  ]
+}
