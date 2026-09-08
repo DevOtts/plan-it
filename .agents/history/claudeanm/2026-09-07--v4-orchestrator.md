@@ -5,8 +5,8 @@ session_id: 558ddded-61df-4dc4-ad2f-d33543fb8d28
 project: plan-it
 cwd: /Users/macbook/Workspace/Devotts/plan-it
 date: 2026-09-07
-status: BUILD COMPLETE, RELEASE HELD — 13/13 epics VERIFIED, QA 231 cases 229 PASS · 2 MANUAL · 0 FAIL; tag/push waits for O-1/O-2 → A-2
-tags: [plan-it, v4, 4.0.0, orchestrator, squads, qa, amendments, dogfood, release-held]
+status: SHIPPED — v4.0.0 tagged on be9cf58 and pushed (A-2 granted 2026-09-07); 13/13 epics VERIFIED, QA 231 cases 229 PASS · 2 MANUAL · 0 FAIL; O-1 (install on this Mac) stays with the owner
+tags: [plan-it, v4, 4.0.0, orchestrator, squads, qa, amendments, dogfood, shipped]
 ---
 # Objective
 Orchestrate the overnight plan-it 4.0.0 build (W0 prep → W1 three squads → W2 integration → W3 QA) from the frozen planning package `delivery/v4/`; merge per lane after on-disk verification; amend the CONTRACT centrally; never tag (A-2 held).
@@ -16,7 +16,7 @@ Orchestrate the overnight plan-it 4.0.0 build (W0 prep → W1 three squads → W
 - W1: SQ-A (renderer) 4 epics, SQ-B (core) 5 epics, SQ-C (prose) 4 epics — every epic's `run:` cells re-run by the orchestrator in the squad's worktree before the board flipped; SQ-A lane merged `8d91e5c`; SQ-B + SQ-C landed together in the W2 merge `5189a04` (4.0.0 at six sites + both harness literals, MIRROR_PAIRS 11, `.plan-it/v4.state.json`).
 - Seven amendments AMD-6…AMD-12 (CONTRACT v1.0 → v1.5, 60 cases unchanged; 4 new epic cases, 166 → 171), five of them from running the new lints/renderer against the package itself; 4 fix branches merged.
 - W3: QA-REPORT.md (independent) 231 cases · 229 PASS · 2 MANUAL (C-E11-07 owner-gated O-1; T-V4C3-10 human read) · 0 FAIL; visual A-3 PASS; dogfood 5/5; every CONTRACT §7 gate green on main.
-- RED stays RED: nothing tagged or pushed (A-2 held until O-2); owner actions O-1, O-2, O-4, O-5 open in GATE.md.
+- SHIPPED: A-2 granted by Fernando → `v4.0.0` tagged on `be9cf58`, main + tag pushed to origin (main 5ab3a66 after the W4 board); run `v4` archived to `.plan-it/done/`. Prod install on this Mac = O-1, unverified (owner). O-4, O-5 open.
 - No usage limit hit; wakeup chain (≤30 min hops) + branch monitor ran W1→W3 and were stopped at close.
 
 # Files touched
@@ -32,5 +32,5 @@ Orchestrate the overnight plan-it 4.0.0 build (W0 prep → W1 three squads → W
 - Squad sessions (Fernando's terminals, idle, told to /conclude-it): v4-sq-a-renderer, v4-sq-b-core, v4-sq-c-prose, v4-qa
 
 # Next
-- Fernando: O-1 (stale installs), O-2 (read QA-REPORT) → grant A-2 → W4: tag 4.0.0, push, marketplace entry; then /reconcile-it the leftover worktrees/branches (epic/v4*, qa/w3, w2/integration).
+- Fernando: O-1 (remove stale installs, install plan-it@devotts 4.0.0 = the prod check of this release); then /reconcile-it the leftover worktrees/branches (epic/v4*, qa/w3, w2/integration).
 - Optional: O-4 (research model-ID citations), O-5 (confirm run.mode relabel).
