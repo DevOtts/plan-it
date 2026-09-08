@@ -2,7 +2,7 @@
 type: report
 title: "plan-it 4.0.0 — morning report (orchestrator, W0–W3)"
 description: "Honest per-epic outcome of the overnight v4 build: what is VERIFIED, what is not, residuals with dispositions, incidental findings, and what to read first."
-status: final-pending-O-2
+status: final (W3 closed; release held for O-2 / A-2)
 verified: 2026-09-07
 repos: [plan-it]
 tags: [plan-it, v4, release, report]
@@ -14,7 +14,7 @@ Legend: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTR
 
 ## Read this first
 
-1. `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree (230 cases at first pass; re-verify section after AMD-12).
+1. `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree — final: **231 cases · 229 PASS · 2 MANUAL · 0 FAIL** (first pass 230 cases 228/2/0 on main 5189a04; "Re-verify after AMD-12" section on main efa5bf7).
 2. Decide **A-2** (tag + push 4.0.0 + marketplace entry): held until you read QA-REPORT.md (**O-2**). Nothing is tagged or pushed. Before the tag, do **O-1** (remove the stale installs, case C-E11-07 — the one CONTRACT case that stays MANUAL by design).
 3. Two small owner calls that do not block: **O-4** (redact-or-keep model-ID citations in the research records) and **O-5** (confirm the `run.mode` relabel of this run's state file). Both are in `GATE.md`.
 
@@ -106,6 +106,17 @@ Every amendment is dated in `delivery/decisions.md`, mirrored in the CONTRACT Ch
 - "Verify on disk, not on done" caught nothing false — every squad tally matched the orchestrator's re-run — but the *dogfood* of the new lints on the package itself found seven real defects the case fixtures could not see. Add "run the new gates against the package that specifies them" as a standing W2 step.
 - Planning-time gaps found at build time: two `run:` mechanisms (awk range, sweep scope), backticked scaffold pointers, one CONTRACT case with no owner (C-E2-11), and a grammar collision (defaults `R<n>` vs PRD requirements). All cheap to catch with a "dry-run every run: cell against the pinned tree" step before handoff.
 - Timestamps: the orchestrator's first log entries used a guessed clock; corrected from commit times. Always `date`.
+
+## Final numbers
+
+| What | Count |
+|---|---|
+| Epics VERIFIED | 13 / 13 |
+| Epic cases (SQ-A 52 · SQ-B 75 · SQ-C 44) | 171, all PASS except T-V4C3-10 (human read, PASS by QA) |
+| CONTRACT cases | 60: 59 PASS · 1 MANUAL (C-E11-07, owner-gated O-1) |
+| Orchestrator amendments | 7 (AMD-6 … AMD-12), CONTRACT v1.0 → v1.5, case count unchanged |
+| Fix branches merged after lane close | 4 (SQ-A ×3, SQ-C ×1) |
+| Merge commits to main | SQ-A lane · W2 (SQ-B + SQ-C, one merge) · 4 fixes · 2 QA |
 
 ## Not done, on purpose
 
