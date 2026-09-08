@@ -187,8 +187,8 @@ shell" pattern to the pipeline itself:
 
 | Piece | What it is |
 |---|---|
-| `machine.json` | The pipeline as an explicit XState v5-compatible statechart — 15 states, 3 human gates, guarded transitions, an amendment self-loop. Paste it into [stately.ai/viz](https://stately.ai/viz) to see it. |
-| `.plan-it/state.json` | Every run persists its position: current state, gate approvals (owner + date), contract version, verified-artifact registry. Crash, compaction, or a fresh session → resume from the machine, not the transcript. |
+| `machine.json` | The pipeline as an explicit XState v5-compatible statechart — 25 states (4.0.0), 5 human gates (G0 anamnesis · G1 scope · G2 decisions · G3 freeze · G4 plan review), guarded transitions, an amendment self-loop. Paste it into [stately.ai/viz](https://stately.ai/viz) to see it. |
+| `.plan-it/<slug>.state.json` (named run; the generic `state.json` is still accepted) | Every run persists its position: current state, gate approvals (owner + date), contract version, verified-artifact registry. Crash, compaction, or a fresh session → resume from the machine, not the transcript. |
 | `scripts/gate-check.mjs` | The guards as exit codes (zero-dep Node): `verify` (idle ≠ delivered), `freeze` (no contract → no squads), `handoff` (consistency lint), `state` (gates recorded). A non-zero exit blocks the transition. |
 
 The fuzzy phases — discovery, synthesis, authoring, judgment — stay
