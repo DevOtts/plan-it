@@ -120,7 +120,9 @@ function inline(s){
     });
 }
 function md(src){
-  var lines=esc(src).split("\\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\\b[^>]*>[\\s\\S]*?<\\/abbr>/gi,function(m){abbrs.push(m);return "\\u0001ABBR"+(abbrs.length-1)+"\\u0001"});
+  var lines=esc(protectedSrc).split("\\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
   function closeAll(){
     if(inList){out.push("</ul>");inList=false}
     if(inOList){out.push("</ol>");inOList=false}
@@ -160,7 +162,9 @@ function md(src){
     closeAll();out.push("<p>"+inline(l)+"</p>");i++;
   }
   closeAll(); if(inCode)out.push("</pre>");
-  return out.join("\\n");
+  var result=out.join("\\n");
+  result=result.replace(/\\u0001ABBR(\\d+)\\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
 }
 `;
 
@@ -404,8 +408,13 @@ export function glossaryExpansionFor(id, index) {
 // dash-joined alphanumeric segments, filtered to those carrying a digit somewhere, so
 // arbitrary family shapes like `D-B<n>` are found in prose without a bespoke alternative
 // per shape; a stoplist excludes acronyms that happen to contain a digit-like run).
-const ID_TOKEN_RE = /\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
+// `DoD` (Definition of Done) is a static-vocabulary literal that doesn't fit the digit-shaped
+// grammar above (mixed-case, no digit) — matched as an explicit extra alternative and exempt
+// from the digit-required filter below, the same way the old bespoke grammar special-cased
+// a handful of literal status-vocabulary words.
+const ID_TOKEN_RE = /\bDoD\b|\b[A-Z][A-Z0-9]*(?:-[A-Za-z0-9]+)*\b/g;
 const ID_STOPLIST = new Set(['UTF8', 'SHA256', 'ISO8601', 'HTTP2', 'X11', 'MD5', 'I18N', 'E2E']);
+const ID_NO_DIGIT_REQUIRED = new Set(['DoD']);
 
 export function buildGlossaryPanel(glossaryPath) {
   if (!glossaryPath || !fs.existsSync(glossaryPath)) {
@@ -424,31 +433,84 @@ export function buildGlossaryPanel(glossaryPath) {
   return { html, index, warning: null };
 }
 
-// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/<script> content
-// and a rendered `glossary` block's own table (AMD-11 — its escaped family-pattern cells,
-// e.g. "V4A&lt;n&gt;", are not prose to scan). The collapsed {{GLOSSARY}} panel is never in
-// bodyHtml at all (a separate template slot), so it is excluded structurally, not by pattern.
+// One id-wrap decision, shared by both surfaces first-use touches (regular HTML prose and
+// embedded markdown source) so a single page-global `seen` set produces one consistent
+// verdict regardless of which surface an ID's true first occurrence lands on.
+function wrapFirstUseId(id, glossaryIndex, seen, warnings, { withExpansionSpan }) {
+  if ((!ID_NO_DIGIT_REQUIRED.has(id) && !/\d/.test(id)) || ID_STOPLIST.has(id)) return id; // not ID-shaped — leave untouched, no warning
+  const known = isKnownGlossaryId(id, glossaryIndex);
+  if (!known) {
+    if (!warnings.includes(id)) warnings.push(id);
+    return id;
+  }
+  if (!seen.has(id)) {
+    seen.add(id);
+    const expansion = glossaryExpansionFor(id, glossaryIndex);
+    const abbr = `<abbr class="gl" title="${esc(expansion)}">${id}</abbr>`;
+    return withExpansionSpan ? `${abbr}<span class="gl-x">(${esc(expansion)})</span>` : abbr;
+  }
+  return `<abbr>${id}</abbr>`;
+}
+
+// AMD-12 (G-8): first-use expansion of an embed's markdown SOURCE, applied at build time
+// before it is placed in <script type="text/markdown">, outside inline code spans, fenced
+// blocks, link targets/URLs and existing HTML tags — sharing the page-global `seen` set so
+// an ID already expanded earlier on the page (body prose or an earlier embed) is not
+// re-expanded. No .gl-x visible-expansion span here (a `<abbr title>` tooltip only) — the
+// embed is client-rendered inside a collapsed <details>, a lighter-weight surface than body
+// prose; CONTRACT T-V4A3-13 only requires the `<abbr class="gl"` itself.
+function expandFirstUseInMarkdown(mdSource, glossaryIndex, seen, warnings) {
+  const fenceParts = mdSource.split(/(```[\s\S]*?```)/);
+  for (let i = 0; i < fenceParts.length; i++) {
+    if (i % 2 === 1) continue; // fenced code block — untouched
+    // Inline code spans, markdown links (URL target only), and existing HTML tags are all
+    // protected the same way: split them out, scan everything else, recombine.
+    const subParts = fenceParts[i].split(/(`[^`]*`|\[[^\]]*\]\([^)]*\)|<[^>]*>)/);
+    for (let j = 0; j < subParts.length; j++) {
+      if (j % 2 === 1) {
+        const linkMatch = subParts[j].match(/^(\[)([^\]]*)(\]\()([^)]*)(\))$/);
+        if (linkMatch) {
+          const [, lb, label, mid, url, rb] = linkMatch;
+          const scannedLabel = label.replace(ID_TOKEN_RE, (id) => wrapFirstUseId(id, glossaryIndex, seen, warnings, { withExpansionSpan: false }));
+          subParts[j] = lb + scannedLabel + mid + url + rb;
+        }
+        continue; // inline code / HTML tag — untouched; a link's URL is never scanned
+      }
+      subParts[j] = subParts[j].replace(ID_TOKEN_RE, (id) => wrapFirstUseId(id, glossaryIndex, seen, warnings, { withExpansionSpan: false }));
+    }
+    fenceParts[i] = subParts.join('');
+  }
+  return fenceParts.join('');
+}
+
+// First-use expansion pass over assembled body HTML, skipping <code>/<pre>/non-markdown
+// <script> content and a rendered `glossary` block's own table (AMD-11 — its escaped
+// family-pattern cells, e.g. "V4A&lt;n&gt;", are not prose to scan). A markdown-typed
+// `<script type="text/markdown">` (an embed's source, AMD-12) gets its OWN nested pass
+// instead of being skipped outright — same shared `seen`/`warnings`, so document order
+// across body prose and embeds is respected (one linear left-to-right scan). The collapsed
+// {{GLOSSARY}} panel is never in bodyHtml at all (a separate template slot), so it is
+// excluded structurally, not by pattern.
 export function expandFirstUse(bodyHtml, glossaryIndex) {
   const seen = new Set();
   const warnings = [];
-  const PROTECTED_RE = /(<(?:code|pre|script)\b[^>]*>[\s\S]*?<\/(?:code|pre|script)>|<div class="glossary-table-block">[\s\S]*?<\/div>\s*<\/div>)/i;
+  // AMD-12: a `copy` block's <pre class="copy"> is copyable STYLED TEXT, not code — its
+  // content is a human-facing surface (G-8) and participates in first-use like any other
+  // prose (it can even BE the true first occurrence an embed later defers to, per
+  // T-V4A3-13's fixture). A bare/other <pre> (currently only `<pre class="mermaid">`,
+  // diagram source that first-use must never mutate) stays protected, same as <code>.
+  const PROTECTED_RE = /(<(?:code|script)\b[^>]*>[\s\S]*?<\/(?:code|script)>|<pre(?! class="copy")\b[^>]*>[\s\S]*?<\/pre>|<div class="glossary-table-block">[\s\S]*?<\/div>\s*<\/div>)/i;
   const segments = bodyHtml.split(PROTECTED_RE);
   for (let s = 0; s < segments.length; s++) {
-    if (s % 2 === 1) continue; // inside a protected tag — untouched
-    segments[s] = segments[s].replace(ID_TOKEN_RE, (id) => {
-      if (!/\d/.test(id) || ID_STOPLIST.has(id)) return id; // not ID-shaped — leave untouched, no warning
-      const known = isKnownGlossaryId(id, glossaryIndex);
-      if (!known) {
-        if (!warnings.includes(id)) warnings.push(id);
-        return id;
+    if (s % 2 === 1) {
+      const mdScriptMatch = segments[s].match(/^(<script type="text\/markdown">\n?)([\s\S]*?)(\n?<\/script>)$/i);
+      if (mdScriptMatch) {
+        const [, openTag, mdSource, closeTag] = mdScriptMatch;
+        segments[s] = openTag + expandFirstUseInMarkdown(mdSource, glossaryIndex, seen, warnings) + closeTag;
       }
-      if (!seen.has(id)) {
-        seen.add(id);
-        const expansion = glossaryExpansionFor(id, glossaryIndex);
-        return `<abbr class="gl" title="${esc(expansion)}">${id}</abbr><span class="gl-x">(${esc(expansion)})</span>`;
-      }
-      return `<abbr>${id}</abbr>`;
-    });
+      continue; // any other protected segment (code/pre/non-markdown script/glossary table) — untouched
+    }
+    segments[s] = segments[s].replace(ID_TOKEN_RE, (id) => wrapFirstUseId(id, glossaryIndex, seen, warnings, { withExpansionSpan: true }));
   }
   return { html: segments.join(''), warnings };
 }
