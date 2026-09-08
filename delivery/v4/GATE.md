@@ -23,7 +23,7 @@
 |---|---|---|---|
 | R1–R12 | decision | the twelve coordinator defaults (draft-contract mechanics, owner-decision routing, typed tags, deadline column, orchestrator tier, incidental channel, brand contrast, 11 mirror pairs, mermaid 10.9.1, deliveryRoot resolution, AMD-4/AMD-5, renderer placement) | `[DECIDED]` confirmed as applied — rationale per row in `DECISIONS.md` |
 | A-1 | authorization | Squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping | GRANTED |
-| A-2 | authorization | The orchestrator tags and pushes 4.0.0 and updates the marketplace entry | HELD until owner action O-2 (read QA-REPORT.md first) — the orchestrator does not tag |
+| A-2 | authorization | The orchestrator tags and pushes 4.0.0 and updates the marketplace entry | **GRANTED** 2026-09-07 by Fernando Ott in the orchestrator session ("lets move the tags to 4.0 and lets /conclude-it") — tag `v4.0.0` cut and pushed by the orchestrator (W4) |
 | A-3 | authorization | QA opens Chrome on this Mac for `--open` at gates; headless fallback sessions if a terminal sticks | GRANTED |
 | A-4 | authorization | The orchestrator commits the guard mirror fix applied during planning as its first W0 commit | GRANTED |
 | G4 | decision | CONTRACT v1.1-draft → v1.0 | RATIFIED, no contradictions; the run is ungated |
@@ -33,7 +33,7 @@
 | # | Item | Owner | When |
 |---|---|---|---|
 | O-1 | Remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 (case C-E11-07) | Fernando | before the 4.0.0 tag |
-| O-2 | Read `delivery/v4/QA-REPORT.md`, then give the tag/push go (A-2) | Fernando | after W3 |
+| O-2 | Read `delivery/v4/QA-REPORT.md`, then give the tag/push go (A-2) | Fernando | DONE 2026-09-07 — go given (A-2 GRANTED) |
 | O-5 | Confirm the relabel of this run's recorded `run.mode` from `autonomous-draft` to `guided` in `.plan-it/v4.state.json` (W2): the state history is the 3.0.1 guided path (decisionGate, freezeGate) because the run executed on the 3.0.1 machine; the autonomous-draft behaviours (draft contract, one review round) were emulated and are recorded under gates.G4. Alternative if you prefer the `autonomous-draft` label: rewrite the history to the 4.0.0 autonomous path (defaultsApplied → render → planReview → freeze) — a history rewrite the orchestrator declined to make on its own | Fernando | any time; not blocking |
 | O-4 | Decide whether the six literal model-ID citations in the research records (`docs/research/v3/stream-A-pxpipe.md`, `docs/research/v3/stream-B-damonade.md`, `docs/v4/research/stream-A-renderer.md`) should be redacted to placeholders or stay as quoted evidence (AMD-6 excluded them from the T-V4C3-08 sweep; the plan artifacts and twins are clean either way) | Fernando | any time; not blocking |
 | O-3 | Ratify R7 (brand contrast deviation) — RATIFIED with R1–R12 at PLAN-REVIEW 2026-09-07 (send exact colours later only if the default twins look wrong) | Fernando | closed |
