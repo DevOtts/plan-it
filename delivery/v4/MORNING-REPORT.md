@@ -14,7 +14,7 @@ Legend: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTR
 
 ## Read this first
 
-1. `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree — final: **231 cases · 229 PASS · 2 MANUAL · 0 FAIL** (first pass 230 cases 228/2/0 on main 5189a04; "Re-verify after AMD-12" section on main efa5bf7).
+1. This page's twin `MORNING-REPORT.html` (the conclude-it report: gates, what shipped, what needs you) and `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree — final: **231 cases · 229 PASS · 2 MANUAL · 0 FAIL** (first pass 230 cases 228/2/0 on main 5189a04; "Re-verify after AMD-12" section on main efa5bf7).
 2. **A-2 granted, v4.0.0 tagged and pushed.** Do **O-1** now: remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 — case C-E11-07, the one CONTRACT case that stays MANUAL by design, and the prod check of this release.
 3. Two small owner calls that do not block: **O-4** (redact-or-keep model-ID citations in the research records) and **O-5** (confirm the `run.mode` relabel of this run's state file). Both are in `GATE.md`.
 

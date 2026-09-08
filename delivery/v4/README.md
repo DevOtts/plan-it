@@ -4,7 +4,7 @@ Reading order — a fresh session reads only what its role needs. Legend: `V4<le
 
 | # | File | Who reads it | What it is |
 |---|---|---|---|
-| 0 | `MORNING-REPORT.md` → then `QA-REPORT.md` | Fernando, the morning after the build | the honest per-epic outcome, residuals, owner actions O-1…O-5, and the A-2 decision |
+| 0 | `MORNING-REPORT.md` / `.html` (conclude-it report) → then `QA-REPORT.md` | Fernando, the morning after the build | the honest per-epic outcome, residuals, owner actions O-1…O-5, and the A-2 decision |
 | 1 | `PLAN-REVIEW.md` / `.html` | Fernando, once | the review-and-contradict round: defaults, authorizations, what you are looking at |
 | 2 | `DECISIONS.md` / `.html` | Fernando, then the orchestrator | rulings carried forward, the twelve defaults with alternatives, open authorizations and owner actions, wave gates, copy-your-rulings |
 | 3 | `GATE.md` | orchestrator, squads | the autonomy contract: everything the build needs from a human, answered |

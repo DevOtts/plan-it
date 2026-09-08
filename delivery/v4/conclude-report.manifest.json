@@ -1,18 +1,42 @@
 {
   "title": "plan-it 4.0.0 — Conclude-it Report",
   "subtitle_html": "concluded 2026-09-07 · session <code>done-v4-orchestrator</code> · tag <code>v4.0.0</code> on <code>be9cf58</code> · repo <code>DevOtts/plan-it</code>",
-  "output": "CONCLUDE_REPORT.html",
+  "output": "MORNING-REPORT.html",
   "sections": [
     {
       "heading": "Gates",
       "table": {
-        "headers": ["Gate", "Result", "Evidence"],
+        "headers": [
+          "Gate",
+          "Result",
+          "Evidence"
+        ],
         "rows": [
-          ["Local: node tests/run-contract.mjs", "<b>GREEN</b>", "v2/v3 51/51 · v3 cases 25/25 · v4 cases 58/58 mechanism-ready + 1 MANUAL (C-E11-07 = owner action O-1) · exit 0 on be9cf58"],
-          ["Local: fail-closed-sweep · mirror-check · machine-diff ×2 · version-triple-match · changelog-shape", "<b>GREEN</b>", "25/25 · 11/11 byte-identical · additive vs v3.0.1 and v2 pins · 4.0.0 at six sites + CHANGELOG · E1–E10 enumerated"],
-          ["Independent QA (v4-qa, fresh worktree)", "<b>GREEN</b>", "QA-REPORT.md: 231 cases · 229 PASS · 2 MANUAL · 0 FAIL; dogfood 5/5; visual A-3 PASS (glossary panel, first-use expansion inside embedded bodies, brand badge, theme toggle)"],
-          ["Deploy: tag + push + marketplace entry", "<b>GREEN</b>", "git tag v4.0.0 → be9cf58; git push origin main + v4.0.0; git ls-remote shows the tag; origin/main == main; .claude-plugin/marketplace.json plan-it 4.0.0 on origin"],
-          ["Prod: install plan-it@devotts 4.0.0 on this Mac", "<b>UNVERIFIED</b>", "Owner action O-1 (remove stale installs, install 4.0.0) — deliberately not performed by the orchestrator; C-E11-07 stays MANUAL until then"]
+          [
+            "Local: node tests/run-contract.mjs",
+            "<b>GREEN</b>",
+            "v2/v3 51/51 · v3 cases 25/25 · v4 cases 58/58 mechanism-ready + 1 MANUAL (C-E11-07 = owner action O-1) · exit 0 on be9cf58"
+          ],
+          [
+            "Local: fail-closed-sweep · mirror-check · machine-diff ×2 · version-triple-match · changelog-shape",
+            "<b>GREEN</b>",
+            "25/25 · 11/11 byte-identical · additive vs v3.0.1 and v2 pins · 4.0.0 at six sites + CHANGELOG · enhancements E1 to E10 enumerated"
+          ],
+          [
+            "Independent QA (v4-qa, fresh worktree)",
+            "<b>GREEN</b>",
+            "QA-REPORT.md: 231 cases · 229 PASS · 2 MANUAL · 0 FAIL; dogfood 5/5; visual A-3 PASS (glossary panel, first-use expansion inside embedded bodies, brand badge, theme toggle)"
+          ],
+          [
+            "Deploy: tag + push + marketplace entry",
+            "<b>GREEN</b>",
+            "git tag v4.0.0 → be9cf58; git push origin main + v4.0.0; git ls-remote shows the tag; origin/main == main; .claude-plugin/marketplace.json plan-it 4.0.0 on origin"
+          ],
+          [
+            "Prod: install plan-it@devotts 4.0.0 on this Mac",
+            "<b>UNVERIFIED</b>",
+            "Owner action O-1 (remove stale installs, install 4.0.0) — deliberately not performed by the orchestrator; C-E11-07 stays MANUAL until then"
+          ]
         ]
       }
     },
@@ -20,13 +44,25 @@
       "heading": "What shipped",
       "cards": [
         {
-          "id": "E1-E10",
+          "id": "release",
           "title": "plan-it 4.0.0 — legibility + autonomy release",
-          "badge": {"label": "shipped", "tone": "ok"},
+          "badge": {
+            "label": "shipped",
+            "tone": "ok"
+          },
           "rename_html": "→ <code>done-v4-orchestrator</code>",
           "body_html": "<p>HTML report twins (zero-dependency renderer, 17 block types, brand tokens, glossary panel, first-use acronym expansion), anamnesis + one review-and-contradict round, build topology with named sessions and a GATE autonomy contract, named runs with archive, readable acronyms via GLOSSARY.md, residual dispositions, triage. 25-state machine, additive over 3.0.1 (both pins). 13 epics across three squads; CONTRACT v1.0 → v1.5 through seven dated amendments, five found by dogfooding the new lints on the package itself.</p>",
           "test_html": "<ul><li><code>cd /Users/macbook/Workspace/Devotts/plan-it && git describe --tags</code> → <code>v4.0.0</code></li><li><code>node tests/run-contract.mjs</code> → ends with <code>58/58 mechanism-ready cases correct … 1 manual</code></li><li><code>node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror-check</code> → <code>11 pair(s) byte-identical</code></li><li>Open <code>delivery/v4/KICKOFF.html</code> in Chrome: hover an ID such as <code>W0</code> or <code>AMD-7</code> inside the embedded body → expansion tooltip</li></ul>",
-          "embeds": [{"path": "MORNING-REPORT.md", "label": "Morning report (per-epic)"}, {"path": "QA-REPORT.md", "label": "QA report (independent run)"}]
+          "embeds": [
+            {
+              "path": "MORNING-REPORT.md",
+              "label": "Morning report (per-epic)"
+            },
+            {
+              "path": "QA-REPORT.md",
+              "label": "QA report (independent run)"
+            }
+          ]
         }
       ]
     },
@@ -36,35 +72,57 @@
         {
           "id": "O-1",
           "title": "Install the release on this Mac (prod check)",
-          "badge": {"label": "act", "tone": "act"},
+          "badge": {
+            "label": "act",
+            "tone": "act"
+          },
           "body_html": "<p>Remove the stale installs (<code>plan-it@plan-it</code> enablement, the <code>plan-it/</code> marketplace dir, the user-level 2.1.0 skill copy) and install <code>plan-it@devotts</code> 4.0.0. Until then the release is deployed to origin but not verified in the harness that runs it (CONTRACT case C-E11-07).</p>",
           "test_html": "<ul><li><code>claude plugin marketplace update devotts</code> then install/enable <code>plan-it@devotts</code></li><li>In a fresh Claude Code session: <code>/plan-it</code> description mentions anamnesis and the HTML report layer; <code>ls ~/.claude*/plugins/marketplaces</code> no longer lists a <code>plan-it</code> marketplace dir</li></ul>"
         },
         {
           "id": "O-4",
           "title": "Model-ID citations in research records",
-          "badge": {"label": "open", "tone": "open"},
+          "badge": {
+            "label": "open",
+            "tone": "open"
+          },
           "body_html": "<p>Six literal model-ID citations in <code>docs/research/v3/</code> and <code>docs/v4/research/</code> are quoted evidence, excluded from the G-4 sweep by AMD-6. Redact to placeholders or keep — your call, not blocking.</p>",
           "test_html": "<ul><li><code>grep -rEn \"claude-[a-z0-9-]*-[0-9]\" docs/</code> lists only research files</li></ul>"
         },
         {
           "id": "O-5",
           "title": "Confirm the run.mode relabel",
-          "badge": {"label": "open", "tone": "open"},
+          "badge": {
+            "label": "open",
+            "tone": "open"
+          },
           "body_html": "<p>This run's archived state file (<code>.plan-it/done/v4.state.json</code>) records <code>run.mode: guided</code> with a <code>modeNote</code>: the history is the 3.0.1 guided path because the run executed on the 3.0.1 machine while emulating autonomous-draft behaviour. Alternative is a history rewrite to the 4.0.0 autonomous path, which the orchestrator declined to do alone.</p>",
           "test_html": "<ul><li><code>node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs runs --dir .</code> → run <code>v4</code> listed as archived</li></ul>"
         },
         {
           "id": "cleanup",
           "title": "Prune the build debris",
-          "badge": {"label": "hold", "tone": "hold"},
+          "badge": {
+            "label": "hold",
+            "tone": "hold"
+          },
           "body_html": "<p>20 branches (<code>epic/v4*</code>, <code>qa/w3</code>, <code>w2/integration</code>) and their worktrees under <code>.claude/worktrees/</code> are fully merged into main and left for inspection. <code>/reconcile-it</code> prunes them behind its human gate.</p>",
           "test_html": "<ul><li><code>for b in $(git branch --list 'epic/v4*' 'qa/*' 'w2/*'); do git log --oneline main..$b | wc -l; done</code> → all 0</li></ul>"
         }
       ]
     },
     {
-      "html": "<p class=\"sub\">Rendered locally by conclude-it's build-report.py; never published as an artifact. Sources: delivery/v4/STATUS.md (board + log), delivery/decisions.md (AMD-4…AMD-12, A-2), delivery/v4/GATE.md (owner actions), docs/v4/03-build-retrospective.md.</p>"
+      "html": "<p class=\"sub\">Rendered locally by plan-it 4.0.0's own renderer (build-report.mjs, conclude-it manifest accepted as kind LEGACY) as the stamped twin of MORNING-REPORT.md; never published as an artifact. Sources: delivery/v4/STATUS.md (board + log), delivery/decisions.md (AMD-4…AMD-12, A-2), delivery/v4/GATE.md (owner actions), docs/v4/03-build-retrospective.md.</p>"
     }
+  ],
+  "source": {
+    "path": "MORNING-REPORT.md"
+  },
+  "glossary": {
+    "path": "GLOSSARY.md"
+  },
+  "allow_tokens": [
+    "claude-plugin",
+    "claude-loudr"
   ]
 }

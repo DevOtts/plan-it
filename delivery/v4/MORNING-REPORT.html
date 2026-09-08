@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="planit-source" content="MORNING-REPORT.md sha256=c8c42f152cc6b15f7e8b6d42f539facfbac3523accd5d1bc560ab92dd2ec605a">
+<meta name="planit-embeds" content="">
+<meta name="planit-brand" content="default sha256=0206fd2d74525ffb33ff4fc010fe2ce6bb978ebe8a5674fc7ec0ed5d20eccb58">
+<meta name="planit-renderer" content="build-report.mjs/4.0.0 template sha256=ebfa958749844845bc46643049a546fdd9d68de69f36452b7babc089e0a9a410">
+<meta name="planit-kind" content="LEGACY">
+<title>plan-it 4.0.0 — Conclude-it Report</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&amp;family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400&amp;display=swap">
+<style>
+:root{--bg:#FFFFFF;--card:#F6F8FA;--line:#E6EDF3;--ink:#0D1117;--muted:#484F58;--accent:#0D1117;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#F6F8FA;--hold:#FF6B4A;--font-display:Space Grotesk,sans-serif;--font-body:Inter,sans-serif;--font-mono:JetBrains Mono;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}}
+:root[data-theme="dark"]{--bg:#0D1117;--card:#161B22;--line:#21262D;--ink:#C9D1D9;--muted:#8B949E;--accent:#00E5A0;--accentBg:#00E5A0;--ok:#2EA043;--warn:#D29922;--bad:#F85149;--info:#58A6FF;--chip:#21262D;--hold:#FF6B4A;}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 var(--font-body);padding:2.5rem 1rem}
+main{max-width:900px;margin:0 auto;position:relative}
+h1{font-family:var(--font-display);font-size:1.5rem;margin:0 0 .25rem;text-wrap:balance;padding-right:6rem}
+.eyebrow{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.78rem;margin:0 0 .3rem}
+.sub{color:var(--muted);margin:0 0 2rem}
+h2{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
+   margin:2.2rem 0 .8rem;border-bottom:1px solid var(--line);padding-bottom:.4rem}
+#theme-toggle{position:absolute;top:0;right:0;background:var(--card);border:1px solid var(--line);
+  color:var(--muted);border-radius:99px;padding:.3rem .8rem;font:inherit;font-size:.8rem;
+  cursor:pointer;display:inline-flex;align-items:center;gap:.4rem}
+#theme-toggle:hover{color:var(--ink)} #theme-toggle:focus-visible{outline:2px solid var(--accentBg);outline-offset:2px}
+.brand-badge{color:var(--muted);font-size:.75rem;margin:0 0 .6rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+      padding:1rem 1.1rem;margin-bottom:.75rem}
+.card h3{margin:0 0 .35rem;font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+.id{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;background:color-mix(in srgb,var(--accentBg) 20%,transparent);border-radius:4px;padding:.05rem .4rem}
+.badge{font-size:.72rem;font-weight:700;letter-spacing:.03em;border-radius:99px;
+       padding:.1rem .55rem;text-transform:uppercase}
+.b-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.b-open{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.b-hold{background:color-mix(in srgb,var(--hold) 20%,transparent);color:var(--ink)}
+.b-act{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--ink)}
+.rename{margin-left:auto;font-size:.75rem;color:var(--muted)}
+.rename code{font-size:.95em}
+.card p{margin:.25rem 0}
+.card ul{margin:.3rem 0 .3rem;padding-left:1.25rem} .card li{margin:.18rem 0}
+code{background:var(--chip);border-radius:4px;padding:.05rem .35rem;font-size:.85em;word-break:break-all;font-family:var(--font-mono)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);
+      border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{text-align:left;padding:.5rem .8rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600} tr:last-child td{border-bottom:none}
+tr.footer td{font-weight:700}
+.overflow{overflow-x:auto}
+.test{margin-top:.6rem;border-top:1px dashed var(--line);padding-top:.55rem;font-size:.88rem}
+.test b{color:var(--ink);text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.test ul{margin:.3rem 0 0;padding-left:1.25rem}
+.warn{color:var(--warn)} .crit{color:var(--bad);font-weight:600}
+details.more{margin-top:.7rem;border-top:1px dashed var(--line);padding-top:.55rem}
+details.more>summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:.88rem;
+  list-style:none;display:inline-flex;align-items:center;gap:.4rem}
+details.more>summary::before{content:"▸";transition:transform .15s}
+details.more[open]>summary::before{transform:rotate(90deg)}
+.srcnote{font-size:.78rem;color:var(--muted);margin:.6rem 0 .3rem}
+.mdout{background:color-mix(in srgb,var(--chip) 55%,transparent);border:1px solid var(--line);
+       border-radius:8px;padding:.9rem 1rem;font-size:.87rem;overflow-x:auto}
+.mdout h1,.mdout h2,.mdout h3{all:revert;font-size:1.02em;margin:.8em 0 .3em;border:none;
+  text-transform:none;letter-spacing:0;color:var(--ink)}
+.mdout h1{font-size:1.12em}
+.mdout pre{background:var(--chip);padding:.6rem .7rem;border-radius:6px;overflow-x:auto}
+.mdout blockquote{border-left:3px solid var(--line);margin:.5em 0;padding:.1em .8em;color:var(--muted)}
+.mdout ul,.mdout ol{padding-left:1.3em} .mdout li{margin:.15em 0}
+.mdout hr{border:none;border-top:1px solid var(--line);margin:.8em 0}
+.mdout a{color:var(--ink);text-decoration:underline}
+.mdout table{font-size:.85em;margin:.5em 0}
+.mdout td,.mdout th{padding:.35rem .6rem}
+details.glossary{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.88rem}
+details.glossary>summary{cursor:pointer;font-weight:700;color:var(--ink)}
+abbr.gl{text-decoration:underline dotted;cursor:help}
+.gl-x{color:var(--muted);font-size:.82em}
+.decision-card .q{margin:.3rem 0}
+.decision-card .options{margin:.3rem 0;padding-left:1.25rem}
+.decision-card .recommendation{margin:.4rem 0}
+.decision-card .unblocks{margin:.3rem 0;font-size:.85rem;color:var(--muted)}
+.decision-card .ruling{margin:.4rem 0;font-weight:600}
+.mock-win{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:.75rem}
+.mock-bar{background:var(--chip);padding:.4rem .7rem;display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.mock-dots{color:var(--muted)} .mock-label{color:var(--muted);flex:1}
+.mock-chip{border-radius:99px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}
+.mock-bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.mock-ok{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.mock-body{padding:1rem;background:var(--bg)}
+.measure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.measure .mvalue{font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.measure .munit{color:var(--muted);margin-left:.3rem}
+.measure .msrc{color:var(--muted);font-size:.8rem;margin:.3rem 0 0}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.75rem}
+.state-col{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.8rem}
+.state-col h4{margin:0 0 .3rem;text-transform:uppercase;font-size:.75rem;letter-spacing:.04em}
+.triage-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.triage-card table{border:none}
+.verdict-box{margin-top:.5rem;padding:.5rem .8rem;background:var(--chip);border-radius:8px}
+.lockbox{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accentBg);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:.75rem}
+.lb-head{color:var(--muted);font-size:.85rem;margin:0 0 .4rem}
+.tally-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:.75rem}
+.tally-tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.6rem 1rem;text-align:center}
+.tally-tile .tval{display:block;font-family:var(--font-display);font-weight:700;font-size:1.4rem}
+.tally-tile .tlabel{color:var(--muted);font-size:.78rem}
+pre.copy{background:var(--chip);border-radius:8px;padding:.7rem .9rem;font-family:var(--font-mono);font-size:.85rem;overflow-x:auto}
+.copy-btn{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:.25rem .7rem;font-size:.78rem;cursor:pointer;margin:-.5rem 0 .75rem}
+pre.mermaid{background:var(--chip);border-radius:8px;padding:.8rem 1rem;font-family:var(--font-mono);font-size:.82rem;overflow-x:auto;white-space:pre-wrap}
+.footer{color:var(--muted);font-size:.75rem;margin-top:2.5rem;border-top:1px solid var(--line);padding-top:.8rem}
+@media (prefers-reduced-motion: reduce){ details.more>summary::before{transition:none} }
+</style>
+</head>
+<body><main>
+<button id="theme-toggle" type="button" aria-label="Toggle light/dark theme">◐ <span id="theme-label">auto</span></button>
+<p class="brand-badge">brand: Her0 default</p>
+<p class="eyebrow">LEGACY</p>
+<h1>plan-it 4.0.0 — Conclude-it Report</h1>
+<p class="sub">concluded 2026-09-07 · session <code>done-v4-orchestrator</code> · tag <code>v4.0.0</code> on <code>be9cf58</code> · repo <code>DevOtts/plan-it</code></p>
+<details class="glossary"><summary>Glossary</summary><div class="overflow"><table><tr><th>ID</th><th>Means</th><th>Where defined</th></tr><tr><td>plan-it</td><td>the planning front-end: fuzzy demand → delivery package</td><td>SKILL.md</td></tr>
+<tr><td>build-it</td><td>the autonomous build engine that consumes the package</td><td>SKILL.md — Composes with</td></tr>
+<tr><td>review-it</td><td>the independent verification leg (runs the Test Contract)</td><td>README — plan-it × build-it</td></tr>
+<tr><td>conclude-it</td><td>the session-close ritual; ships the ancestor of the v4 renderer</td><td>~/.claude/skills/conclude-it</td></tr>
+<tr><td>DoD</td><td>Definition of Done — the numbered, individually verifiable criteria</td><td>SKILL.md Phase 1</td></tr>
+<tr><td>PRD</td><td>Product Requirements Document — one per squad</td><td>templates.md PART B</td></tr>
+<tr><td>epic</td><td>a buildable unit ending in a binding Test Contract</td><td>templates.md PART B</td></tr>
+<tr><td>Test Contract</td><td>up to ~20 cases with expected outputs registered at planning time; DoD = 100% pass</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>CONTRACT</td><td>the frozen shared law squads build against (vocabulary, schema, interfaces, ownership)</td><td>SKILL.md Rule 1</td></tr>
+<tr><td>squad</td><td>one build lane with disjoint files, usually one session</td><td>00-program-plan.md</td></tr>
+<tr><td>wave</td><td>a group of epics built together; `Wn`</td><td>00-program-plan.md</td></tr>
+<tr><td>G0</td><td>gate: anamnesis — the up-front questionnaire (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G1</td><td>gate: scope — size, shape, topology, DoD</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>G2</td><td>gate: decisions — the batched judgment calls with recommendations</td><td>SKILL.md Phase 7</td></tr>
+<tr><td>G3</td><td>gate: freeze — &quot;specs aligned, proceed to the delivery package?&quot;</td><td>SKILL.md Phase 8</td></tr>
+<tr><td>G4</td><td>gate: plan review — the single review-and-contradict round (new in v4)</td><td>CONTRACT §3.1</td></tr>
+<tr><td>G-n</td><td>a governance rule inside a CONTRACT (dash: rule; no dash: gate)</td><td>CONTRACT §6</td></tr>
+<tr><td>size S/M/L</td><td>how much gets written: single feature / multi-feature / from-scratch program</td><td>SKILL.md Phase 2</td></tr>
+<tr><td>shape 1–5</td><td>the package form: multi-doc + delivery / single-file PRD / research→locked architecture→phase PRDs / numbered PRD-NN / refactor catalog</td><td>templates.md PART D</td></tr>
+<tr><td>topology</td><td>how the build runs: solo · orchestrator+squads · headless</td><td>CONTRACT §1</td></tr>
+<tr><td>mode</td><td>autonomous-draft (default) or guided</td><td>CONTRACT §1</td></tr>
+<tr><td>[REAL]</td><td>a test case needing a live target; never VERIFIED on a mock</td><td>formats.md — Test Contract</td></tr>
+<tr><td>INV / IMPLEMENTED-NOT-VERIFIED</td><td>built, but the proving case could not run</td><td>formats.md §7</td></tr>
+<tr><td>NOT-STARTED · IN-PROGRESS · IMPLEMENTED-NOT-VERIFIED · VERIFIED</td><td>the closed status vocabulary</td><td>gate-check W4</td></tr>
+<tr><td>disposition</td><td>what happens to a non-green item at close: backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>CONTRACT §5</td></tr>
+<tr><td>FD-1</td><td>founder mandate: test-convention discovery registered in CLAUDE.md</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>FD-2</td><td>founder mandate: pre-freeze case review (TEST-CONTRACT-REVIEW.md)</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>W1–W6 (CHANGELOG)</td><td>the six v3 write-time invariants (contract hygiene, preflight, tiers, vocabulary, computed counts, kickoff pinning) — not build waves</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>W5</td><td>v3 write-time invariant 5 (computed counts) as cited by `gate-check` output — not a wave of this run</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>W6</td><td>v3 write-time invariant 6 (kickoff pinning) as cited by `gate-check` output — not a wave of this run</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>D4 (CHANGELOG)</td><td>the v3 adversarial-depth ruling behind the `adversary` verb — not this run's D4 ruling</td><td>CHANGELOG 3.0.0</td></tr>
+<tr><td>AMD-n</td><td>a dated amendment to a frozen contract</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-1</td><td>v3 amendment (2026-07-08): T-E1-05 gate-count precedent</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-2</td><td>v3 amendment: mirror-pair count precedent</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-3</td><td>v3 amendment (3.0.x)</td><td>delivery/decisions.md</td></tr>
+<tr><td>xhigh</td><td>Claude Code's highest `/effort` reasoning setting</td><td>SKILL.md — Autonomy posture</td></tr>
+<tr><td>CDP</td><td>Chrome DevTools Protocol — drives UI test cases</td><td>formats.md §4</td></tr>
+<tr><td>ATDD / BDD</td><td>Acceptance-Test-Driven / Behaviour-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>SbE / EDD</td><td>Specification by Example / Eval-Driven Development</td><td>SKILL.md — The Test Contract</td></tr>
+<tr><td>twin</td><td>the `&lt;NAME&gt;.html` rendered beside a canonical `&lt;NAME&gt;.md`</td><td>CONTRACT §1</td></tr>
+<tr><td>manifest</td><td>the JSON a low-tier author writes for the renderer (`planit-report/1`)</td><td>CONTRACT §4.2</td></tr>
+<tr><td>stamp</td><td>`&lt;meta name=&quot;planit-*&quot;&gt;` provenance in a twin (`&lt;relpath&gt; sha256=&lt;hash&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>deliveryRoot</td><td>the repo-relative folder a run's package lives in</td><td>CONTRACT §1</td></tr>
+<tr><td>tier top/mid/low</td><td>model tiers resolved at execution time; never a model ID</td><td>RUN-POLICY</td></tr>
+<tr><td>mirror pair</td><td>a root file and its byte-identical plugin copy (11 in v4)</td><td>gate-check mirror-check</td></tr>
+<tr><td>machine-diff</td><td>the additive-only check of a live machine against a pinned baseline</td><td>gate-check</td></tr>
+<tr><td>WCAG</td><td>Web Content Accessibility Guidelines — the contrast ratios cited for brand tokens</td><td>01-findings §2.2</td></tr>
+<tr><td>E1</td><td>scope brief: the human-readable explanation of size, shape and topology rendered before gate G1</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E2</td><td>HTML report layer: the zero-dependency renderer and report-family kinds with provenance stamps</td><td>delivery/v4/CONTRACT.md §4</td></tr>
+<tr><td>E3</td><td>decision queue: the DECISIONS/PLAN-REVIEW kind with ruled, defaults, authorizations and owner actions</td><td>delivery/v4/CONTRACT.md §2</td></tr>
+<tr><td>E4</td><td>build topology: the user's choice at G1 with plan-it's recommendation; solo · orchestrator+squads · headless</td><td>delivery/v4/KICKOFF.md</td></tr>
+<tr><td>E5</td><td>show-don't-describe: enumerating the honest states of every surface (good, empty, misconfigured)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E6</td><td>triage + measurement: the triage verdict determines CLOSED_WITHOUT_PLAN exit; measurements are read-only or say they are not</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E7</td><td>anamnesis + review round: the up-front questionnaire (G0) and single review-and-contradict gate (G4)</td><td>delivery/v4/CONTRACT.md §3</td></tr>
+<tr><td>E8</td><td>residual disposition: every non-green item at close gets one of backlog-with-reason · owner-gated · IMPLEMENTED-NOT-VERIFIED</td><td>delivery/v4/DECISIONS.md — Defaults</td></tr>
+<tr><td>E9</td><td>named runs: every plan-it execution has a slug; state lives in `.plan-it/&lt;slug&gt;.state.json`</td><td>delivery/v4/CONTRACT.md §1</td></tr>
+<tr><td>E10</td><td>readable acronyms: the glossary seed copied at intake; every acronym explained on first use</td><td>delivery/v4/GLOSSARY.md</td></tr>
+<tr><td>D1</td><td>autonomous-draft is the default mode; guided selectable at anamnesis</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D2</td><td>brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D3</td><td>HTML twin beside its markdown, always created locally by default, opened in Chrome only at human gates, never a claude.ai artifact</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D4</td><td>topology is the user's choice at G1 with plan-it's recommendation shown</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D5</td><td>the copy-your-rulings block ships in 4.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D6</td><td>all ten enhancements in 4.0.0</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>D7</td><td>v4 is built by an orchestrator + three squads + QA</td><td>DECISIONS.md — Ruled</td></tr>
+<tr><td>R1</td><td>CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R2</td><td>&quot;Owner decision&quot; triage verdict exits to CLOSED_WITHOUT_PLAN with a decision memo and a reopen condition</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R3</td><td>typed `[DECIDED]/[CHANGED]/[CONFIRM: owner]` canonical in markdown; glyphs only as HTML decoration</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R4</td><td>optional `Deadline` column on decisions; owner actions with a deadline surface in the close-out report</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R5</td><td>orchestrator = top tier in RUN-POLICY</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R6</td><td>incidental findings in STATUS `## Log` bullets tagged `[incidental]`, never in the case tally</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R7</td><td>brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R8</td><td>mirror pairs 8 → 11 (renderer, template, brand JSON)</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R9</td><td>mermaid 10.9.1 pinned on cdnjs, strict security, source shown as text when offline</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R10</td><td>the state file names the package folder; every verb derives paths from `run.deliveryRoot`</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R11</td><td>harness amendments AMD-4 (gate count) and AMD-5 (11 pairs), recorded like AMD-1/AMD-2</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>R12</td><td>renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb</td><td>DECISIONS.md — Defaults</td></tr>
+<tr><td>A-1</td><td>squads commit to `epic/v4*` branches; the orchestrator merges to `main` overnight without a per-merge ping</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-2</td><td>the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-3</td><td>QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>A-4</td><td>the orchestrator commits the guard mirror fix applied during planning as its first W0 commit</td><td>GATE.md — Answered at PLAN-REVIEW</td></tr>
+<tr><td>O-1</td><td>remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-2</td><td>read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-3</td><td>ratify R7 (brand contrast deviation) or send the exact colours you want as text</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>O-5</td><td>owner action: confirm the recorded run.mode relabel (autonomous-draft → guided) in .plan-it/v4.state.json</td><td>GATE.md</td></tr>
+<tr><td>O-4</td><td>decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence</td><td>GATE.md — Still human, but NOT blocking</td></tr>
+<tr><td>W0</td><td>orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY</td><td>00-program-plan.md</td></tr>
+<tr><td>W1</td><td>three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason</td><td>00-program-plan.md</td></tr>
+<tr><td>W2</td><td>integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0</td><td>00-program-plan.md</td></tr>
+<tr><td>W3</td><td>QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered</td><td>00-program-plan.md</td></tr>
+<tr><td>W4</td><td>release: tag 4.0.0, marketplace entry, README install note; conclude-it; ledger card written</td><td>00-program-plan.md</td></tr>
+<tr><td>SQ-A</td><td>renderer squad: zero-dependency renderer and report-family kinds, report-family reference, renderer tests (4 epics, 48 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-B</td><td>deterministic core squad: machine, gate-check verbs, guard, harness, fixtures (5 epics, 74 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>SQ-C</td><td>prose and packaging squad: SKILL, references, docs, README, CHANGELOG, versions (4 epics, 44 cases)</td><td>CONTRACT §2</td></tr>
+<tr><td>LG-n</td><td>live-grounding facts measured by the coordinator</td><td>research/00-main-thread-grounding.md</td></tr>
+<tr><td>F-*n</td><td>research findings by stream (A renderer · B core · C prose · D precedents)</td><td>research/stream-*.md</td></tr>
+<tr><td>D-A&lt;n&gt; · D-B&lt;n&gt; · D-C&lt;n&gt;</td><td>PRD-level design decisions per squad (renderer · core · prose), cited by every epic task</td><td>delivery/v4/prds/</td></tr>
+<tr><td>ab0c192</td><td>the W0 commit that landed the v4 planning package and the guard mirror fix (A-4)</td><td>STATUS.md ## Log</td></tr>
+<tr><td>V4A&lt;n&gt;</td><td>SQ-A (renderer) epic ID</td><td>delivery/v4/epics/epics-a-renderer.md</td></tr>
+<tr><td>V4B&lt;n&gt;</td><td>SQ-B (deterministic core) epic ID</td><td>delivery/v4/epics/epics-b-core.md</td></tr>
+<tr><td>V4C&lt;n&gt;</td><td>SQ-C (prose and packaging) epic ID</td><td>delivery/v4/epics/epics-c-prose.md</td></tr>
+<tr><td>C-E*-NN</td><td>enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)</td><td>CONTRACT ## Cases</td></tr>
+<tr><td>T-*-NN</td><td>per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)</td><td>delivery/v4/epics/</td></tr>
+<tr><td>T-E*-NN</td><td>v2/v3 harness case inside `tests/run-contract.mjs` (e.g. T-E1-05 gate count, T-E5-01 version, T-E5-02 mirror pairs)</td><td>tests/run-contract.mjs</td></tr>
+<tr><td>C-W*-NN · C-META-NN</td><td>v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist)</td><td>delivery/v3/CONTRACT.md</td></tr>
+<tr><td>SHA-256</td><td>the hash function behind every pin and stamp (`sha256=&lt;64-hex&gt;`)</td><td>CONTRACT §4.3</td></tr>
+<tr><td>AMD-12</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.5): embed-block prose gets first-use expansion; case T-V4A3-13</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-11</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.4): literal-first glossary lookup, no range expansion; glossary table excluded from first-use scan</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-10</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-9</td><td>orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-8</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-7</td><td>orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-6</td><td>orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-4</td><td>harness amendment: gate count bound to the v2 baseline; required for the machine-diff check</td><td>delivery/decisions.md</td></tr>
+<tr><td>AMD-5</td><td>harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`</td><td>delivery/decisions.md</td></tr>
+<tr><td>CLOSED_WITHOUT_PLAN · REVIEW_CONTRADICTED · RENDERED_PARTIAL · RENDER_FAILED · MIRROR_STALE · MIRROR_REJECTED · HTML_UNSTAMPED · ESCALATED · WRITE_DENIED · ARCHIVE_REFUSED</td><td>failure and recovery states of the v4 core-logic models</td><td>CONTRACT §3</td></tr>
+<tr><td>planit-report/1 · planit-brand/1</td><td>the manifest and brand token schemas</td><td>CONTRACT §4</td></tr>
+<tr><td>7fcff27</td><td>the commit that added named-state resolution to the root guard only</td><td>01-findings §2.9</td></tr>
+<tr><td>P2-11</td><td>the owner ruling (2026-08-26) that made worktrees-only a plan-it/build-it enhancement</td><td>LG-16</td></tr></table></div></details>
+<h2>Gates</h2>
+<div class="overflow"><table>
+<tr><th>Gate</th><th>Result</th><th>Evidence</th></tr>
+<tr><td>Local: node tests/run-contract.mjs</td><td><b>GREEN</b></td><td>v2/v3 51/51 · v3 cases 25/25 · v4 cases 58/58 mechanism-ready + 1 MANUAL (<abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-07</abbr><span class="gl-x">(enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed))</span> = owner action <abbr class="gl" title="remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0">O-1</abbr><span class="gl-x">(remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, user-level 2.1.0 skill) and install `plan-it@devotts` 4.0.0)</span>) · exit 0 on be9cf58</td></tr>
+<tr><td>Local: fail-closed-sweep · mirror-check · machine-diff ×2 · version-triple-match · changelog-shape</td><td><b>GREEN</b></td><td>25/25 · 11/11 byte-identical · additive vs v3.0.1 and v2 pins · 4.0.0 at six sites + CHANGELOG · enhancements <abbr class="gl" title="scope brief: the human-readable explanation of size, shape and topology rendered before gate G1">E1</abbr><span class="gl-x">(scope brief: the human-readable explanation of size, shape and topology rendered before gate G1)</span> to <abbr class="gl" title="readable acronyms: the glossary seed copied at intake; every acronym explained on first use">E10</abbr><span class="gl-x">(readable acronyms: the glossary seed copied at intake; every acronym explained on first use)</span> enumerated</td></tr>
+<tr><td>Independent QA (v4-qa, fresh worktree)</td><td><b>GREEN</b></td><td>QA-REPORT.md: 231 cases · 229 PASS · 2 MANUAL · 0 FAIL; dogfood 5/5; visual <abbr class="gl" title="QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed">A-3</abbr><span class="gl-x">(QA opens Chrome on this Mac to look at rendered twins (`--open` at gates); headless fallback sessions allowed)</span> PASS (glossary panel, first-use expansion inside embedded bodies, brand badge, theme toggle)</td></tr>
+<tr><td>Deploy: tag + push + marketplace entry</td><td><b>GREEN</b></td><td>git tag v4.0.0 → be9cf58; git push origin main + v4.0.0; git ls-remote shows the tag; origin/main == main; .claude-plugin/marketplace.json plan-it 4.0.0 on origin</td></tr>
+<tr><td>Prod: install plan-it@devotts 4.0.0 on this Mac</td><td><b>UNVERIFIED</b></td><td>Owner action <abbr>O-1</abbr> (remove stale installs, install 4.0.0) — deliberately not performed by the orchestrator; <abbr>C-E11-07</abbr> stays MANUAL until then</td></tr>
+</table></div>
+<h2>What shipped</h2>
+<div class="card"><h3>
+<span class="id">release</span>
+ plan-it 4.0.0 — legibility + autonomy release
+ <span class="badge b-ok">shipped</span>
+<span class="rename">→ <code>done-v4-orchestrator</code></span>
+</h3>
+<p>HTML report twins (zero-dependency renderer, 17 block types, brand tokens, glossary panel, first-use acronym expansion), anamnesis + one review-and-contradict round, build topology with named sessions and a GATE autonomy contract, named runs with archive, readable acronyms via GLOSSARY.md, residual dispositions, triage. 25-state machine, additive over 3.0.1 (both pins). 13 epics across three squads; CONTRACT v1.0 → v1.5 through seven dated amendments, five found by dogfooding the new lints on the package itself.</p>
+<div class="test"><b>How to test</b><ul><li><code>cd /Users/macbook/Workspace/Devotts/plan-it && git describe --tags</code> → <code>v4.0.0</code></li><li><code>node tests/run-contract.mjs</code> → ends with <code>58/58 mechanism-ready cases correct … 1 manual</code></li><li><code>node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror-check</code> → <code>11 pair(s) byte-identical</code></li><li>Open <code>delivery/v4/KICKOFF.html</code> in Chrome: hover an ID such as <code>W0</code> or <code>AMD-7</code> inside the embedded body → expansion tooltip</li></ul></div>
+<details class="more"><summary>Morning report (per-epic)</summary>
+<p class="srcnote">Rendered from <code>MORNING-REPORT.md</code>:</p>
+<div class="mdout"><script type="text/markdown">
+---
+type: report
+title: "plan-it 4.0.0 — morning report (orchestrator, <abbr class="gl" title="orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY">W0</abbr>–<abbr class="gl" title="QA: every C-E enforcement case and every T-epic case run against the merged tree; dogfood run; QA-REPORT.md delivered">W3</abbr>)"
+description: "Honest per-epic outcome of the overnight v4 build: what is VERIFIED, what is not, residuals with dispositions, incidental findings, and what to read first."
+status: final (SHIPPED — v4.0.0 tagged and pushed 2026-09-07 after <abbr class="gl" title="the orchestrator tags and pushes 4.0.0 and updates the marketplace entry once Definition of SHIPPED is green">A-2</abbr>)
+verified: 2026-09-07
+repos: [plan-it]
+tags: [plan-it, v4, release, report]
+---
+
+# plan-it 4.0.0 — morning report
+
+Legend: `V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTRACT case · `Wn` wave · `A-n` authorization · `O-n` owner action · `AMD-n` amendment — see `GLOSSARY.md`.
+
+## Read this first
+
+1. This page's twin `MORNING-REPORT.html` (the conclude-it report: gates, what shipped, what needs you) and `delivery/v4/QA-REPORT.md` — QA's independent run of every case against the merged tree — final: **231 cases · 229 PASS · 2 MANUAL · 0 FAIL** (first pass 230 cases 228/2/0 on main 5189a04; "Re-verify after <abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.5): embed-block prose gets first-use expansion; case T-V4A3-13">AMD-12</abbr>" section on main efa5bf7).
+2. **<abbr>A-2</abbr> granted, v4.0.0 tagged and pushed.** Do **<abbr>O-1</abbr>** now: remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 — case <abbr>C-E11-07</abbr>, the one CONTRACT case that stays MANUAL by design, and the prod check of this release.
+3. Two small owner calls that do not block: **<abbr class="gl" title="decide whether the six literal model-ID citations in the research records should be redacted to placeholders or stay as quoted evidence">O-4</abbr>** (redact-or-keep model-ID citations in the research records) and **<abbr class="gl" title="owner action: confirm the recorded run.mode relabel (autonomous-draft → guided) in .plan-it/v4.state.json">O-5</abbr>** (confirm the `run.mode` relabel of this run's state file). Both are in `GATE.md`.
+
+## Outcome in one line
+
+All 13 epics are **VERIFIED** by the orchestrator on disk (every `run:` cell exit code as expected; `node tests/run-contract.mjs` exit 0 on main) and re-run on `main`; QA independently found **0 FAIL**; every release gate of CONTRACT §7 is green on `main`; the only non-green item is the owner-gated manual case <abbr>C-E11-07</abbr>. **Shipped**: <abbr>A-2</abbr> granted 2026-09-07; `v4.0.0` tagged on `be9cf58` and pushed with main. Still yours: **<abbr>O-1</abbr>** (stale installs → install `plan-it@devotts` 4.0.0), which is also the only prod verification not yet done.
+
+## Per-epic (from STATUS.md, computed)
+
+| EID | Epic | Squad | Status | Tests (local gate) | Disposition |
+|---|---|---|---|---|---|
+| <abbr class="gl" title="SQ-A (renderer) epic ID">V4A1</abbr> | Renderer core: CLI, determinism, exit codes, `--open` routing, legacy manifest compat | SQ-A | VERIFIED | 14/14 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-A (renderer) epic ID">V4A2</abbr> | Block catalogue (17 types) + brand tokens + detection + badge/stamps | SQ-A | VERIFIED | 15/15 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-A (renderer) epic ID">V4A3</abbr> | Glossary panel + first-use expansion + model-ID leak lint + escape hardening + theme tokens | SQ-A | VERIFIED | 13/13 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-A (renderer) epic ID">V4A4</abbr> | `references/report-family.md`, fixture completeness, renderer test-harness wiring | SQ-A | VERIFIED | 10/10 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B1</abbr> | `machine.json` additive superset + byte-pinned 3.0.1 baseline + negative machine fixtures | SQ-B | VERIFIED | 14/14 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B2</abbr> | `state` verb additions (triage · defaults · plan review · draft-cannot-hand-off · mode · `--run`) + `freeze --draft` | SQ-B | VERIFIED | 15/15 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B3</abbr> | Named runs: state-file resolution, deliveryRoot-aware verbs, `archive`, `runs`, guard resolution in both copies, grammar widening | SQ-B | VERIFIED | 17/17 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B4</abbr> | `mirror`, `glossary`, disposition counting in `reconcile`, ENV-FACTS tool-only fix, embedded in `handoff` | SQ-B | VERIFIED | 17/17 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-B (deterministic core) epic ID">V4B5</abbr> | Harness: <abbr class="gl" title="harness amendment: gate count bound to the v2 baseline; required for the machine-diff check">AMD-4</abbr>, <abbr class="gl" title="harness amendment: mirror pairs 8 → 11; binds `scripts/build-report.mjs`, `scripts/report-template.html`, `assets/brand/default.brand.json`">AMD-5</abbr>, exit polarity, `tests/v4/core/*` wiring, fixture index, dogfood fixture | SQ-B | VERIFIED | 12/12 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-C (prose and packaging) epic ID">V4C1</abbr> | SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget | SQ-C | VERIFIED | 12/12 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-C (prose and packaging) epic ID">V4C2</abbr> | references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram | SQ-C | VERIFIED | 12/12 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-C (prose and packaging) epic ID">V4C3</abbr> | docs + README + CHANGELOG 4.0.0 + installation note on stale installs | SQ-C | VERIFIED | 10/10 · exit 0 on every `run:` cell, re-run on main | — |
+| <abbr class="gl" title="SQ-C (prose and packaging) epic ID">V4C4</abbr> | Versions 4.0.0 across six sites + harness literals + `kickoff-pinning`/`changelog-shape` updates + `tests/v4/prose/*` | SQ-C | VERIFIED | 10/10 · exit 0 on every `run:` cell, re-run on main | — |
+
+13/13 VERIFIED. Epic cases: 171 epic cases (SQ-A 52 · SQ-B 75 · SQ-C 44) · CONTRACT cases: 60 (59 PASS, 1 MANUAL).
+
+## Release gates (CONTRACT §7) on `main`
+
+| Gate | Result |
+|---|---|
+| `node tests/run-contract.mjs` | v2/v3 51/51 · v3 cases 25/25 · v4 cases 58/58 mechanism-ready + 1 MANUAL (<abbr>C-E11-07</abbr>) · exit 0 |
+| `tests/v3/fail-closed-sweep.mjs` | 25/25 |
+| `gate-check mirror-check` | 11/11 byte-identical (<abbr>AMD-5</abbr> executed) |
+| `gate-check machine-diff` vs `machine.v3.7fcff27.json` and `machine.v2.fc6abc8.json` | PASS, PASS (25 states, additive) |
+| `tests/v3/version-triple-match.mjs` | 4.0.0 at plugin.json = marketplace = both SKILL.md = both machine.json = CHANGELOG |
+| `tests/v3/changelog-shape.mjs` | PASS (<abbr>E1</abbr>–<abbr>E10</abbr> enumerated) |
+| dogfood `tests/fixtures/v4/dogfood-project/` | state resume · handoff · mirror --require-html · glossary · runs — 5/5 (QA) |
+| this package's own v4 `handoff delivery/v4/` (embeds reconcile · glossary · mirror) | PASS; five twins fresh with first-use expansions |
+
+## Residuals (closed dispositions)
+
+| Item | Disposition | Reason / exit criterion | Evidence |
+|---|---|---|---|
+| <abbr>C-E11-07</abbr> stale installs removed + 4.0.0 installed | owner-gated: Fernando Ott (<abbr>O-1</abbr>) | only the owner can touch the live plugin registry; do before the tag | run-contract MANUAL row; GATE.md <abbr>O-1</abbr> |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-10</abbr> docs visual read | PASS by QA (human read) — not a residual | recorded MANUAL in QA-REPORT.md | QA-REPORT.md |
+
+Dispositions: 0 backlog · 1 owner-gated · 0 INV.
+
+## Amendments the orchestrator made (CONTRACT v1.0 → v1.5; case count unchanged at 60)
+
+| ID | What |
+|---|---|
+| <abbr class="gl" title="orchestrator amendment 2026-09-07: two `run:` mechanism corrections in epics-c-prose.md (T-V4C3-06 awk range, T-V4C3-08 research exclusion)">AMD-6</abbr> | orchestrator ruling (capped, reversible, applies existing answers; CONTRACT.md text unchanged, v1.0 stands). |
+| <abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case T-V4B4-17">AMD-7</abbr> | orchestrator amendment, CONTRACT v1.0 → v1.1 (cases unchanged at 60). |
+| <abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.2): disposition required only for IMPLEMENTED-NOT-VERIFIED rows; `mirror --dir` skips `resources/`">AMD-8</abbr> | orchestrator amendment, CONTRACT v1.1 → v1.2 (cases unchanged at 60). |
+| <abbr class="gl" title="orchestrator amendment 2026-09-07 (epic level): renderer stamp relpaths twin-relative + CSS scan scoped; cases T-V4A1-13/14">AMD-9</abbr> | orchestrator amendment at epic level (CONTRACT text unchanged, v1.2). |
+| <abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.3): one GLOSSARY family grammar for lint and renderer; case T-V4A3-12">AMD-10</abbr> | orchestrator amendment, CONTRACT v1.2 → v1.3 (cases unchanged at 60). |
+| <abbr class="gl" title="orchestrator amendment 2026-09-07 (CONTRACT v1.4): literal-first glossary lookup, no range expansion; glossary table excluded from first-use scan">AMD-11</abbr> | orchestrator amendment, CONTRACT v1.3 → v1.4 (cases unchanged at 60). |
+| <abbr>AMD-12</abbr> | orchestrator amendment (<abbr>W3</abbr>), CONTRACT v1.4 → v1.5 (cases unchanged at 60). |
+
+Every amendment is dated in `delivery/decisions.md`, mirrored in the CONTRACT Changelog, and carries a binding test hook. Five of the seven came from **running the new v4 lints and renderer against this very package** (dogfood), which is exactly what they are for.
+
+## Incidental findings (unasked-for, dispositioned)
+
+- QA reports a forked verifier it dispatched briefly overstepped its scope (tried to redo all of <abbr>W3</abbr>); caught and narrowed, no writes — noted for the build-it/QA playbook (scope-lock the prompt of verifier forks).
+- running <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-13</abbr> (`tests/v4/renderer/stamp-relpath-subdir.mjs`) writes `tests/fixtures/v4/report/manifest-in-subdir/REPORT.html` into the fixture directory (untracked file after every harness run); disposition: backlog-with-reason → SQ-A fix branch `epic/v4a-fix-subdir-output` requested (render to a temp dir), merge after QA. Removed from the main tree by the orchestrator.
+- GLOSSARY.md range cells (`D1 … D7`) resolved by `gate-check glossary` but not by the renderer's glossary panel — §5 says one literal ID or family pattern per row; expanding to one row per ID (agent, in progress).
+- `tests/v4/renderer/open-routing.mjs` inherits `PLANIT_NO_OPEN` from the parent environment and fails when a caller has it set (<abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-08</abbr>/10 expect the open stub to be called); the test should scrub it from the child env for those cases — hermeticity, for <abbr>V4A4</abbr> harness wiring.
+- rendering in THIS repo exits 2 "brand: default (guideline present, not tokenised)" because `assets/brand/` carries the Her0 guideline but no `brand.json`; expected per CONTRACT §4.4, but a tokenised `assets/brand/brand.json` for this repo is a candidate backlog item (<abbr class="gl" title="brand = the target repository's brand guideline if present, else DevOtts' own default at `assets/brand/`">D2</abbr>). <abbr>V4A3</abbr> in progress.
+- the 3.0.1 handoff lint scans forward from a `Count:` line to the next heading; a count line placed BELOW its table counts zero rows and is silently skipped (no failure, no ok line). SQ-C's four epics were affected and re-headed; disposition: backlog-with-reason for <abbr>V4B5</abbr> (harness) — a `Count:` with zero rows in its block should be a lint finding, not silence.
+- the plugin's guard hook lacked the named-state fix from commit 7fcff27 (mirror drift, <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-E5-02</abbr> red); copied root → plugin during planning, uncommitted, pending <abbr class="gl" title="the orchestrator commits the guard mirror fix applied during planning as its first W0 commit">A-4</abbr>.
+- an ABSENT preflight probe blacklists every token of its argv (<abbr class="gl" title="v3 CONTRACT cases and meta-cases (e.g. C-W5-02 orphan scan, C-W2-03 probe blacklist)">C-W2-03</abbr>), fixed by case <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E6-03</abbr>.
+- `formats.md §9` cited by `gate-check preflight` does not exist (<abbr class="gl" title="live-grounding facts measured by the coordinator">LG-6</abbr>), closed by <abbr>V4C2</abbr>.
+
+## Owner actions (GATE.md)
+
+| # | Item | Owner | When |
+|---|---|---|---|
+| <abbr>O-1</abbr> | Remove the stale installs (`plan-it@plan-it` enablement, the `plan-it/` marketplace dir, the user-level 2.1.0 skill copy) and install `plan-it@devotts` 4.0.0 (case <abbr>C-E11-07</abbr>) | Fernando | before the 4.0.0 tag |
+| <abbr class="gl" title="read `delivery/v4/QA-REPORT.md` and give the tag/push go (A-2)">O-2</abbr> | Read `delivery/v4/QA-REPORT.md`, then give the tag/push go (<abbr>A-2</abbr>) | Fernando | after <abbr>W3</abbr> |
+| <abbr>O-5</abbr> | Confirm the relabel of this run's recorded `run.mode` from `autonomous-draft` to `guided` in `.plan-it/v4.state.json` (<abbr class="gl" title="integration: mirror pairs 11, root mirrors synced, version 4.0.0 across six sites, both harness literals in one merge, CHANGELOG 4.0.0">W2</abbr>): the state history is the 3.0.1 guided path (decisionGate, freezeGate) because the run executed on the 3.0.1 machine; the autonomous-draf… | Fernando | any time; not blocking |
+| <abbr>O-4</abbr> | Decide whether the six literal model-ID citations in the research records (`docs/research/v3/stream-A-pxpipe.md`, `docs/research/v3/stream-B-damonade.md`, `docs/v4/research/stream-A-renderer.md`) should be redacted to placeholders or stay as quoted evidence (A… | Fernando | any time; not blocking |
+| <abbr class="gl" title="ratify R7 (brand contrast deviation) or send the exact colours you want as text">O-3</abbr> | Ratify <abbr class="gl" title="brand accents as chip backgrounds in light mode; muted text Steel; measured WCAG contrast">R7</abbr> (brand contrast deviation) — RATIFIED with <abbr class="gl" title="CONTRACT frozen as v1.0-draft for the squads; PLAN-REVIEW records G2 and G3 answers in one stop; freeze bumps to v1.0; contradictions re-enter as amendments">R1</abbr>–<abbr class="gl" title="renderer is a separate script (`scripts/build-report.mjs`), not a gate-check verb">R12</abbr> at PLAN-REVIEW 2026-09-07 (send exact colours later only if the default twins look wrong) | Fernando | closed |
+
+## What went well / what to change next time
+
+- Disjoint lanes + worktrees-only: zero merge conflicts across 13 epics, 3 fix branches and 7 amendments.
+- "Verify on disk, not on done" caught nothing false — every squad tally matched the orchestrator's re-run — but the *dogfood* of the new lints on the package itself found seven real defects the case fixtures could not see. Add "run the new gates against the package that specifies them" as a standing <abbr>W2</abbr> step.
+- Planning-time gaps found at build time: two `run:` mechanisms (awk range, sweep scope), backticked scaffold pointers, one CONTRACT case with no owner (<abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-11</abbr>), and a grammar collision (defaults `R<n>` vs PRD requirements). All cheap to catch with a "dry-run every run: cell against the pinned tree" step before handoff.
+- Timestamps: the orchestrator's first log entries used a guessed clock; corrected from commit times. Always `date`.
+
+## Final numbers
+
+| What | Count |
+|---|---|
+| Epics VERIFIED | 13 / 13 |
+| Epic cases (SQ-A 52 · SQ-B 75 · SQ-C 44) | 171, all PASS except <abbr>T-V4C3-10</abbr> (human read, PASS by QA) |
+| CONTRACT cases | 60: 59 PASS · 1 MANUAL (<abbr>C-E11-07</abbr>, owner-gated <abbr>O-1</abbr>) |
+| Orchestrator amendments | 7 (<abbr>AMD-6</abbr> … <abbr>AMD-12</abbr>), CONTRACT v1.0 → v1.5, case count unchanged |
+| Fix branches merged after lane close | 4 (SQ-A ×3, SQ-C ×1) |
+| Merge commits to main | SQ-A lane · <abbr>W2</abbr> (SQ-B + SQ-C, one merge) · 4 fixes · 2 QA |
+
+## Not done, on purpose
+
+- No `git tag 4.0.0`, no push, no marketplace edit (<abbr>A-2</abbr> held until <abbr>O-2</abbr>).
+- The research records' six literal model-ID citations are untouched (<abbr>O-4</abbr>).
+- Squad worktrees under `.claude/worktrees/` and the epic branches are left in place for your inspection; `/reconcile-it` can prune them after the tag.
+
+</script></div>
+</details>
+<details class="more"><summary>QA report (independent run)</summary>
+<p class="srcnote">Rendered from <code>QA-REPORT.md</code>:</p>
+<div class="mdout"><script type="text/markdown">
+# QA-REPORT — plan-it v4 (<abbr>W3</abbr>)
+
+QA session: v4-qa. Worktree: `.claude/worktrees/qa-w3` (branch `qa/w3`), merged to `main` @ `fef35a3` (descendant of the <abbr>W2</abbr> merge target `5189a04`).
+
+Legend: `✅ PASS` case behavior matches its Expected column, verified by re-running its `run:` command · `⚠️ MANUAL` case cannot be mechanically run, human action required, never silently passed · `❌ FAIL` genuine defect, described inline. IDs: see `GLOSSARY.md` (`V4<letter><n>` epic · `T-<EID>-NN` epic test case · `C-E<n>-NN` CONTRACT case).
+
+## Tally
+
+| Scope | Cases | Pass | Manual | Fail |
+|---|---|---|---|---|
+| CONTRACT (delivery/v4/CONTRACT.md) | 60 | 59 | 1 (<abbr>C-E11-07</abbr>) | 0 |
+| Epic V4A1-V4A4 (SQ-A) | 51 | 51 | 0 | 0 |
+| Epic V4B1-V4B5 (SQ-B) | 75 | 75 | 0 | 0 |
+| Epic V4C1-V4C4 (SQ-C) | 44 | 43 | 1 (<abbr>T-V4C3-10</abbr>) | 0 |
+| **Total** | **230** | **228** | **2** | **0** |
+
+Release gates (§7): 9/9 PASS. Dogfood (§7): 5/5 PASS. Visual authorization <abbr>A-3</abbr>: PASS with 1 finding (see Findings).
+
+**Verdict: no fake green. 228/230 mechanism-ready cases pass; the 2 non-pass cases are genuinely manual (owner action / human visual read), each named with its reason below, never silently marked PASS.**
+
+## Release gates (§7)
+
+| Gate | Command | Result |
+|---|---|---|
+| run-contract | `node tests/run-contract.mjs` | PASS — v2/v3 51/51 · v3 cases 25/25 · v4 cases 58/58 mechanism-ready + 1 manual (<abbr>C-E11-07</abbr>), exit 0 |
+| fail-closed-sweep | `node tests/v3/fail-closed-sweep.mjs` | PASS — 25/25 |
+| mirror-check | `gate-check mirror-check` | PASS — 11/11 byte-identical pairs |
+| machine-diff vs v3 pin | `gate-check machine-diff plugins/plan-it/skills/plan-it/machine.json tests/fixtures/v3/machine.v3.7fcff27.json` | PASS — additive-only superset |
+| machine-diff vs v2 pin | `gate-check machine-diff plugins/plan-it/skills/plan-it/machine.json tests/fixtures/v2/machine.v2.fc6abc8.json` | PASS — additive-only superset |
+| version-triple-match | `node tests/v3/version-triple-match.mjs` | PASS — 4.0.0 across plugin.json, marketplace.json, both SKILL.md, both machine.json, CHANGELOG top |
+| changelog-shape | `node tests/v3/changelog-shape.mjs` | PASS |
+| state (root run) | `gate-check state --dir . --run v4` | PASS — state: done (final) |
+| handoff (embeds reconcile/glossary/mirror) | `gate-check handoff delivery/v4/` | PASS — 177 distinct case IDs, declared==counted for 13 epics, 5/5 twins MIRROR_FRESH; standalone `reconcile --dir`, `glossary`, `mirror --dir --require-html` also independently PASS |
+
+## Dogfood (§7) — tests/fixtures/v4/dogfood-project/
+
+| Check | Command | Result |
+|---|---|---|
+| state (resume at handoff) | `gate-check state --dir tests/fixtures/v4/dogfood-project --run dogfood` | PASS — state: handoff, next: HANDED_OFF |
+| handoff (embedded mirror+glossary) | `gate-check handoff --dir tests/fixtures/v4/dogfood-project` | PASS — 6/6 twins MIRROR_FRESH |
+| mirror --require-html | `gate-check mirror --dir tests/fixtures/v4/dogfood-project/delivery --require-html` | PASS — 6/6 MIRROR_FRESH |
+| glossary | `gate-check glossary tests/fixtures/v4/dogfood-project/delivery` | PASS — 6 ID mentions resolved |
+| runs | `gate-check runs --dir tests/fixtures/v4/dogfood-project` | PASS — 1 run listed (dogfood, handoff, autonomous-draft, not yet archived — by design, README: one step short of done so freeze/handoff stay exercisable) |
+
+<abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-08</abbr>/09 (dogfood-run.mjs, the model-driven half's deterministic walk) confirmed PASS as part of SQ-B's epic-case sweep below.
+
+## Visual check (authorization <abbr>A-3</abbr>)
+
+Rendered and opened in Chrome (CDP): `delivery/v4/KICKOFF.html` (re-rendered to `/tmp` from its manifest, confirmed `--check` identical to the committed twin) and `delivery/v4/DECISIONS.html` (confirmed `--check` identical).
+
+| Check | KICKOFF.html | DECISIONS.html |
+|---|---|---|
+| Glossary panel expands on click | PASS | PASS |
+| Brand badge reads "brand: Her0 default" | PASS | PASS |
+| Theme toggle (auto → light → dark) recolors the page | PASS (verified: bg #fff → #0d1117) | not re-tested (same mechanism, already proven on KICKOFF) |
+| First-use `<abbr class="gl">` expansion visible in body prose | **0 abbr present — see Finding 1** | PASS — e.g. first `D1` renders as underlined `<abbr>` with inline `(autonomous-draft is the default mode...)` chip; later `D1`/`G1`/`C-E3-03` occurrences bare |
+| Exactly one render warning (brand default, guideline not tokenised) | PASS — exit 2, single `WARNING: brand: default (guideline present, not tokenised)` | not independently re-checked (same manifest-level brand warning applies repo-wide) |
+
+## Findings
+
+**Finding 1 — embed-block content never receives glossary first-use `<abbr>` expansion (affects KICKOFF, CONTRACT, GLOSSARY, PLAN-REVIEW kinds).**
+Confirmed by direct inspection of the live rendered artifacts, not just the isolated unit fixtures:
+- `renderEmbedBlock` (scripts/build-report.mjs:594-604) wraps embedded markdown in `<script type="text/markdown">…<\/script>`, documented in `references/report-family.md` line 49 as intentionally client-rendered.
+- `expandFirstUse`'s `PROTECTED_RE` (build-report.mjs:434) explicitly excludes `<script>` content from abbr-wrapping — correctly, to avoid corrupting the embedded markdown source — but the side effect is that embed-block content can never be abbr-wrapped server-side, and the client-side markdown renderer does not re-run the expansion pass either.
+- Live evidence: `delivery/v4/KICKOFF.html`, `CONTRACT.html`, `GLOSSARY.html`, `PLAN-REVIEW.html` each contain 0 `<abbr>` tags despite their embedded source prose (e.g. KICKOFF.md's `plan-it`, `epic`, `CONTRACT` in real non-code paragraphs) matching GLOSSARY.md IDs verbatim. `DECISIONS.html` (built from `table`/`copy-rulings` blocks, no `embed`) shows 26 `<abbr>` occurrences and the mechanism works correctly there.
+- <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E10-03</abbr> / <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-01</abbr>,02,03 all PASS as written, because their dedicated fixtures use non-embed body blocks — the case commands are not wrong, but they don't exercise the embed path, so this gap was invisible to the mechanism-ready test suite.
+- **This is not a case FAIL** (every case's literal `run:` command passes against its Expected column) but is a real product gap: 4 of the 8 report-family kinds structurally cannot fulfill the glossary first-use promise on their primary content. Recommend disposition: `backlog-with-reason` (or the orchestrator may judge this covered by existing scope and waive it) — flagging for a human call, not marking it PASS or FAIL myself.
+
+## GLOSSARY.md coverage
+
+`gate-check glossary delivery/v4/` — PASS, 446 ID mentions resolved against `delivery/v4/GLOSSARY.md`, 0 unknown IDs. Every case ID referenced in this report (`T-V4*-NN`, `C-E*-NN`) is covered by the family-pattern rows in GLOSSARY.md; no bare/unresolvable ID found.
+
+## Case checklist — CONTRACT (60)
+
+| Case | Tag | Result | Note |
+|---|---|---|---|
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E1-01</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/skill-sections.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E1-02</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/description-budget.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E1-03</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/local-html-rule.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E1-04</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/templates-present.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-01</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/determinism.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-02</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/missing-embed.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-03</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/strict-schema.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-04</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/brand-detection.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-05</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror --dir tests/fixtures/v4/mirror-missing-twin/delivery --require-html` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-06</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror tests/fixtures/v4/mirror-stale/CONTRACT.md tests/fixtures/v4/mirror-stale/CONTRACT.html` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-07</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs mirror tests/fixtures/v4/mirror-unstamped/X.md tests/fixtures/v4/mirror-unstamped/X.html` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-08</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/tally-computed.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-09</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/model-id-leak.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-10</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/open-routing.mjs` |
+| <abbr>C-E2-11</abbr> | @case-packaging | ✅ PASS | `node tests/v4/prose/zero-deps.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-12</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/xss-escape.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-13</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/theme-tokens.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E2-14</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/mermaid-fallback.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E3-01</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/decision-card-complete.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E3-02</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/rulings-forward.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E3-03</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/copy-rulings.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E4-01</abbr> | @case-prose | ✅ PASS | authorization |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E4-02</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/sessions-prompts.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E5-01</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/mockup-provenance.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E5-02</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/measurement-readonly.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E5-03</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/states-triptych.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E6-01</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state --dir tests/fixtures/v4/triage-no-memo --run t1` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E6-02</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/triage-closed.mjs` |
+| <abbr>C-E6-03</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/envfacts-tool-only.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-01</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/machine-additive.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-02</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/machine-negatives.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-03</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state --dir tests/fixtures/v4/planreview-no-file --run v4` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-04</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state tests/fixtures/v4/draft-at-handoff/.plan-it/v4.state.json` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-05</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs freeze tests/fixtures/v4/draft-header/delivery/CONTRACT.md` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-06</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/mode-consistency.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E7-07</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs state tests/fixtures/v4/defaults-empty/.plan-it/v4.state.json` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E8-01</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-missing` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E8-02</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-contract-case` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E8-03</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs reconcile --dir tests/fixtures/v4/disposition-tally-drift` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-01</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/state-run-flag.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-02</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/testconv-named.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-03</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/deliveryroot-resolution.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-04</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/archive-moves.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-05</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs archive beta --dir tests/fixtures/v4/portfolio` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-06</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/runs-list.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-07</abbr> | @case-guard | ✅ PASS | `node tests/v4/core/guard-named-run.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-08</abbr> | @case-guard | ✅ PASS | `node tests/v4/core/guard-unfrozen-named.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-09</abbr> | @case-packaging | ✅ PASS | `node tests/v3/mirror-wired-into-release.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E9-10</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/contract-cases-v4.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E10-01</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs glossary tests/fixtures/v4/glossary-unknown-id/delivery` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E10-02</abbr> | @case-machine | ✅ PASS | `node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs handoff tests/fixtures/v4/glossary-unknown-id/delivery` |
+| <abbr>C-E10-03</abbr> | @case-renderer | ✅ PASS | `node tests/v4/renderer/glossary-panel.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E10-04</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/glossary-seed.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-01</abbr> | @case-packaging | ✅ PASS | `node tests/v3/version-triple-match.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-02</abbr> | @case-packaging | ✅ PASS | `node tests/v3/changelog-shape.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-03</abbr> | @case-prose | ✅ PASS | `node tests/v4/prose/docs-coherence.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-04</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/guided-unchanged.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-05</abbr> | @case-machine | ✅ PASS | `node tests/v4/core/amd4-gate-count.mjs` |
+| <abbr class="gl" title="enforcement case for enhancement n (`C-E&lt;n&gt;-NN`; 60 in the CONTRACT, computed)">C-E11-06</abbr> | @case-packaging | ✅ PASS | `node tests/v4/core/dogfood-run.mjs` |
+| <abbr>C-E11-07</abbr> | @case-packaging | ⚠️ MANUAL | owner action <abbr>O-1</abbr> (Fernando confirms in GATE.md before the 4.0.0 tag) — never silently PASS |
+
+## Case checklist — Epic cases (170)
+
+### <abbr>V4A1</abbr> — Renderer core: CLI, determinism, exit codes, --open routing, legacy manifest compat (SQ-A, <abbr class="gl" title="three squads in parallel: all epics of each squad on their branches, each with its Test Contract 100% or IMPLEMENTED-NOT-VERIFIED with reason">W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-07</abbr> | ✅ PASS | |
+| <abbr>T-V4A1-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-12</abbr> | ✅ PASS | |
+| <abbr>T-V4A1-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A1-14</abbr> | ✅ PASS | |
+
+### <abbr>V4A2</abbr> — Block catalogue (17 types) + brand tokens + detection + badge/stamps (SQ-A, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-12</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-14</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A2-15</abbr> | ✅ PASS | |
+
+### <abbr>V4A3</abbr> — Glossary panel + first-use expansion + model-ID leak lint + escape hardening + theme tokens (SQ-A, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr>T-V4A3-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-12</abbr> | ✅ PASS | |
+
+### <abbr>V4A4</abbr> — references/report-family.md, fixture completeness, renderer test-harness wiring (SQ-A, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A4-10</abbr> | ✅ PASS | |
+
+### <abbr>V4B1</abbr> — machine.json additive superset + byte-pinned 3.0.1 baseline + negative machine fixtures (SQ-B, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-12</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B1-14</abbr> | ✅ PASS | |
+
+### <abbr>V4B2</abbr> — state verb additions (triage, defaults, plan review, draft-cannot-hand-off, mode, --run) + freeze --draft (SQ-B, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-12</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-14</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B2-15</abbr> | ✅ PASS | |
+
+### <abbr>V4B3</abbr> — Named runs: state-file resolution, deliveryRoot-aware verbs, archive, runs, guard resolution in both copies, grammar widening (SQ-B, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-12</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-14</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-15</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-16</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B3-17</abbr> | ✅ PASS | |
+
+### <abbr>V4B4</abbr> — mirror, glossary, disposition counting in reconcile, ENV-FACTS tool-only fix, embedded in handoff (SQ-B, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-12</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-13</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-14</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-15</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-16</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B4-17</abbr> | ✅ PASS | |
+
+### <abbr>V4B5</abbr> — Harness: <abbr>AMD-4</abbr>, <abbr>AMD-5</abbr>, exit polarity, tests/v4/core/* wiring, fixture index, dogfood fixture (SQ-B, <abbr>W1</abbr>-><abbr>W2</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-07</abbr> | ✅ PASS | |
+| <abbr>T-V4B5-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4B5-12</abbr> | ✅ PASS | |
+
+### <abbr>V4C1</abbr> — SKILL.md prose: anamnesis, triage, topology axis, scope brief, two posture tables, output discipline, description budget (SQ-C, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C1-12</abbr> | ✅ PASS | |
+
+### <abbr>V4C2</abbr> — references: seven new template skeletons, formats §9, playbooks §G, machine.md 25-state diagram (SQ-C, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-10</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-11</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C2-12</abbr> | ✅ PASS | |
+
+### <abbr>V4C3</abbr> — docs + README + CHANGELOG 4.0.0 + installation note on stale installs (SQ-C, <abbr>W1</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C3-09</abbr> | ✅ PASS | |
+| <abbr>T-V4C3-10</abbr> | ⚠️ MANUAL | human visual/prose read of README + docs rendering as clean GFM — not automatable, never silently PASS |
+
+### <abbr>V4C4</abbr> — Versions 4.0.0 across six sites + harness literals + kickoff-pinning/changelog-shape updates + tests/v4/prose/* (SQ-C, <abbr>W1</abbr>-><abbr>W2</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-01</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-02</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-03</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-04</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-05</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-06</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-07</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-08</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-09</abbr> | ✅ PASS | |
+| <abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4C4-10</abbr> | ✅ PASS | |
+
+## Re-verify after <abbr>AMD-12</abbr> (main efa5bf7)
+
+<abbr>AMD-12</abbr> (CONTRACT v1.5) fixed Finding 1 above: `renderEmbedBlock` now expands first-use glossary IDs inside the embed's markdown *source*, at build time, before it's placed in `<script type="text/markdown">` — outside fenced code, inline code spans, and link targets — sharing the page-global `seen` set with body prose so an ID already expanded once (either surface) isn't re-expanded. New binding case: **<abbr class="gl" title="per-epic Test Contract case (`T-&lt;EID&gt;-NN`, e.g. T-V4B4-17)">T-V4A3-13</abbr>** (`node tests/v4/renderer/embed-first-use.mjs`).
+
+Re-verified in `.claude/worktrees/qa-w3` merged to `main @ efa5bf7` (descendant of `99a606b`, this report's first commit).
+
+### Updated tally (computed fresh, not copied from the original report)
+
+Epic case count changed: <abbr>V4A3</abbr> gained 1 row (12 → 13) for the new binding case. SQ-A total 51 → 52. SQ-B and SQ-C unchanged.
+
+| Scope | Cases | Pass | Manual | Fail |
+|---|---|---|---|---|
+| CONTRACT (delivery/v4/CONTRACT.md) | 60 | 59 | 1 (<abbr>C-E11-07</abbr>) | 0 |
+| Epic V4A1-V4A4 (SQ-A) | 52 | 52 | 0 | 0 |
+| Epic V4B1-V4B5 (SQ-B) | 75 | 75 | 0 | 0 |
+| Epic V4C1-V4C4 (SQ-C) | 44 | 43 | 1 (<abbr>T-V4C3-10</abbr>) | 0 |
+| **Total** | **231** | **229** | **2** | **0** |
+
+### <abbr>V4A3</abbr> — all 13 rows re-run (12 unchanged + new <abbr>T-V4A3-13</abbr>)
+
+| Case | Result | Note |
+|---|---|---|
+| <abbr>T-V4A3-01</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-02</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-03</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-04</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-05</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-06</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-07</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-08</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-09</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-10</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-11</abbr> | ✅ PASS | |
+| <abbr>T-V4A3-12</abbr> | ✅ PASS | unchanged from original report |
+| <abbr>T-V4A3-13</abbr> | ✅ PASS | new binding case (<abbr>AMD-12</abbr>): `node tests/v4/renderer/embed-first-use.mjs` |
+
+### Full SQ-A re-run (52 cases, cheap to re-verify in full)
+
+<abbr>V4A1</abbr> 14/14 PASS · <abbr>V4A2</abbr> 15/15 PASS · <abbr>V4A3</abbr> 13/13 PASS · <abbr>V4A4</abbr> 10/10 PASS. (V4A1-02/03/04/05/07-14 and <abbr>V4A2</abbr>/<abbr>V4A4</abbr> unchanged from the original report; re-run here for completeness, no regressions. <abbr>T-V4A1-06</abbr> again needed its documented pre-render-then---check convention — not a defect — and passed: `build-report.mjs … --out /tmp/... ` then `--check --out /tmp/...` → identical, exit 0.)
+
+### Release gates re-run
+
+| Gate | Result |
+|---|---|
+| `node tests/run-contract.mjs` | PASS — 51/51 · 25/25 · 58/58 mechanism-ready + 1 manual, exit 0 |
+| `gate-check mirror-check` | PASS — 11/11 |
+| `gate-check handoff delivery/v4/` | PASS — 178 distinct case IDs, declared==counted for 13 epics, 5/5 twins MIRROR_FRESH |
+
+### Visual re-check (<abbr>A-3</abbr>) — KICKOFF.html and CONTRACT.html
+
+| Check | KICKOFF.html | CONTRACT.html |
+|---|---|---|
+| `--check` identical to manifest | PASS | PASS |
+| Total `<abbr>` count (occurrences, not lines) | **69** (matches orchestrator's expected order of magnitude) | **246** (matches) |
+| First-use markers (`class="gl"`) | 29 | 130 |
+| Abbr inside code spans (`<code><abbr`) | 0 | 0 |
+| Hover shows expansion | PASS — `title` attribute present and populated on every `abbr.gl`, e.g. first KICKOFF occurrence `W0` → title "orchestrator prep: commit the planning package, guard mirror fix, byte-pin the 3.0.1 machine, create worktrees, record amendments, copy GLOSSARY" | PASS — first occurrence `AMD-7` → title "orchestrator amendment 2026-09-07 (CONTRACT v1.1): reconcile orphan scan skips recorded default IDs; case <abbr>T-V4B4-17</abbr>" |
+| Glossary panel still expands | PASS | PASS |
+| Theme toggle still cycles (auto/light/dark) | PASS | not re-tested independently (same shared mechanism, already proven working here and in the original <abbr>A-3</abbr> pass) |
+
+**Note on the visible `.gl-x` expansion span:** embed-sourced first-use markers get `<abbr class="gl" title="…">` (tooltip) only, deliberately — `build-report.mjs` (`expandFirstUseInMarkdown`, ~line 455) documents this as an intentional lighter-weight treatment for the collapsed embed surface; <abbr>T-V4A3-13</abbr>'s own Expected column only requires the `abbr class="gl"` itself, not a visible span. Regular (non-embed) body prose, e.g. DECISIONS.html's table cells, still gets both the abbr and the visible `.gl-x` span as before. This is a design choice, not a gap — confirmed by reading the implementation, not assumed.
+
+**Verdict: Finding 1 is closed. 229/231 cases pass; the 2 non-pass cases remain the same genuinely-manual items as the original report (owner action <abbr>O-1</abbr>, and the human visual/prose read for <abbr>T-V4C3-10</abbr>) — never silently marked PASS. No fake green, no regressions found in the re-run.**
+
+
+</script></div>
+</details>
+</div>
+<h2>Open — needs you</h2>
+<div class="card"><h3>
+<span class="id"><abbr>O-1</abbr></span>
+ Install the release on this Mac (prod check)
+ <span class="badge b-act">act</span>
+</h3>
+<p>Remove the stale installs (<code>plan-it@plan-it</code> enablement, the <code>plan-it/</code> marketplace dir, the user-level 2.1.0 skill copy) and install <code>plan-it@devotts</code> 4.0.0. Until then the release is deployed to origin but not verified in the harness that runs it (CONTRACT case <abbr>C-E11-07</abbr>).</p>
+<div class="test"><b>How to test</b><ul><li><code>claude plugin marketplace update devotts</code> then install/enable <code>plan-it@devotts</code></li><li>In a fresh Claude Code session: <code>/plan-it</code> description mentions anamnesis and the HTML report layer; <code>ls ~/.claude*/plugins/marketplaces</code> no longer lists a <code>plan-it</code> marketplace dir</li></ul></div>
+</div>
+<div class="card"><h3>
+<span class="id"><abbr>O-4</abbr></span>
+ Model-ID citations in research records
+ <span class="badge b-open">open</span>
+</h3>
+<p>Six literal model-ID citations in <code>docs/research/v3/</code> and <code>docs/v4/research/</code> are quoted evidence, excluded from the <abbr class="gl" title="a governance rule inside a CONTRACT (dash: rule; no dash: gate)">G-4</abbr><span class="gl-x">(a governance rule inside a CONTRACT (dash: rule; no dash: gate))</span> sweep by <abbr>AMD-6</abbr>. Redact to placeholders or keep — your call, not blocking.</p>
+<div class="test"><b>How to test</b><ul><li><code>grep -rEn "claude-[a-z0-9-]*-[0-9]" docs/</code> lists only research files</li></ul></div>
+</div>
+<div class="card"><h3>
+<span class="id"><abbr>O-5</abbr></span>
+ Confirm the run.mode relabel
+ <span class="badge b-open">open</span>
+</h3>
+<p>This run's archived state file (<code>.plan-it/done/v4.state.json</code>) records <code>run.mode: guided</code> with a <code>modeNote</code>: the history is the 3.0.1 guided path because the run executed on the 3.0.1 machine while emulating autonomous-draft behaviour. Alternative is a history rewrite to the 4.0.0 autonomous path, which the orchestrator declined to do alone.</p>
+<div class="test"><b>How to test</b><ul><li><code>node plugins/plan-it/skills/plan-it/scripts/gate-check.mjs runs --dir .</code> → run <code>v4</code> listed as archived</li></ul></div>
+</div>
+<div class="card"><h3>
+<span class="id">cleanup</span>
+ Prune the build debris
+ <span class="badge b-hold">hold</span>
+</h3>
+<p>20 branches (<code>epic/v4*</code>, <code>qa/w3</code>, <code>w2/integration</code>) and their worktrees under <code>.claude/worktrees/</code> are fully merged into main and left for inspection. <code>/reconcile-it</code> prunes them behind its human gate.</p>
+<div class="test"><b>How to test</b><ul><li><code>for b in $(git branch --list 'epic/v4*' 'qa/*' 'w2/*'); do git log --oneline main..$b | wc -l; done</code> → all 0</li></ul></div>
+</div>
+<p class="sub">Rendered locally by plan-it 4.0.0's own renderer (build-report.mjs, conclude-it manifest accepted as kind LEGACY) as the stamped twin of MORNING-REPORT.md; never published as an artifact. Sources: delivery/v4/STATUS.md (board + log), delivery/decisions.md (<abbr>AMD-4</abbr>…<abbr>AMD-12</abbr>, <abbr>A-2</abbr>), delivery/v4/GATE.md (owner actions), docs/v4/03-build-retrospective.md.</p>
+<p class="footer">html-blocks=1</p>
+<script>
+// Theme toggle: auto → light → dark → auto. Persists per-viewer (try/catch — storage may be blocked).
+(function(){
+  const btn=document.getElementById("theme-toggle"), lab=document.getElementById("theme-label");
+  const order=["auto","light","dark"]; let cur="auto";
+  try{ cur=localStorage.getItem("report-theme")||"auto" }catch(e){}
+  function apply(v){
+    cur=v; lab.textContent=v;
+    if(v==="auto"){ document.documentElement.removeAttribute("data-theme"); }
+    else{ document.documentElement.setAttribute("data-theme",v); }
+    try{ localStorage.setItem("report-theme",v) }catch(e){}
+  }
+  apply(cur);
+  btn.addEventListener("click",()=>apply(order[(order.indexOf(cur)+1)%order.length]));
+})();
+// Copy-to-clipboard: client-side navigator.clipboard, try/catch — API may be unavailable.
+document.querySelectorAll(".copy-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    var pre = btn.previousElementSibling;
+    var text = pre ? pre.textContent : "";
+    try{
+      navigator.clipboard.writeText(text);
+    }catch(e){
+      var note = document.createElement("p");
+      note.className = "warn"; note.textContent = "select the text above";
+      btn.parentNode.insertBefore(note, btn.nextSibling);
+    }
+  });
+});
+</script>
+<script>
+/* MDPARSER-START */
+
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function isSafeUrl(u){
+  var url=String(u).trim();
+  if(url.indexOf('"')!==-1||url.indexOf("'")!==-1) return false;
+  if(/^(https?:|mailto:|#)/i.test(url)) return true;
+  return !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+function inline(s){
+  return s
+    .replace(/`([^`]+)`/g,function(m,c){return "<code>"+c+"</code>"})
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g,function(m,label,url){
+      return isSafeUrl(url) ? '<a href="'+esc(url)+'">'+label+'</a>' : label;
+    });
+}
+function md(src){
+  var abbrs=[];
+  var protectedSrc=src.replace(/<abbr\b[^>]*>[\s\S]*?<\/abbr>/gi,function(m){abbrs.push(m);return "\u0001ABBR"+(abbrs.length-1)+"\u0001"});
+  var lines=esc(protectedSrc).split("\n"), out=[], inCode=false, inList=false, inOList=false, inQuote=false, i=0;
+  function closeAll(){
+    if(inList){out.push("</ul>");inList=false}
+    if(inOList){out.push("</ol>");inOList=false}
+    if(inQuote){out.push("</blockquote>");inQuote=false}
+  }
+  while(i<lines.length){
+    var raw=lines[i];
+    if(raw.indexOf("```")===0){closeAll();out.push(inCode?"</pre>":"<pre>");inCode=!inCode;i++;continue}
+    if(inCode){out.push(raw);i++;continue}
+    if(/^\s*\|.*\|\s*$/.test(raw) && i+1<lines.length && /^\s*\|[\s\-:|]+\|\s*$/.test(lines[i+1])){
+      closeAll();
+      var cells=function(r){return r.trim().replace(/^\||\|$/g,"").split("|").map(function(c){return inline(c.trim())})};
+      out.push('<div class="overflow"><table><tr>'+cells(raw).map(function(c){return "<th>"+c+"</th>"}).join("")+"</tr>");
+      i+=2;
+      while(i<lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        out.push("<tr>"+cells(lines[i]).map(function(c){return "<td>"+c+"</td>"}).join("")+"</tr>"); i++;
+      }
+      out.push("</table></div>"); continue;
+    }
+    var l=raw, m;
+    if(/^\s*$/.test(l)){closeAll();i++;continue}
+    if(/^---+\s*$/.test(l)){closeAll();out.push("<hr>");i++;continue}
+    if(m=l.match(/^(#{1,4})\s+(.*)/)){closeAll();var h=m[1].length;out.push("<h"+h+">"+inline(m[2])+"</h"+h+">");i++;continue}
+    if(m=l.match(/^\s*&gt;\s?(.*)/)){if(!inQuote){closeAll();out.push("<blockquote>");inQuote=true}out.push("<p>"+inline(m[1])+"</p>");i++;continue}
+    if(m=l.match(/^\s*[-*]\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inOList){out.push("</ol>");inOList=false}
+      if(!inList){out.push("<ul>");inList=true}
+      out.push("<li>"+inline(m[1])+"</li>");i++;continue;
+    }
+    if(m=l.match(/^\s*(\d+)\.\s+(.*)/)){
+      if(inQuote){out.push("</blockquote>");inQuote=false}
+      if(inList){out.push("</ul>");inList=false}
+      if(!inOList){out.push("<ol>");inOList=true}
+      out.push("<li>"+inline(m[2])+"</li>");i++;continue;
+    }
+    closeAll();out.push("<p>"+inline(l)+"</p>");i++;
+  }
+  closeAll(); if(inCode)out.push("</pre>");
+  var result=out.join("\n");
+  result=result.replace(/\u0001ABBR(\d+)\u0001/g,function(m,idx){return abbrs[Number(idx)]});
+  return result;
+}
+
+/* MDPARSER-END */
+document.querySelectorAll('script[type="text/markdown"]').forEach(function(s){
+  var d=document.createElement("div"); d.innerHTML=md(s.textContent.trim());
+  s.parentNode.replaceChild(d,s);
+});
+</script>
+
+</main></body>
+</html>
