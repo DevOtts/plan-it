@@ -285,6 +285,63 @@ t("T-E6-05", "guard fails open on malformed state.json", () => {
   assert(out === "", `expected allow (no output), got: ${out}`);
 });
 
+// ---------- E7 (drain-0912): CLI entrypoint guard survives symlinks ----------
+// gate-check.mjs's `isMain` dispatch guard used a raw path-string compare
+// (resolve(argv[1]) === fileURLToPath(import.meta.url)), which never matches
+// when the script is invoked through a symlinked directory (e.g. a
+// symlinked plugin-config root such as ~/.claude-anm -> ~/.claude): the CLI
+// dispatch block is silently skipped and the process exits 0 having
+// validated nothing. Fixed by comparing realpathSync() on both sides.
+t("T-E7-01", "gate-check dispatches (and fails closed) when invoked through a symlinked directory", () => {
+  const symlinkDir = mkdtempSync(join(tmpdir(), "planit-symlink-"));
+  const linkPath = join(symlinkDir, "scripts-link");
+  execSync(`ln -s "${join(ROOT, "scripts")}" "${linkPath}"`);
+  const missing = join(tmpdir(), "planit-e7-01-definitely-does-not-exist");
+  let code = 0;
+  let out = "";
+  try {
+    out = execFileSync("node", [join(linkPath, "gate-check.mjs"), "verify", missing], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  } catch (e) {
+    code = e.status ?? 1;
+    out = `${e.stdout ?? ""}${e.stderr ?? ""}`;
+  }
+  assert(code !== 0, `expected non-zero exit through the symlink (regression: silent no-op), got exit=${code}`);
+  assert(out.trim().length > 0, "expected non-empty output through the symlink, got zero bytes");
+  assert(/missing/i.test(out), `expected the missing-path failure to be named, got: ${out}`);
+});
+
+// gate-check.mjs `state` validated a state's own gate payload but never that
+// history actually contains the state's real predecessor — a hand-crafted
+// state.json could claim state:"planReview" (full G0-G4 gate payload, an
+// acked PLAN-REVIEW.md) while "render" (planReview's sole predecessor in
+// machine.json) never ran and zero rendered artifacts existed on disk, and
+// pass. Fixed with an edge-walk scoped to states whose sole inbound is
+// "render".
+t("T-L2-02", "state rejects planReview claimed without render in history / HTML twins on disk; a genuine render+twin run still passes", () => {
+  const bad = gc(["state", "--dir", join(FIX, "v4", "planreview-no-render"), "--run", "v4"]);
+  assert(bad.code !== 0, `expected non-zero exit for planReview without render in history, got 0:\n${bad.out}`);
+  assert(/T-L2-02/.test(bad.out) && /render/.test(bad.out), `expected the missing-render reason named, got:\n${bad.out}`);
+
+  const good = gc(["state", "--dir", join(FIX, "v4", "planreview-good"), "--run", "v4"]);
+  assert(good.code === 0, `expected exit 0 for planreview-good (render in history + a stamped HTML twin on disk), got ${good.code}:\n${good.out}`);
+});
+
+// gate-check.mjs `handoff` had two false-positive linter defects (C2-skills
+// discovery #2): (a) the placeholder scanner flagged "<EID>" inside the
+// literal "T-<EID>-NN" test-ID grammar legend (a description of the ID
+// format, not an unfilled token); (b) the [REAL]-tally check only counted
+// tagged rows within the SAME file as the declaration, so a summary doc
+// (KICKOFF.md) whose rows live in sibling epics/*.md always false-failed at
+// "0 tagged rows counted". Both fixed; T-L2-03 pins both as regressions.
+t("T-L2-03", "handoff ignores the T-<EID>-NN legend and counts [REAL] rows package-wide across epics/prds", () => {
+  const eid = gc(["handoff", join(FIX, "handoff-eid-legend")]);
+  assert(eid.code === 0, `expected exit 0 — "<EID>" inside the T-<EID>-NN legend is not a placeholder, got ${eid.code}:\n${eid.out}`);
+  assert(!/placeholder/i.test(eid.out), `expected no placeholder complaint, got:\n${eid.out}`);
+
+  const tally = gc(["handoff", join(FIX, "handoff-real-tally-crossfile")]);
+  assert(tally.code === 0, `expected exit 0 — KICKOFF's declared [REAL] count matches epics/*.md's tagged rows package-wide, got ${tally.code}:\n${tally.out}`);
+});
+
 // ---------- E4: doc checks ----------
 t("T-E4-01", "SKILL.md wires the deterministic core + keeps attribution", () => {
   const text = readFileSync(join(ROOT, "SKILL.md"), "utf8");
