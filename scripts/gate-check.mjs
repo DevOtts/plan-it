@@ -18,7 +18,7 @@
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
  */
-import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync, renameSync } from "node:fs";
+import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync, renameSync, realpathSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { join, dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -86,6 +86,17 @@ function stripCode(text) {
     .replace(/`[^`]*?`/g, (m) => (/\n\s*\n/.test(m) ? m : ""));
 }
 
+// drain-0912 T-L2-03(a): "<EID>" inside the literal "T-<EID>-NN" test-ID
+// grammar legend (e.g. "Legend: ... T-<EID>-NN test case ...") is describing
+// the ID naming convention, not an unfilled placeholder token — the
+// backtick-wrapped form (`` `T-<EID>-NN` ``) is already removed by stripCode;
+// this strips the bare-prose legend form the same way, before PLACEHOLDER_RE
+// ever sees it. Narrowly scoped to this one grammar string, not a general
+// widening of what counts as "described, not used".
+function stripIdGrammarLegend(text) {
+  return text.replace(/T-<EID>-NN\b/g, "");
+}
+
 function cmdFreeze(rawArgs) {
   // v4 D-B4: --draft anywhere in argv opts into the autonomous-draft freeze
   // (accepted alongside --dir/positional/--run; stripped before the rest of
@@ -140,7 +151,7 @@ function cmdFreeze(rawArgs) {
   const sections = (text.match(/^##\s+/gm) || []).length;
   if (sections < 3) fail(`only ${sections} "##" sections — a frozen CONTRACT needs ≥3 (vocabulary, schema/interface, definition of shipped)`);
   if (!/changelog/i.test(text)) fail(`no changelog line — amendments need somewhere to land (v1.0 → v1.1 …)`);
-  const ph = stripCode(text).match(PLACEHOLDER_RE);
+  const ph = stripIdGrammarLegend(stripCode(text)).match(PLACEHOLDER_RE);
   if (ph) fail(`placeholder token "${ph[0]}" inside a frozen contract`);
   // W3.1-2: the v3 freeze hardenings key off "is there a v3 run backing this
   // contract", not the --dir flag. --dir is an explicit run root; a positional
@@ -762,6 +773,19 @@ function cmdHandoff(rawArgs) {
   const epicsWithCases = new Set(
     [...allCaseIds.keys()].map((id) => id.match(/^T-([A-Z]\d+)/)[1])
   );
+  // drain-0912 T-L2-03(b): a package's [REAL]-tagged rows live in the per-epic
+  // Test Contract tables under epics/ (or prds/ for small-shape packages), not
+  // inline in a summary doc like KICKOFF.md/README.md — a summary doc's own
+  // "declares N [REAL] cases" tally is a cross-package rollup, so its
+  // per-file row count is legitimately 0. Pre-compute the whole package's
+  // epics+prds [REAL]-tagged row count once, for check 3 to fall back on.
+  const REAL_TAG_RE = /\|\s*\[REAL\]|\[REAL\]\s*\|/g;
+  let realTagCountInEpicsAndPrds = 0;
+  for (const [f2, text2] of texts) {
+    if (/[\\/](epics|prds)[\\/]/.test(f2.replace(/\\/g, "/"))) {
+      realTagCountInEpicsAndPrds += (text2.match(REAL_TAG_RE) || []).length;
+    }
+  }
 
   // Pass 2 — the checks.
   for (const f of files) {
@@ -792,7 +816,15 @@ function cmdHandoff(rawArgs) {
     const realDecl = text.match(/(\d+)\s*\[REAL\]\s*(?:cases?|of)/i);
     if (realDecl) {
       const declaredReal = Number(realDecl[1]);
-      const countedReal = (text.match(/\|\s*\[REAL\]|\[REAL\]\s*\|/g) || []).length;
+      const isEpicOrPrd = /[\\/](epics|prds)[\\/]/.test(f.replace(/\\/g, "/"));
+      let countedReal = (text.match(REAL_TAG_RE) || []).length;
+      // T-L2-03(b): this file's own rows are 0 and it's a summary doc (not
+      // itself an epics/prds file) — fall back to the package-wide epics+prds
+      // tally rather than false-failing a rollup declaration against an
+      // inline count that was never meant to live in this file.
+      if (countedReal === 0 && !isEpicOrPrd && realTagCountInEpicsAndPrds > 0) {
+        countedReal = realTagCountInEpicsAndPrds;
+      }
       if (countedReal !== declaredReal) {
         fail(`${f}: declares ${declaredReal} [REAL] cases but ${countedReal} tagged rows counted`);
       }
@@ -829,7 +861,7 @@ function cmdHandoff(rawArgs) {
       fail(`${f}: suspicious digits-in-word token "${word}" (unparseable-merge smell)`);
     }
     if (/\bFROZEN\b/.test(prose)) {
-      const ph = prose.match(PLACEHOLDER_RE);
+      const ph = stripIdGrammarLegend(prose).match(PLACEHOLDER_RE);
       if (ph) fail(`${f}: placeholder "${ph[0]}" inside a FROZEN artifact`);
     }
 
@@ -1226,6 +1258,59 @@ function cmdState(rawArgs) {
       if (row?.contradicted !== true) continue;
       if (!contradictions.some((c) => c?.id === row.id)) {
         fail(`C-E7-03: default "${row?.id}" is contradicted:true but has no matching entry in gates.G4.contradictions[]`);
+      }
+    }
+  }
+  // drain-0912 T-L2-02: the checks above validate that a state's OWN gate
+  // payload is internally consistent, but never validate that history
+  // actually contains the state's real predecessor — a hand-crafted
+  // state.json can claim state:"planReview" (fully-formed G2/G3/G4 gate
+  // records, a PLAN-REVIEW.md with a Reviewed-by line) while `render` never
+  // ran and zero rendered artifacts exist, and pass. Close that with a
+  // general edge-walk (scoped to states whose sole predecessor is "render",
+  // which today means exactly planReview): compute, for the CURRENT state,
+  // every distinct source state with an edge targeting it in machine.json;
+  // when "render" is the ONLY such source, require both that "render" is in
+  // history AND that at least one stamped HTML twin exists on disk under
+  // delivery/ — render's whole job is producing artifacts, so a run cannot
+  // claim the state right after it without having actually rendered
+  // anything. (Deliberately narrower than validating every state's
+  // predecessor: most other states' minimal test fixtures don't backfill
+  // full history chains, and that's not this ticket's defect.)
+  //
+  // Scoped to machineVersion major >= 4 (same convention as the GLOSSARY.md
+  // check below, C-E10-02): the render/planReview split is a v4 addition —
+  // a legacy run authored under an older machine (no "render" state, or
+  // adversaryGate -> planReview directly) predates the invariant and must
+  // not be schema-drift-failed for a shape that didn't exist when it ran.
+  const rL2mvMatch = typeof state.machineVersion === "string" && state.machineVersion.match(/^(\d+)\./);
+  const rL2mvMajor = rL2mvMatch ? Number(rL2mvMatch[1]) : null;
+  if (root && rL2mvMajor !== null && rL2mvMajor >= 4 && state.state && states[state.state]) {
+    const inboundSources = new Set();
+    for (const [srcName, node] of Object.entries(states)) {
+      for (const t of Object.values(node.on ?? {})) {
+        const target = (Array.isArray(t) ? t[0] : t)?.target;
+        if (target === state.state) inboundSources.add(srcName);
+      }
+    }
+    const soleInbound = inboundSources.size === 1 ? [...inboundSources][0] : null;
+    if (soleInbound === "render") {
+      if (!historyStates.has("render")) {
+        fail(`T-L2-02: state "${state.state}" is reachable in machine.json only via "render", but history does not contain "render" — a run cannot claim this state without having actually rendered`);
+      } else {
+        const deliveryDir = deliveryDirFor(root);
+        const htmlTwins = existsSync(deliveryDir)
+          ? walkFiles(deliveryDir, ".html").filter((h) => {
+              try {
+                return /planit-source/.test(readFileSync(h, "utf8"));
+              } catch {
+                return false;
+              }
+            })
+          : [];
+        if (htmlTwins.length === 0) {
+          fail(`T-L2-02: state "${state.state}" follows "render" per machine.json but no rendered HTML twin (planit-source stamp) exists on disk under ${deliveryDir} — render must actually produce artifacts, not just appear in history`);
+        }
       }
     }
   }
@@ -2581,8 +2666,22 @@ const commands = {
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
-// exported check* functions without side effects.
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+// exported check* functions without side effects. Compare realpaths (not raw
+// resolved paths) so invocation through a symlinked directory — e.g. a
+// symlinked plugin-config root such as ~/.claude-anm -> ~/.claude — still
+// resolves to the same underlying file and is correctly recognized as the
+// CLI entrypoint. Falls back to the plain resolve() compare if either path
+// can't be realpath'd (e.g. it genuinely doesn't exist).
+function isMainModule(argv1) {
+  if (!argv1) return false;
+  const thisFile = fileURLToPath(import.meta.url);
+  try {
+    return realpathSync(argv1) === realpathSync(thisFile);
+  } catch {
+    return resolve(argv1) === thisFile;
+  }
+}
+const isMain = isMainModule(process.argv[1]);
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
