@@ -17,7 +17,7 @@ description: >-
   exit codes gate advancement.
 author: DevOtts
 author_url: https://github.com/DevOtts
-version: 4.0.0
+version: 4.1.0
 license: MIT
 homepage: https://github.com/DevOtts/plan-it
 repository: https://github.com/DevOtts/plan-it
@@ -174,6 +174,10 @@ Rules of the Test Contract:
 
 Grammars and the contract header format: `references/formats.md` (the Test Contract
 block + §4–5).
+
+**`Verify` column (do-it).** Each case row may carry a `Verify` column whose only
+values are `auto` (a command decides), `attended` (the owner confirms) or
+`judgement` (a reviewer decides); any other value fails `gate-check handoff`.
 
 ---
 
@@ -608,6 +612,11 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   it in `STATUS.md`'s Disposition column. A binding contract case may never move
   to `backlog-with-reason` — it stays `IMPLEMENTED-NOT-VERIFIED` with a reason
   instead; only work beyond the case set may go to backlog (G-9).
+- **Write the readiness pair** (at G4, before handoff): `plan/DECISIONS.md` and
+  `plan/READINESS.json` (`do-it-readiness/1`: every decision `RESOLVED` or
+  `DEFAULTED`, `preflight.passed` true, `owner_dependent_slices` 0). Run
+  `node scripts/gate-check.mjs readiness --dir .` — a build cannot start without
+  both files (G-8).
 - **Fill the board:** `STATUS.md` rows reflect Wave-0 in-progress, rest backlog.
 - **Hand off** (the terminal phase — the build runs in a *fresh* session):
   - Wire the repo to your knowledge base (`/sync-obsidian` or equivalent), if your
