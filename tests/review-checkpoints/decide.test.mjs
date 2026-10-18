@@ -249,3 +249,29 @@ test("CLI decide --write warns, naming them, when slices match no wave task list
   assert.equal(JSON.parse(fs.readFileSync(readiness, "utf8")).slices[0].wave, undefined);
   fs.rmSync(d, { recursive: true, force: true });
 });
+
+test("merge_model incremental: no pre-merge, closing reviews gate the release", () => {
+  const flags = { security: "rotates a signing secret", cross_cutting: "shared schema" };
+  const b = decideCheckpoints({ tasks: 12, waves: 3, flags, merge_model: "incremental" });
+  assert.equal(b.checkpoints.some((c) => c.kind === "pre-merge"), false);
+  assert.equal(b.checkpoints.some((c) => (c.gates || []).includes("merge")), false);
+  const adv = b.checkpoints.find((c) => c.kind === "adversarial");
+  assert.deepEqual(adv.gates, ["release"]);
+  const pr = b.checkpoints.find((c) => c.kind === "pre-release");
+  assert.deepEqual(pr.gates, ["release"]);
+  assert.equal(b.inputs.merge_model, "incremental");
+  assert.deepEqual(checkBlock(b), []);
+});
+
+test("merge_model defaults to single and is not recorded", () => {
+  const b = decideCheckpoints({ tasks: 6, waves: 2 });
+  assert.equal(b.inputs.merge_model, undefined);
+  assert.ok(b.checkpoints.some((c) => c.kind === "pre-merge"));
+});
+
+test("merge_model rejects an unknown value; incremental block without pre-release is invalid", () => {
+  assert.throws(() => decideCheckpoints({ tasks: 3, merge_model: "both" }), InputError);
+  const b = decideCheckpoints({ tasks: 3, merge_model: "incremental" });
+  b.checkpoints = b.checkpoints.filter((c) => c.kind !== "pre-release");
+  assert.ok(checkBlock(b).some((e) => /pre-release/.test(e)));
+});

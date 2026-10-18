@@ -21,7 +21,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const EXPECTED = "5.1.2";
+const EXPECTED = "5.2.0";
 const r = (p) => readFileSync(join(ROOT, p), "utf8");
 
 function pluginJsonVersion(p) {

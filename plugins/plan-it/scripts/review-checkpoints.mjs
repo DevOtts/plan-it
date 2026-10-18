@@ -16,6 +16,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const SCHEMA = "review-checkpoints/1";
+export const MERGE_MODELS = ["single", "incremental"];
 export const POLICY = "CHECKPOINT-POLICY v1";
 export const COMPLEXITY_FLAGS = ["cross_cutting", "owner_gated", "new_surface"];
 export const IMPORTANCE_FLAGS = ["data", "money", "security", "prod_facing"];
@@ -89,6 +90,12 @@ export function decideCheckpoints(input) {
   const flags = normFlags(input.flags);
   const waves = normWaves(input.waves, tasks);
   const evidenceDir = (input.evidence_dir || "plan/reviews").replace(/\/+$/, "");
+  // "single" (default): one merge of the whole build, reviewed before it.
+  // "incremental": slices merge to main one by one, so no review of the whole
+  // can sit before a merge; the closing reviews gate the release instead.
+  const mergeModel = input.merge_model === undefined ? "single" : String(input.merge_model);
+  if (!MERGE_MODELS.includes(mergeModel)) throw new InputError(`merge_model must be one of ${MERGE_MODELS.join(", ")}`);
+  const incremental = mergeModel === "incremental";
 
   const size = sizePoints(tasks, epics);
   const complexity = COMPLEXITY_FLAGS.filter((k) => flags[k]).length;
@@ -143,11 +150,14 @@ export function decideCheckpoints(input) {
       const advHold = `slices that depend on ${aw} work`;
       if (existing) Object.assign(existing, { kind: "adversarial", review: advReview, blocks: advHold, gates: ["dependents"] });
       else if (awIdx >= 0 && awIdx < waves.length - 1) add("adversarial", `after ${aw}`, advReview, advHold, aw, ["dependents"], [aw]);
+      else if (incremental) add("adversarial", aw ? `after ${aw}, before release` : "after the last wave, before release", advReview, "tag, publish or deploy", null, ["release"], allWaves);
       else add("adversarial", aw ? `after ${aw}, before pre-merge` : "after the last wave, before pre-merge", advReview, "merge to main", null, ["merge"], allWaves);
       cps.sort((a, b) => order(a) - order(b));
     }
-    add("pre-merge", "before merge to main", "the whole Test Contract on the integrated branch", "merge to main", null, ["merge"], allWaves);
-    if (flags.prod_facing) {
+    if (!incremental) add("pre-merge", "before merge to main", "the whole Test Contract on the integrated branch", "merge to main", null, ["merge"], allWaves);
+    if (incremental) {
+      add("pre-release", "after the last merge to main, before tag, publish or deploy", "the whole Test Contract on main, plus deploy-verify and the [REAL] cases on the released artifact when it is prod-facing", "tag, publish or deploy", null, ["release"], allWaves);
+    } else if (flags.prod_facing) {
       add("pre-release", "after merge, before tag, publish or deploy", "deploy-verify plus the [REAL] cases on the released artifact", "tag, publish or deploy", null, ["release"], allWaves);
     }
   }
@@ -164,7 +174,7 @@ export function decideCheckpoints(input) {
   return {
     schema: SCHEMA,
     policy: POLICY,
-    inputs: { tasks, epics, waves: waves.map((w) => w.id), flags },
+    inputs: { tasks, epics, waves: waves.map((w) => w.id), flags, ...(incremental ? { merge_model: mergeModel } : {}) },
     score: { size, complexity, importance, total },
     level,
     count: checkpoints.length,
@@ -189,7 +199,8 @@ export function checkBlock(block) {
     if (c && c.covers !== undefined && (!Array.isArray(c.covers) || c.covers.some((x) => typeof x !== "string" || !x.trim()))) errs.push(`checkpoints[${i}].covers must be a list of slice or wave ids`);
   });
   const tasks = block.inputs && block.inputs.tasks;
-  if (tasks > 0 && !block.checkpoints.some((c) => c && c.kind === "pre-merge")) errs.push("a plan with tasks must have a pre-merge checkpoint");
+  const closing = block.inputs && block.inputs.merge_model === "incremental" ? "pre-release" : "pre-merge";
+  if (tasks > 0 && !block.checkpoints.some((c) => c && c.kind === closing)) errs.push(`a plan with tasks must have a ${closing} checkpoint`);
   return errs;
 }
 

@@ -3,6 +3,20 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.2.0 — 2026-10-18
+
+Minor release. The first real run showed that the closing reviews assumed one merge of the whole
+build, while a program that merges slice by slice can never satisfy them. IDs are the run's findings.
+
+### Added
+- **H-22** `merge_model` input for the checkpoint emitter: `single` (default, unchanged) or
+  `incremental`. With `incremental`, slices merge to main one by one, so no review of the whole can
+  sit before a merge. The emitter then writes no `pre-merge`; the adversarial pass and a
+  `pre-release` checkpoint (always written) gate `release` instead, and the wave checkpoints still
+  gate only dependents and promotion. `inputs.merge_model` is recorded only when it is not the
+  default, and the "a plan with tasks must have a pre-merge checkpoint" check asks for `pre-release`
+  in that case. Plans without the input produce exactly the blocks they did before.
+
 ## 5.1.2 — 2026-10-18
 
 Patch release. A defect left over from 5.1.1's handoff work, found when the real package of the first
