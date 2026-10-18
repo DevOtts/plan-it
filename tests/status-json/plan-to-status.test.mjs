@@ -56,7 +56,11 @@ test("AT-01 / T-B-16 plan-it on fixture: full CLI writes valid status.json", { s
   assert.equal(tasks.length, 6);
   assert.ok(tasks.every((t) => t.status === "not-started"));
   assert.deepEqual(doc.sessions, []);
-  assert.deepEqual(doc.history, []);
+  assert.equal(doc.history.length, 6);
+  for (const t of tasks) {
+    const h = doc.history.filter((e) => e.task === t.id);
+    assert.deepEqual(h.map((e) => [e.from, e.to, e.by, e.note]), [["not-started", "not-started", "plan-it", "created"]]);
+  }
   const v = runWriter(["validate", "--file", path.join(pkg, "status.json")]);
   assert.equal(v.status, 0, v.stderr);
 });
@@ -132,4 +136,23 @@ test("--dry-run prints plan.json only and touches nothing", () => {
   assert.equal(r.status, 0);
   assert.equal(JSON.parse(r.stdout).waves.flatMap((w) => w.tasks).length, 6);
   assert.ok(!fs.existsSync(path.join(pkg, "status.json")));
+});
+
+test("gate passes after delivery; refuses on missing status.json and on count mismatch", { skip: SKIP }, () => {
+  const pkg = copyPkg("pkg");
+  const env = { ...process.env, DOIT_STATUS_WRITE: WRITER };
+  const gate = () => spawnSync(process.execPath, [CLI, "--gate", "--package", pkg], { encoding: "utf8", env });
+  const missing = gate();
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /REFUSED - status\.json exists/);
+  assert.equal(spawnSync(process.execPath, [CLI, "--package", pkg], { encoding: "utf8", env }).status, 0);
+  const ok = gate();
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /task count matches epics \(6 tasks\)/);
+  // add an epic checklist item the board does not have
+  const ef = path.join(pkg, "delivery", "epics", "epics.md");
+  fs.writeFileSync(ef, fs.readFileSync(ef, "utf8").replace("- [ ] retire endpoint", "- [ ] retire endpoint\n- [ ] FX-99 extra item not on the board"));
+  const bad = gate();
+  assert.equal(bad.status, 1);
+  assert.match(bad.stderr, /REFUSED - task count matches epics: status\.json has 6 tasks but the epics' checklists have 7/);
 });
