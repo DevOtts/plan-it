@@ -1,0 +1,15 @@
+{
+  "tasks": ["A0", "B0", "A1", "B1", "A2", "B2"],
+  "epics": 2,
+  "waves": [
+    { "id": "W0", "tasks": ["A0", "B0"] },
+    { "id": "W1", "tasks": ["A1", "B1"] },
+    { "id": "W2", "tasks": ["A2", "B2"] }
+  ],
+  "flags": {
+    "cross_cutting": "a shared schema other lanes read",
+    "owner_gated": "the release needs the owner",
+    "new_surface": "a new CLI verb",
+    "prod_facing": "ships as a tagged release"
+  }
+}

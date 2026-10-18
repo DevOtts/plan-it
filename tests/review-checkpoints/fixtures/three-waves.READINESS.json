@@ -1,0 +1,14 @@
+{
+  "schema": "do-it-readiness/1",
+  "decisions": [{ "id": "D1", "status": "RESOLVED" }],
+  "preflight": { "passed": true },
+  "owner_dependent_slices": 0,
+  "slices": [
+    { "id": "A0", "depends_on": [] },
+    { "id": "B0", "depends_on": [] },
+    { "id": "A1", "depends_on": [] },
+    { "id": "B1", "depends_on": ["A0"] },
+    { "id": "A2", "depends_on": ["B1"] },
+    { "id": "B2", "depends_on": ["A1"] }
+  ]
+}

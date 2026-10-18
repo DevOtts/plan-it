@@ -172,3 +172,80 @@ test("CLI exit codes: missing READINESS is 2, flag without reason is 1, no block
   assert.equal(run("check", readiness).status, 1);
   fs.rmSync(d, { recursive: true, force: true });
 });
+
+// H-10: a wave checkpoint holds the dependents and the promotion of the work it
+// covers, never the whole next wave.
+const FIX = path.join(path.dirname(fileURLToPath(import.meta.url)), "fixtures");
+
+test("gates and covers: wave checkpoints hold dependents and promotion of the covered wave only", () => {
+  const b = decideCheckpoints(JSON.parse(fs.readFileSync(path.join(FIX, "three-waves.inputs.json"), "utf8")));
+  assert.deepEqual(b.checkpoints.map((c) => [c.id, c.kind]), [["CP-01", "wave"], ["CP-02", "wave"], ["CP-03", "pre-merge"], ["CP-04", "pre-release"]]);
+  const [cp1, cp2, cp3, cp4] = b.checkpoints;
+  assert.deepEqual(cp1.gates, ["dependents", "promotion"]);
+  assert.deepEqual(cp1.covers, ["W0"]);
+  assert.equal(cp1.blocks, "slices that depend on W0 work, and promotion of W0 work");
+  assert.deepEqual(cp2.covers, ["W1"]);
+  assert.deepEqual(cp3.gates, ["merge"]);
+  assert.deepEqual(cp4.gates, ["release"]);
+  assert.deepEqual(cp3.covers, ["W0", "W1", "W2"]);
+  for (const c of b.checkpoints) assert.doesNotMatch(c.blocks, /^start of/);
+  assert.deepEqual(checkBlock(b), []);
+});
+
+test("gates: an adversarial wave mid-plan holds dependents; the closing adversarial holds merge", () => {
+  const mid = decideCheckpoints({ tasks: 16, epics: 3, waves: 4, adversarial_wave: "W3", flags: { ...HST_FLAGS, owner_gated: "release needs the owner" } });
+  const adv = mid.checkpoints.find((c) => c.kind === "adversarial");
+  assert.deepEqual(adv.gates, ["dependents"]);
+  assert.deepEqual(adv.covers, ["W3"]);
+  assert.equal(adv.blocks, "slices that depend on W3 work");
+  const last = decideCheckpoints({ tasks: 9, waves: 3, flags: HST_FLAGS }).checkpoints.find((c) => c.kind === "adversarial");
+  assert.deepEqual(last.gates, ["merge"]);
+  assert.equal(last.blocks, "merge to main");
+});
+
+test("gates: a phase checkpoint covers the tasks up to the lock, or leaves covers out when only a count is known", () => {
+  const withIds = decideCheckpoints({ tasks: ["t1", "t2", "t3", "t4", "t5", "t6"], waves: 1, flags: { new_surface: "new CLI verb" } }).checkpoints[0];
+  assert.deepEqual(withIds.gates, ["dependents", "promotion"]);
+  assert.deepEqual(withIds.covers, ["t1", "t2", "t3"]);
+  const countOnly = decideCheckpoints({ tasks: 6, waves: 1, flags: { new_surface: "new CLI verb" } }).checkpoints[0];
+  assert.equal(countOnly.covers, undefined);
+  const lock = decideCheckpoints({ tasks: 6, waves: 1, interface_lock_after: "t1", flags: { new_surface: "new CLI verb" } }).checkpoints[0];
+  assert.deepEqual(lock.covers, ["t1"]);
+});
+
+test("checkBlock refuses unknown gates and malformed covers", () => {
+  const b = decideCheckpoints({ tasks: 6, waves: 3, flags: { cross_cutting: "shared schema" } });
+  const bad = JSON.parse(JSON.stringify(b));
+  bad.checkpoints[0].gates = ["next-wave"];
+  assert.match(checkBlock(bad).join("\n"), /gates must be/);
+  bad.checkpoints[0].gates = ["dependents"];
+  bad.checkpoints[0].covers = "W1";
+  assert.match(checkBlock(bad).join("\n"), /covers must be/);
+});
+
+test("CLI decide --write tags each READINESS slice with its wave", () => {
+  const d = tmpdir();
+  const readiness = path.join(d, "READINESS.json");
+  fs.copyFileSync(path.join(FIX, "three-waves.READINESS.json"), readiness);
+  const r = run("decide", "--inputs", path.join(FIX, "three-waves.inputs.json"), "--write", readiness);
+  assert.equal(r.status, 0, r.stderr);
+  assert.doesNotMatch(r.stderr, /carry no wave/);
+  const doc = JSON.parse(fs.readFileSync(readiness, "utf8"));
+  assert.deepEqual(doc.slices.map((s) => [s.id, s.wave]), [["A0", "W0"], ["B0", "W0"], ["A1", "W1"], ["B1", "W1"], ["A2", "W2"], ["B2", "W2"]]);
+  assert.deepEqual(doc.slices[3].depends_on, ["A0"]);
+  assert.equal(run("check", readiness).status, 0);
+  fs.rmSync(d, { recursive: true, force: true });
+});
+
+test("CLI decide --write warns, naming them, when slices match no wave task list", () => {
+  const d = tmpdir();
+  const readiness = path.join(d, "READINESS.json");
+  fs.writeFileSync(readiness, JSON.stringify({ decisions: [], preflight: { passed: true }, slices: [{ id: "S1" }, { id: "S2" }] }));
+  const inputs = path.join(d, "inputs.json");
+  fs.writeFileSync(inputs, JSON.stringify({ tasks: 6, waves: 3, flags: { cross_cutting: "shared schema" } }));
+  const r = run("decide", "--inputs", inputs, "--write", readiness);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stderr, /2 slice\(s\) carry no wave.*S1, S2/);
+  assert.equal(JSON.parse(fs.readFileSync(readiness, "utf8")).slices[0].wave, undefined);
+  fs.rmSync(d, { recursive: true, force: true });
+});
