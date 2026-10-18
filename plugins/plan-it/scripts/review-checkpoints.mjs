@@ -20,6 +20,11 @@ export const POLICY = "CHECKPOINT-POLICY v1";
 export const COMPLEXITY_FLAGS = ["cross_cutting", "owner_gated", "new_surface"];
 export const IMPORTANCE_FLAGS = ["data", "money", "security", "prod_facing"];
 export const KINDS = ["phase", "wave", "adversarial", "pre-merge", "pre-release"];
+// What a checkpoint holds until its verdict is PASS. "dependents": the start of
+// any slice that depends (through depends_on) on covered work. "promotion":
+// promoting covered work beyond the integration environment. "merge": merge to
+// main. "release": tag, publish or deploy. Nothing else waits on a checkpoint.
+export const GATES = ["dependents", "promotion", "merge", "release"];
 const ALL_FLAGS = [...COMPLEXITY_FLAGS, ...IMPORTANCE_FLAGS];
 
 export class InputError extends Error {}
@@ -100,7 +105,9 @@ export function decideCheckpoints(input) {
     if (i >= 0) return i;
     return c.kind === "phase" ? 0.5 : 1e6;
   };
-  const add =(kind, at, review, blocks, ref) => cps.push({ kind, at, review, blocks, ref });
+  const add = (kind, at, review, blocks, ref, gates, covers) => cps.push({ kind, at, review, blocks, ref, gates, covers });
+  const allWaves = waves.map((w) => w.id);
+  const waveHold = (id) => `slices that depend on ${id} work, and promotion of ${id} work`;
 
   if (tasks > 0) {
     // Mid-build checkpoints.
@@ -109,16 +116,20 @@ export function decideCheckpoints(input) {
     if (someMid && waves.length >= 2) {
       const upto = everyWave ? waves.length - 1 : 1;
       for (let i = 0; i < upto; i++) {
-        add("wave", `after ${waves[i].id}`, "contract cases of the finished waves, on the merged tree", `start of ${waves[i + 1].id}`, waves[i].id);
+        add("wave", `after ${waves[i].id}`, "contract cases of the finished waves, on the merged tree", waveHold(waves[i].id), waves[i].id, ["dependents", "promotion"], [waves[i].id]);
       }
     } else if (someMid && waves.length === 1 && tasks >= 4) {
+      const ids = taskIds || waves[0].tasks;
       let after = input.interface_lock_after ? String(input.interface_lock_after) : null;
       if (!after) {
-        const ids = taskIds || waves[0].tasks;
         const half = Math.ceil(tasks / 2);
         after = ids.length >= half ? ids[half - 1] : `task ${half} of ${tasks}`;
       }
-      add("phase", `after ${after}`, "contract cases of the finished tasks, plus the interface the rest builds on", "the remaining tasks", after);
+      // Covered: the tasks up to the lock. With only a count there are no ids to
+      // name, so covers is left out and build-it's gate says it cannot tell.
+      const at = ids.indexOf(after);
+      const covers = at >= 0 ? ids.slice(0, at + 1) : input.interface_lock_after ? [after] : undefined;
+      add("phase", `after ${after}`, "contract cases of the finished tasks, plus the interface the rest builds on", `tasks that depend on the work up to ${after}, and promotion of that work`, after, ["dependents", "promotion"], covers);
     }
     // Adversarial pass (the ST-08 convention): try to get a fake pass through.
     // When the plan already has an adversarial wave, its boundary is the
@@ -129,21 +140,25 @@ export function decideCheckpoints(input) {
       const awIdx = aw ? waves.findIndex((w) => w.id === aw) : -1;
       if (aw && awIdx < 0) throw new InputError(`adversarial_wave "${aw}" is not one of the waves`);
       const existing = awIdx >= 0 ? cps.find((c) => c.kind === "wave" && c.ref === aw) : null;
-      if (existing) Object.assign(existing, { kind: "adversarial", review: advReview });
-      else if (awIdx >= 0 && awIdx < waves.length - 1) add("adversarial", `after ${aw}`, advReview, `start of ${waves[awIdx + 1].id}`, aw);
-      else add("adversarial", aw ? `after ${aw}, before pre-merge` : "after the last wave, before pre-merge", advReview, "pre-merge", null);
+      const advHold = `slices that depend on ${aw} work`;
+      if (existing) Object.assign(existing, { kind: "adversarial", review: advReview, blocks: advHold, gates: ["dependents"] });
+      else if (awIdx >= 0 && awIdx < waves.length - 1) add("adversarial", `after ${aw}`, advReview, advHold, aw, ["dependents"], [aw]);
+      else add("adversarial", aw ? `after ${aw}, before pre-merge` : "after the last wave, before pre-merge", advReview, "merge to main", null, ["merge"], allWaves);
       cps.sort((a, b) => order(a) - order(b));
     }
-    add("pre-merge", "before merge to main", "the whole Test Contract on the integrated branch", "merge to main", null);
+    add("pre-merge", "before merge to main", "the whole Test Contract on the integrated branch", "merge to main", null, ["merge"], allWaves);
     if (flags.prod_facing) {
-      add("pre-release", "after merge, before tag, publish or deploy", "deploy-verify plus the [REAL] cases on the released artifact", "tag, publish or deploy", null);
+      add("pre-release", "after merge, before tag, publish or deploy", "deploy-verify plus the [REAL] cases on the released artifact", "tag, publish or deploy", null, ["release"], allWaves);
     }
   }
 
   const checkpoints = cps.map((c, i) => {
     const id = `CP-${String(i + 1).padStart(2, "0")}`;
     const name = c.ref ? `${id}-${c.kind}-${slug(c.ref)}` : `${id}-${c.kind}`;
-    return { id, kind: c.kind, at: c.at, review: c.review, blocks: c.blocks, evidence: `${evidenceDir}/${name}.md` };
+    const cp = { id, kind: c.kind, at: c.at, review: c.review, blocks: c.blocks, gates: c.gates };
+    if (c.covers) cp.covers = c.covers;
+    cp.evidence = `${evidenceDir}/${name}.md`;
+    return cp;
   });
 
   return {
@@ -169,10 +184,31 @@ export function checkBlock(block) {
     if (!c || c.id !== want) errs.push(`checkpoints[${i}].id must be ${want}`);
     if (!c || !KINDS.includes(c.kind)) errs.push(`checkpoints[${i}].kind must be one of ${KINDS.join(", ")}`);
     if (!c || typeof c.evidence !== "string" || c.evidence.trim() === "") errs.push(`checkpoints[${i}].evidence must be a path`);
+    // gates and covers are optional (plans before they existed have neither).
+    if (c && c.gates !== undefined && (!Array.isArray(c.gates) || !c.gates.length || c.gates.some((g) => !GATES.includes(g)))) errs.push(`checkpoints[${i}].gates must be a non-empty subset of ${GATES.join(", ")}`);
+    if (c && c.covers !== undefined && (!Array.isArray(c.covers) || c.covers.some((x) => typeof x !== "string" || !x.trim()))) errs.push(`checkpoints[${i}].covers must be a list of slice or wave ids`);
   });
   const tasks = block.inputs && block.inputs.tasks;
   if (tasks > 0 && !block.checkpoints.some((c) => c && c.kind === "pre-merge")) errs.push("a plan with tasks must have a pre-merge checkpoint");
   return errs;
+}
+
+// Tag each READINESS slice with the wave whose task list names it, so build-it's
+// gate can resolve a wave id in `covers`. Returns the ids left without a wave.
+export function tagSliceWaves(doc, waves) {
+  if (!Array.isArray(doc.slices)) return [];
+  const waveOf = new Map();
+  for (const w of Array.isArray(waves) ? waves : []) {
+    for (const t of Array.isArray(w && w.tasks) ? w.tasks : []) waveOf.set(String(typeof t === "object" && t ? t.id : t), String(w.id));
+  }
+  const untagged = [];
+  for (const s of doc.slices) {
+    if (!s || s.id === undefined) continue;
+    const w = waveOf.get(String(s.id));
+    if (w) s.wave = w;
+    else if (typeof s.wave !== "string") untagged.push(String(s.id));
+  }
+  return untagged;
 }
 
 // Derive tasks and waves from a status.json (schema 1) when one exists.
@@ -215,6 +251,8 @@ export function main(argv) {
         if (!fs.existsSync(target)) { err(`decide: ${target} not found; write READINESS.json first (G4)`); return 2; }
         const doc = JSON.parse(fs.readFileSync(target, "utf8"));
         doc.review_checkpoints = block;
+        const untagged = tagSliceWaves(doc, input.waves);
+        if (untagged.length) err(`warning: ${untagged.length} slice(s) carry no wave (no wave task list names them); build-it's gate cannot resolve a wave id in covers for slices that depend on them: ${untagged.join(", ")}`);
         writeAtomic(target, JSON.stringify(doc, null, 2) + "\n");
         err(`wrote review_checkpoints (${block.count}, level ${block.level}) into ${target}`);
       }

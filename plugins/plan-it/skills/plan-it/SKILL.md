@@ -633,7 +633,12 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   implementation gets and where each sits (phase, wave boundary, adversarial,
   pre-merge, pre-release), each with the verdict file path build-it must produce.
   The count scales with size, complexity and importance; it is never fixed per
-  wave and never typed by hand. A flag without a reason is refused.
+  wave and never typed by hand. A flag without a reason is refused. Each
+  checkpoint names what it holds (`gates`) and the work it reviews (`covers`): a
+  wave checkpoint holds only the slices that depend on the covered wave and the
+  promotion of that wave's work, never the whole next wave; pre-merge holds the
+  merge, pre-release the release. `decide --write` also tags each READINESS slice
+  with its `wave` from the wave task lists, and names any slice it cannot place.
 - **Gate the board after delivery:** `node ${CLAUDE_PLUGIN_ROOT}/scripts/status-from-plan.mjs --gate --package <implementation dir>`
   — `status.json` must exist, pass `status-write validate`, and hold exactly as many
   tasks as the epics' checklists. A refusal names the failed check; fix it (re-run
