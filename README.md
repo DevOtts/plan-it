@@ -80,7 +80,7 @@ None of that is a capability problem. It's a *planning* problem: no frozen contr
 /plugin marketplace add DevOtts/plan-it
 
 # 2. Install the plugin (plugin-name@marketplace-name)
-/plugin install plan-it@devotts
+/plugin install plan-it@plan-it
 ```
 
 Then invoke it with `/plan-it <your idea, brain-dump, or transcription>`. On
