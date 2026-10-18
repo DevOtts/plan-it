@@ -108,12 +108,31 @@ at HEAD, so a `verified` claim can be re-proved without trusting the verdict
 file. A case never gets a command when it is owner-gated (`Verify: attended`,
 `@owner`), `judgement`, live (`@live`, `[LIVE]`, `Kind: live`, or `[REAL]`
 without `Verify: auto`) or prod (`@prod`, `[PROD]`, `Kind: prod`); it stays
-unchecked and is listed as such. Cases map to tasks by Test Contract group, or
-to checklist tasks by a `Task` column naming the task id (never guessed):
+unchecked and is listed as such. Cases map to checklist tasks, in this order:
+a `Task` column naming the task id (explicit, always wins); else by id — case
+`T-<EID>-NN` belongs to task `<EID>-NN`; else to the epic (every task of the
+epic carries the case as its Test Contract group). A task no case reaches carries
+the epic's whole contract, so no task of an epic with cases is left without one.
+A `Task` naming a task that does not exist is reported as unmapped and never
+guessed onto another task. Without a `Check` column the task's check is
+`{kind:"none", reason:"no Check column in the Test Contract"}`; a command is
+never invented, and a command on an epic-level case is not lent to a task it was
+not written for:
 ```
 | ID | Task | Case | Verify | Check |
 | T-X1-01 | X1-01 | parser round-trips | auto | `node tests/rt.mjs` |
 | T-X1-02 | X1-02 | owner reads the copy | attended | — |
+```
+
+**Epic wave header** — each epic declares its wave under its heading, label bold
+and value outside: `**Wave:** W0` (also read: `**Wave: W0**`, `Wave: W0`,
+`- Wave: W0`, `... | Wave: W0 | ...`, a `| Wave | W0 |` table row). `status-from-plan`
+groups tasks into waves by it. Either every epic declares a wave or none does: a
+mix is refused with a list (file:line) of the epics missing one, and no wave
+anywhere yields a single wave `W1` plus a warning (`--default-wave` silences it).
+```
+## X1 — parser
+**Branch:** epic/X1-parser · **Wave:** W0
 ```
 
 **Stress / agentic contract** — use the six-axes scenarios (§4c). **Pure logic** —

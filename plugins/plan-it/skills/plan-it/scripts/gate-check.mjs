@@ -19,7 +19,7 @@
  * Authored by DevOtts (https://github.com/DevOtts).
  */
 import { readFileSync, statSync, readdirSync, existsSync, writeFileSync, mkdirSync, renameSync, realpathSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { join, dirname, resolve, basename } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -732,6 +732,58 @@ function collectMdFiles(dir, out = []) {
   return out;
 }
 
+// A STATUS.md whose first line is this marker is rendered from status.json by build-it's status-write; it is
+// derived output, not a hand-written board, so the hand-written-board lint below must not read it.
+const GENERATED_STATUS_MARKER = "<!-- generated from status.json by status-write; do not edit by hand -->";
+
+function isGeneratedStatus(file) {
+  try {
+    return readFileSync(file, "utf8").split("\n", 1)[0].trim() === GENERATED_STATUS_MARKER;
+  } catch {
+    return false;
+  }
+}
+
+// Validates the source of a generated STATUS.md: status.json must exist and be valid. Uses plan-it's own
+// `status-from-plan --gate` (status-write validate, task count == the epics' checklists, a case per task) and
+// falls back to a structural check only when the shared writer is not installed.
+function checkGeneratedStatus(dir, generated) {
+  const pkgCandidates = [dir, dirname(resolve(dir))];
+  const pkg = pkgCandidates.find((d) => existsSync(join(d, "status.json")));
+  const names = generated.map((f) => basename(f)).join(", ");
+  if (!pkg) {
+    fail(`${generated[0]}: generated from status.json, but no status.json found in ${pkgCandidates.join(" or ")} — re-run status-from-plan`);
+    return;
+  }
+  ok(`${names}: generated from status.json — validating ${join(pkg, "status.json")} instead of linting the rendered file as a hand-written board`);
+  const hereDir = dirname(fileURLToPath(import.meta.url));
+  const gen = [
+    join(hereDir, "..", "..", "..", "scripts", "status-from-plan.mjs"), // plugin install: skills/plan-it/scripts -> plugin scripts
+    join(hereDir, "..", "plugins", "plan-it", "scripts", "status-from-plan.mjs"), // repo root: scripts -> plugins/plan-it/scripts
+  ].find((c) => existsSync(c));
+  if (gen) {
+    const r = spawnSync(process.execPath, [gen, "--gate", "--package", pkg], { encoding: "utf8", env: process.env });
+    const msg = `${r.stderr || ""}${r.stdout || ""}`.trim();
+    if (r.status === 0) {
+      for (const l of msg.split("\n").filter(Boolean)) ok(l.replace(/^status-from-plan gate: ok - /, "status.json: "));
+      return;
+    }
+    if (!/status writer not found/.test(msg)) {
+      fail(`status.json (${pkg}): ${msg.split("\n").filter(Boolean).slice(-1)[0] ?? `status-from-plan --gate exit ${r.status}`}`);
+      return;
+    }
+    ok("status-write not installed — structural check of status.json only (install build-it or set DOIT_STATUS_WRITE for the full validate)");
+  }
+  try {
+    const doc = JSON.parse(readFileSync(join(pkg, "status.json"), "utf8"));
+    const n = Array.isArray(doc.waves) ? doc.waves.reduce((a, w) => a + (w.tasks?.length ?? 0), 0) : -1;
+    if (doc.schema !== 1 || n < 1) fail(`status.json (${pkg}): not a schema-1 board with tasks`);
+    else ok(`status.json: schema 1, ${n} tasks`);
+  } catch (e) {
+    fail(`status.json (${pkg}): unreadable — ${e.message}`);
+  }
+}
+
 function cmdHandoff(rawArgs) {
   const { dir: rootFlag, rest: restRaw, dirErr } = parseDirFlag(rawArgs);
   if (dirErr) {
@@ -752,7 +804,10 @@ function cmdHandoff(rawArgs) {
     fail(`handoff: delivery dir not found: ${dir ?? "(none given)"}`);
     return finish("pre-handoff lint");
   }
-  const files = collectMdFiles(dir);
+  const allFiles = collectMdFiles(dir);
+  const generatedStatus = allFiles.filter(isGeneratedStatus);
+  const files = allFiles.filter((f) => !generatedStatus.includes(f));
+  if (generatedStatus.length) checkGeneratedStatus(dir, generatedStatus);
   if (files.length === 0) fail(`no .md files under ${dir}`);
 
   // Pass 1 — collect every test-case ID across the whole package, so the
@@ -2656,13 +2711,38 @@ function cmdRuns(rawArgs) {
 // start on an unresolved plan (G-8).
 const VERIFY_VALUES = ["auto", "attended", "judgement"];
 
+// A table row split into cells: "\|" is a literal pipe and a "|" inside an inline code span (backticks) does
+// not split the cell. status-from-plan.mjs and gate-check.mjs carry the same splitter so they agree.
+function splitTableRow(line) {
+  const s = line.trim().replace(/^\|/, "");
+  const cells = [];
+  let cur = "";
+  let open = 0; // length of the backtick run that opened the current code span, 0 outside one
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "\\" && s[i + 1] === "|") { cur += "|"; i++; continue; }
+    if (ch === "`") {
+      let n = 1;
+      while (s[i + n] === "`") n++;
+      if (!open) open = n; else if (n === open) open = 0;
+      cur += "`".repeat(n);
+      i += n - 1;
+      continue;
+    }
+    if (ch === "|" && !open) { cells.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur.trim() !== "" || !/\|\s*$/.test(line)) cells.push(cur.trim());
+  return cells;
+}
+
 export function lintVerifyColumn(text) {
   const errs = [];
   const lines = stripCode(text).split("\n");
   let col = -1;
   for (const line of lines) {
     if (!/^\s*\|/.test(line)) { col = -1; continue; }
-    const cells = line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    const cells = splitTableRow(line);
     if (col === -1) {
       col = cells.findIndex((c) => c.toLowerCase() === "verify");
       continue;
