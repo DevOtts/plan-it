@@ -1,6 +1,6 @@
 # plan-it
 
-Claude Code plugin: deterministic multi-squad planning pipeline (statechart core + gate-check + PreToolUse hard gate). Plugin source: `plugins/plan-it/`. Current: v5.0.0.
+Claude Code plugin: deterministic multi-squad planning pipeline (statechart core + gate-check + PreToolUse hard gate). Plugin source: `plugins/plan-it/`. Current: v5.1.0.
 
 ## Documentation
 
