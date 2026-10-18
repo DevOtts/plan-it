@@ -83,6 +83,16 @@ Closed outputs → **exact match**; open outputs → **rubric / LLM-as-judge**
 (`make-eval`, promptfoo, DeepEval G-Eval). Keep the set small & high-quality (≤20),
 drawn from real/likely failure cases — not auto-bulked "slop". Iterate until 100%.
 
+**`Verify` column (optional, any grammar)** — append `Verify` as the last column;
+its only values are `auto`, `attended`, `judgement` (anything else is a
+`gate-check handoff` error):
+```
+| ID | Scenario | Expected | Kind | Verify |
+| T-X1-01 | build passes | exit 0 | happy | auto |
+| T-X1-02 | morning report reads well | owner confirms | edge | attended |
+| T-X1-03 | copy matches brand voice | reviewer judgement | edge | judgement |
+```
+
 **Stress / agentic contract** — use the six-axes scenarios (§4c). **Pure logic** —
 add property-based invariants alongside enumerated cases.
 

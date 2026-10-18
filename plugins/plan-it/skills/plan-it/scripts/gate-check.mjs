@@ -850,6 +850,10 @@ function cmdHandoff(rawArgs) {
       }
     }
 
+    // 4b. (do-it companion catalog, plan-it) a Test Contract table that carries
+    //    a `Verify` column may hold only auto | attended | judgement.
+    for (const msg of lintVerifyColumn(text)) fail(`${f}: ${msg}`);
+
     // 5. Token lint: digits embedded in words; placeholders in FROZEN files.
     const prose = stripCode(text);
     for (const m of prose.matchAll(/\b[a-z]+\d+[a-z]+[a-z0-9]*\b/g)) {
@@ -2645,6 +2649,80 @@ function cmdRuns(rawArgs) {
   finish(label);
 }
 
+// ---------------------------------------------------------------- readiness
+// do-it companion catalog (plan-it): the Test Contract grammar gains a `Verify`
+// column (auto | attended | judgement; any other value is a lint error), and at
+// G4 plan-it writes plan/READINESS.json (do-it-readiness/1) so a build cannot
+// start on an unresolved plan (G-8).
+const VERIFY_VALUES = ["auto", "attended", "judgement"];
+
+export function lintVerifyColumn(text) {
+  const errs = [];
+  const lines = stripCode(text).split("\n");
+  let col = -1;
+  for (const line of lines) {
+    if (!/^\s*\|/.test(line)) { col = -1; continue; }
+    const cells = line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    if (col === -1) {
+      col = cells.findIndex((c) => c.toLowerCase() === "verify");
+      continue;
+    }
+    if (cells.every((c) => /^:?-{2,}:?$/.test(c))) continue; // separator row
+    if (!/^T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}$/.test(cells[0])) continue;
+    const v = cells[col];
+    if (!VERIFY_VALUES.includes(v)) {
+      errs.push(`${cells[0]}: Verify must be one of ${VERIFY_VALUES.join(" | ")}, got "${v ?? ""}"`);
+    }
+  }
+  return errs;
+}
+
+export function checkReadiness(doc) {
+  const errs = [];
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) return ["READINESS.json must be a JSON object"];
+  if (doc.schema !== "do-it-readiness/1") errs.push(`schema must be "do-it-readiness/1", got ${JSON.stringify(doc.schema)}`);
+  if (!Array.isArray(doc.decisions)) errs.push("decisions must be an array");
+  else {
+    doc.decisions.forEach((d, i) => {
+      if (!d || typeof d.id !== "string" || d.id.length === 0) errs.push(`decisions[${i}].id must be a non-empty string`);
+      if (!d || !["RESOLVED", "DEFAULTED"].includes(d.status)) errs.push(`decisions[${i}] (${d?.id ?? "?"}) is ${JSON.stringify(d?.status)} — every decision must be RESOLVED or DEFAULTED`);
+    });
+  }
+  if (!doc.preflight || doc.preflight.passed !== true) errs.push("preflight.passed must be true");
+  if (doc.owner_dependent_slices !== 0) errs.push(`owner_dependent_slices must be 0, got ${JSON.stringify(doc.owner_dependent_slices)}`);
+  return errs;
+}
+
+function cmdReadiness(rawArgs) {
+  const label = "readiness (do-it-readiness/1)";
+  const { dir, rest, dirErr } = parseDirFlag(rawArgs);
+  if (dirErr) {
+    fail(`readiness: ${dirErr}`);
+    return finish(label);
+  }
+  const planDir = dir ? join(dir, "plan") : rest[0] ? dirname(rest[0]) : null;
+  const file = dir ? join(dir, "plan", "READINESS.json") : rest[0];
+  if (!file) {
+    fail("readiness: usage: gate-check readiness <READINESS.json|--dir repo-root>");
+    return finish(label);
+  }
+  if (!existsSync(file)) {
+    fail(`readiness: ${file} not found — at G4 plan-it writes plan/READINESS.json (G-8: build cannot start without it)`);
+    return finish(label);
+  }
+  if (!existsSync(join(planDir, "DECISIONS.md"))) fail(`readiness: ${join(planDir, "DECISIONS.md")} not found — G4 writes it beside READINESS.json (G-8)`);
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(file, "utf8"));
+  } catch (e) {
+    fail(`readiness: ${file} is not valid JSON: ${e.message}`);
+    return finish(label);
+  }
+  for (const e of checkReadiness(doc)) fail(`readiness: ${e}`);
+  if (failures.length === 0) ok(`${file}: ${doc.decisions.length} decision(s) all RESOLVED/DEFAULTED, preflight passed, 0 owner-dependent slices`);
+  finish(label);
+}
+
 // ---------------------------------------------------------------- main
 const commands = {
   verify: cmdVerify,
@@ -2663,6 +2741,7 @@ const commands = {
   runs: cmdRuns,
   mirror: cmdMirror,
   glossary: cmdGlossary,
+  readiness: cmdReadiness,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -2685,7 +2764,7 @@ const isMain = isMainModule(process.argv[1]);
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -2702,6 +2781,7 @@ if (isMain) {
     console.error("  runs [--dir repo-root] [--json]      list every plan-it run (live + archived), computed counts");
     console.error("  mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (0 fresh · 2 stale · 1 unstamped/malformed)");
     console.error("  glossary <delivery-dir>              first-use ID coverage (1 = unknown ID, named file:line)");
+    console.error("  readiness <READINESS.json|--dir repo-root>  G4 readiness check: plan/READINESS.json + plan/DECISIONS.md (G-8)");
     process.exit(1);
   }
   commands[cmd](args);

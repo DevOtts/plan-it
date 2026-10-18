@@ -3,6 +3,36 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.0.0 — 2026-10-14
+
+Major release: plan-it moves to 5.0.0 together with the rest of the *-it lifecycle
+family (prompt-it 1.0.0, build-it 4.0.0, review-it 2.0.0, conclude-it 2.0.0,
+parallel-lifecycle 1.0.0). No statechart, verb or grammar change beyond 4.1.0; the
+do-it integration shipped in 4.1.0 (DI1 Test Contract `Verify` column, DI2 G4
+readiness artifacts, DI3 `gate-check readiness`, DI4 prompt-it pin) is carried
+unchanged.
+
+- Version bump in `plugin.json`, `marketplace.json`, both `SKILL.md` frontmatters,
+  both `machine.json` copies and the version-pinned tests.
+- DI4 pin update: the marketplace pin for prompt-it moves from 0.3.0 to 1.0.0 (exact).
+
+## 4.1.0 — 2026-10-14
+
+The **do-it integration** release — plan-it fits the do-it companion catalog
+(`plugins/do-it/catalog/companion-changes.md`, "plan-it" and "prompt-it" sections).
+Strictly additive: no statechart state, transition or existing verb changes.
+
+- **DI1 — Test Contract `Verify` column.** The Test Contract grammar gains a
+  `Verify` column whose only values are `auto`, `attended`, `judgement`;
+  `gate-check handoff` fails on any other value in a table that carries the column.
+- **DI2 — G4 readiness artifacts.** At G4 plan-it writes `plan/READINESS.json`
+  (`do-it-readiness/1`) and `plan/DECISIONS.md` (G-8: a build cannot start without them).
+- **DI3 — `gate-check readiness`.** New verb that validates `plan/READINESS.json`:
+  every decision RESOLVED or DEFAULTED, `preflight.passed` true,
+  `owner_dependent_slices` 0, and `plan/DECISIONS.md` present.
+- **DI4 — prompt-it pin drift.** The marketplace pin for prompt-it moves from
+  0.2.1 to 0.3.0 (G-15).
+
 ## 4.0.0 — 2026-09-07
 
 The **autonomous-draft** release — the pipeline gains a default unattended
