@@ -474,15 +474,38 @@ run creates new per-run IDs (governance rules, epic IDs, wave numbers).
 ### `epics/epics-N-<slug>.md` — per-squad agile breakdown
 Per epic `E*.*`:
 ```
-Branch: epic/<EID>-<slug>   |   Depends on: <epics>
+**Branch:** epic/<EID>-<slug>   |   **Depends on:** <epics>
+**Wave:** W<n>
 Scope: <one-liner + expansion>
 Tasks:
-  [ ] <task, file:line scoped>
-  [ ] …
+- [ ] <EID>-01 <task, file:line scoped>
+- [ ] <EID>-02 …
 Test suite (≥10 rows):
-  | T-<EID>-01 | unit|integration|e2e | [REAL]? | Given/When/Then | assertion |
-  | T-<EID>-02 | …
+  | ID | Task | Kind | Given / When / Then | Assertion | Verify | Check |
+  |---|---|---|---|---|---|---|
+  | T-<EID>-01 | <EID>-01 | unit | Given … When … Then … | assertion | auto | `<one command>` |
+  | T-<EID>-02 | <EID>-02 | e2e [REAL] | … | … | attended | — |
 DoD: all N tests green · merged to main · artifacts visible · STATUS.md updated
+```
+
+**Wave and the `Task` / `Check` columns feed the status board.** `status-from-plan`
+reads the epic's wave from the `**Wave:** W<n>` line under its heading (also
+`**Wave: W<n>**`, `Wave: W<n>`, `- Wave: W<n>`, or a `| Wave | W<n> |` row). Give
+every epic a wave, or none: a mix is refused, and no wave at all means one wave
+`W1`. A case maps to a task by its `Task` column; without it, by id (`T-<EID>-NN`
+→ task `<EID>-NN`), else to the whole epic. `Check` is the one backticked command
+that proves a mechanical case; without that column no command is ever invented
+(`check.kind: none`, reason "no Check column in the Test Contract"). Worked
+example, synthetic:
+```
+## Q7 — export queue
+**Branch:** epic/Q7-export-queue · **Wave:** W1
+- [ ] Q7-01 enqueue an export job
+- [ ] Q7-02 retry a failed job
+| ID | Task | Kind | Given / When / Then | Assertion | Verify | Check |
+|---|---|---|---|---|---|---|
+| T-Q7-01 | Q7-01 | unit | Given an empty queue, When a job is added, Then size is 1 | size == 1 | auto | `node tests/queue.mjs` |
+| T-Q7-02 | Q7-02 | e2e | Given a failing job, When it retries twice, Then it is parked | state == parked | attended | — |
 ```
 
 **The test table is the heart of the agile split.** Per-shape count: **Shape-1

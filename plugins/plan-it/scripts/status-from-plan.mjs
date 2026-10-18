@@ -16,7 +16,11 @@
  *
  * Usage:
  *   status-from-plan --package <impl dir> [--epics <dir>] [--implementation <name>]
- *                    [--title T] [--dry-run]
+ *                    [--title T] [--dry-run] [--default-wave]
+ *     Waves come from each epic's header ("**Wave:** W0", "**Wave: W0**", "Wave: W0", "- Wave: W0", a
+ *     "| Wave | W0 |" row). If some epics declare a wave and others do not, it refuses and lists them; if
+ *     none does, it uses one wave W1 and warns (--default-wave silences the warning).
+ *     Cases map to tasks by the Task column, else by id (T-<EID>-NN -> <EID>-NN), else to the whole epic.
  *   status-from-plan --gate --package <impl dir> [--epics <dir>]
  *     Post-delivery gate: status.json exists, `status-write validate` passes, and
  *     its task count equals the epics' checklist count. Exit 1 naming the failed check.
@@ -156,7 +160,7 @@ export function caseCheck(cells, cols) {
   if (kind === "live" || /@live\b|\[LIVE\]/i.test(text)) return { kind: "none", reason: "live" };
   // [REAL] means "needs a live target" (formats.md): mechanical only when the row says Verify: auto.
   if (/\[REAL\]/i.test(text) && verify !== "auto") return { kind: "none", reason: "live ([REAL] without Verify auto)" };
-  if (cols.check < 0) return { kind: "none", reason: "no check column" };
+  if (cols.check < 0) return { kind: "none", reason: "no Check column in the Test Contract" };
   const cell = cellAt(cols.check);
   if (NONE_CELL_RE.test(cell.replace(/[`*]/g, "").trim())) return { kind: "none", reason: "no check command" };
   const spans = [...cell.matchAll(/`([^`]+)`/g)].map((m) => m[1].trim()).filter(Boolean);
@@ -181,6 +185,19 @@ export function composeCheck(cases) {
   return out;
 }
 
+// ---------------------------------------------------------------- waves
+// Header spellings plan-it itself emits or people write: `**Wave:** W0`, `**Wave: W0**`, `Wave: W0`,
+// `- Wave: W0`, `Branch: x | Wave: W0 | ...`, `... · **Wave:** W0`, a `| Wave | W0 |` table row, and
+// (line-leading only) `Wave 0`. A bare "wave" in prose never counts: it needs a colon, `=` or a table cell.
+const HEADER_MAX = 40;
+const WAVE_INLINE_RE = /(?<![A-Za-z0-9])wave\s*[:=]\s*(?:\*+|_+)?\s*`?(?:\*+|_+)?\s*W?(\d+)(?!\d)/i;
+const WAVE_CELL_RE = /^\s*\|\s*(?:\*+|_+)?wave(?:\*+|_+)?\s*\|\s*(?:\*+|_+)?\s*`?W?(\d+)(?!\d)/i;
+const WAVE_LEAD_RE = /^\s*(?:[-*]\s+)?(?:\*+|_+)?wave(?:\*+|_+)?\s+W?(\d+)(?!\d)/i;
+export function waveOf(line) {
+  const m = WAVE_CELL_RE.exec(line) || WAVE_INLINE_RE.exec(line) || WAVE_LEAD_RE.exec(line);
+  return m ? `W${Number(m[1])}` : null;
+}
+
 /** Parse one epic markdown text into [{eid,title,wave,items[],groups[]}]. */
 export function parseEpicText(text) {
   const lines = text.split(/\r?\n/);
@@ -198,7 +215,7 @@ export function parseEpicText(text) {
     if (inFence) continue;
     const em = EPIC_RE.exec(raw);
     if (em && /^##\s/.test(raw) && !/^###/.test(raw)) {
-      cur = { eid: em[1], title: em[2], line: lineNo, endLine: lines.length + 1, header: [], items: [], itemLines: [], groups: [], typeCounts: new Map(), cases: [] };
+      cur = { eid: em[1], title: em[2], line: lineNo, endLine: lines.length + 1, header: [], headerLines: [], items: [], itemLines: [], groups: [], typeCounts: new Map(), cases: [] };
       if (epics.length) epics[epics.length - 1].endLine = lineNo; // block = [line, endLine)
       epics.push(cur);
       inTC = false; sub = null; cols = null;
@@ -244,18 +261,22 @@ export function parseEpicText(text) {
         if (type) cur.typeCounts.set(type, (cur.typeCounts.get(type) || 0) + 1);
         const c = cols ?? NO_COLS;
         const taskRef = c.task >= 0 ? (cells[c.task] || "").replace(/[`*\[\]]/g, "").trim() : "";
-        cur.cases.push({ id: cells[0].replace(/[`*]/g, "").trim(), group: target, type, task: taskRef || null, check: caseCheck(cells, c) });
+        cur.cases.push({ id: cells[0].replace(/[`*]/g, "").trim(), line: lineNo, group: target, type, task: taskRef || null, check: caseCheck(cells, c) });
       }
       continue;
     }
     const im = ITEM_RE.exec(raw);
     if (im) { cur.items.push(im[1]); cur.itemLines.push(lineNo); continue; }
-    if (cur.items.length === 0 && cur.header.length < 12) cur.header.push(raw);
+    if (cur.items.length === 0 && cur.header.length < HEADER_MAX) { cur.header.push(raw); cur.headerLines.push(lineNo); }
   }
   for (const e of epics) {
-    const hdr = e.header.join("\n");
-    const wm = /\bwave\s*[:=]?\s*`?W?(\d+)/i.exec(hdr);
-    e.wave = wm ? `W${wm[1]}` : "W1";
+    // No default here: an epic that declares no wave has wave null, and buildPlan decides (never a silent W1).
+    e.wave = null;
+    e.waveLine = null;
+    for (let i = 0; i < e.header.length && !e.wave; i++) {
+      const w = waveOf(e.header[i]);
+      if (w) { e.wave = w; e.waveLine = e.headerLines[i]; }
+    }
   }
   return epics;
 }
@@ -286,6 +307,50 @@ function readMap(pkg) {
   } catch { return []; }
 }
 
+// ---------------------------------------------------------------- case -> task mapping
+const numId = (id) => {
+  const m = /^(.*?)-0*(\d+)$/.exec(id);
+  return m ? `${m[1].toUpperCase()}-${Number(m[2])}` : id.toUpperCase();
+};
+
+/**
+ * Attaches Test Contract cases to the tasks of one epic (sets task.cases) and counts how.
+ *   1. column  - the Task column names the task (explicit, kept as before).
+ *   2. id      - case T-<EID>-NN belongs to the task whose id is <EID>-NN.
+ *   3. epic    - any other case belongs to the epic's Test Contract: every task of the epic carries it.
+ *   A task still without a case (more tasks than cases) carries the epic's whole Test Contract, so a task of
+ *   an epic that has cases never ends up with none.
+ *   unmapped   - the Task column names a task that does not exist (warning; not guessed onto another task).
+ */
+function mapCases(e, tasks, cases, mapping, rel) {
+  const attach = new Map(tasks.map((t) => [t, new Set()]));
+  const byId = new Map(tasks.map((t) => [numId(t.id), t]));
+  const epicLevel = new Set(); // cases that belong to the epic, not to one task
+  for (const c of cases) {
+    if (c.task) {
+      const hit = tasks.filter((t) => c.task === t.id || c.task === t.from);
+      if (hit.length) { for (const t of hit) attach.get(t).add(c); mapping.column += 1; }
+      else { mapping.unmapped += 1; mapping.unmappedList.push(`${rel}:${c.line} ${c.id} (Task column names "${c.task}", no such task in ${e.eid})`); }
+      continue;
+    }
+    const m = /^T-(.+)$/i.exec(c.id);
+    const t = m ? byId.get(numId(m[1])) : undefined;
+    if (t) { attach.get(t).add(c); mapping.id += 1; continue; }
+    for (const x of tasks) attach.get(x).add(c);
+    epicLevel.add(c);
+    mapping.epic += 1;
+  }
+  // A task no case reached (more tasks than cases) carries the epic's whole Test Contract as its group.
+  // A case that is not pinned to this task shows as covered but never lends its command: a command is only
+  // re-run for the task it was written for (never invented, never spread).
+  const demote = (c) => (c.check.kind === "command" ? { ...c, check: { kind: "none", reason: "epic-level case, not mapped to this task" } } : c);
+  const mappable = cases.filter((c) => [...attach.values()].some((set) => set.has(c)));
+  for (const t of tasks) {
+    if (!attach.get(t).size && mappable.length) { t.cases = mappable.map(demote); mapping.inherited += 1; }
+    else t.cases = cases.filter((c) => attach.get(t).has(c)).map((c) => (epicLevel.has(c) ? demote(c) : c));
+  }
+}
+
 /**
  * Epic files -> ordered task list with source positions. `texts` (Map file->text)
  * overrides what is on disk (dry-run). Generated-id renames recorded in
@@ -305,6 +370,7 @@ export function collectTasks({ pkg, epicsDir, texts, genRenames = [] }) {
   }
   if (!epics.length) throw new Error("no epics parsed (expected '## E1 — title' headings)");
   const out = [];
+  const mapping = { column: 0, id: 0, epic: 0, unmapped: 0, inherited: 0, unmappedList: [] };
   for (const e of epics) {
     const rel = posix(path.relative(pkg, e.file));
     const mk = (id, title, generated, line) => {
@@ -318,8 +384,7 @@ export function collectTasks({ pkg, epicsDir, texts, genRenames = [] }) {
         const { id, title: t } = stripId(it);
         tasks.push(id ? mk(id, t, false, e.itemLines[i]) : mk(`${e.eid}-${String(i + 1).padStart(2, "0")}`, t, true, e.line));
       });
-      // Checklist tasks: a case belongs to a task only when its Task column names it (R-1; never guessed).
-      for (const t of tasks) t.cases = cases.filter((c) => c.task && (c.task === t.id || c.task === t.from));
+      mapCases(e, tasks, cases, mapping, rel);
     } else {
       let groups = e.groups.filter((g) => g.rows > 0 || !g.whole);
       if (groups.length === 1 && groups[0].whole && e.typeCounts.size > 1) {
@@ -329,11 +394,12 @@ export function collectTasks({ pkg, epicsDir, texts, genRenames = [] }) {
       } else {
         groups = groups.map((g) => ({ ...g, cases: cases.filter((c) => c.group === g) }));
       }
+      mapping.epic += cases.length; // no checklist: each Test Contract group is a task, its cases belong to it
       tasks = groups.map((g, i) => Object.assign(mk(`${e.eid}-${String(i + 1).padStart(2, "0")}`, `${e.eid}: ${g.title}`.slice(0, 200), true, e.line), { cases: g.cases }));
     }
     out.push(...tasks);
   }
-  return { epics, tasks: out };
+  return { epics, tasks: out, mapping };
 }
 
 function walkFiles(root) {
@@ -490,8 +556,24 @@ export function applyRenames({ pkg, plan }) {
 }
 
 /** Epic markdown files -> plan.json (writer input). Never carries a status. */
-export function buildPlan({ pkg, epicsDir, implementation, title, texts, genRenames }) {
-  const { epics, tasks } = collectTasks({ pkg, epicsDir, texts, genRenames });
+export function buildPlan({ pkg, epicsDir, implementation, title, texts, genRenames, defaultWave = false, onWarn, report }) {
+  const { epics, tasks, mapping } = collectTasks({ pkg, epicsDir, texts, genRenames });
+  const warn = onWarn ?? (() => {});
+  if (report) report.mapping = mapping;
+  // Waves: no silent default. Either every epic declares one, none does (one W1, announced), or we refuse.
+  const declared = epics.filter((e) => e.wave);
+  const undeclared = epics.filter((e) => !e.wave);
+  if (declared.length && undeclared.length) {
+    const rel = (e) => `${posix(path.relative(pkg, e.file))}:${e.line}`;
+    throw new Error(
+      `${undeclared.length} of ${epics.length} epics declare no wave while the others do; refusing to put them in a default wave. Add a "**Wave:** W<n>" line under each heading:\n` +
+        undeclared.map((e) => `  ${rel(e)}  ${e.eid}`).join("\n"),
+    );
+  }
+  if (!declared.length) {
+    for (const e of epics) e.wave = "W1";
+    if (!defaultWave) warn(`no epic declares a wave ("**Wave:** W<n>"); using one wave W1 for all ${epics.length} epics (pass --default-wave to silence this)`);
+  }
   const seen = new Set();
   for (const t of tasks) {
     if (seen.has(t.id)) throw new Error(`duplicate task id ${t.id} (run status-from-plan to rename it consistently, D-29)`);
@@ -549,16 +631,23 @@ export function gateCheck({ pkg, epicsDir, env = process.env }) {
     add("task count matches epics", false, e.message);
     return done();
   }
-  add("task count matches epics", have === want, have === want ? `${have} tasks` : `status.json has ${have} tasks but the epics' checklists have ${want}; re-run status-from-plan --package ${pkg}`);
+  if (!add("task count matches epics", have === want, have === want ? `${have} tasks` : `status.json has ${have} tasks but the epics' checklists have ${want}; re-run status-from-plan --package ${pkg}`)) return done();
+  try {
+    const { tasks } = collectTasks({ pkg, epicsDir });
+    const bare = tasks.filter((t) => t.epic.cases.length > 0 && t.cases.length === 0);
+    add("every task has a Test Contract case", bare.length === 0,
+      bare.length === 0 ? "no task is left without a case" : `${bare.length} task(s) have no case although their epic has cases: ${bare.slice(0, 8).map((t) => t.id).join(", ")}${bare.length > 8 ? ", ..." : ""}`);
+  } catch (e) { add("every task has a Test Contract case", false, e.message); }
   return done();
 }
 
 function parseArgs(argv) {
-  const o = { dry: false, gate: false };
+  const o = { dry: false, gate: false, defaultWave: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") o.dry = true;
     else if (a === "--gate") o.gate = true;
+    else if (a === "--default-wave") o.defaultWave = true;
     else if (["--package", "--epics", "--implementation", "--title"].includes(a)) {
       const v = argv[++i];
       if (v === undefined) throw new Error(`${a} needs a value`);
@@ -569,6 +658,14 @@ function parseArgs(argv) {
   return o;
 }
 
+/** One line of counts (cases mapped by column / id / epic fallback / unmapped); unmapped cases are listed as warnings. */
+function mappingSummary(m, out) {
+  if (!m) return;
+  out(`status-from-plan: Test Contract cases mapped: ${m.column} by Task column, ${m.id} by id, ${m.epic} by epic fallback, ${m.unmapped} unmapped; ${m.inherited} task(s) with no case of their own carry their epic's Test Contract`);
+  for (const u of m.unmappedList.slice(0, 20)) console.error(`status-from-plan: warning: unmapped case ${u}`);
+  if (m.unmappedList.length > 20) console.error(`status-from-plan: warning: ... and ${m.unmappedList.length - 20} more unmapped cases`);
+}
+
 function statusMdPath(pkg) {
   return isDir(path.join(pkg, "delivery")) ? path.join(pkg, "delivery", "STATUS.md") : path.join(pkg, "STATUS.md");
 }
@@ -576,7 +673,7 @@ function statusMdPath(pkg) {
 export function main(argv = process.argv.slice(2), env = process.env) {
   let o;
   try { o = parseArgs(argv); } catch (e) {
-    console.error(`status-from-plan: ${e.message}\nusage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run] | --gate --package <dir>`);
+    console.error(`status-from-plan: ${e.message}\nusage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run] [--default-wave] | --gate --package <dir>`);
     return 2;
   }
   const pkg = path.resolve(o.package);
@@ -600,6 +697,8 @@ export function main(argv = process.argv.slice(2), env = process.env) {
     console.error(`status-from-plan: ${e.message}`);
     return 1;
   }
+  const warn = (m) => console.error(`status-from-plan: warning: ${m}`);
+  const report = {};
   const where = (x) => `${x.file}${x.line ? `:${x.line}` : ""}`;
   const real = d29.renames.filter((r) => !r.generated);
   if (real.length && d29.notGit) console.log("outside-reference check skipped: not in a git repo");
@@ -616,8 +715,9 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const say = (r) => `${r.old} -> ${r.new} at ${r.file}:${r.line}${r.generated ? " (generated id, recorded in the map only)" : ""}, ${r.references_updated.length} reference(s) updated`;
   if (o.dry) {
     try {
-      plan = buildPlan({ pkg, epicsDir, implementation: o.implementation, title: o.title, texts: d29.edits, genRenames: d29.renames.filter((r) => r.generated).map(mapEntry) });
+      plan = buildPlan({ pkg, epicsDir, implementation: o.implementation, title: o.title, texts: d29.edits, genRenames: d29.renames.filter((r) => r.generated).map(mapEntry), defaultWave: o.defaultWave, onWarn: warn, report });
     } catch (e) { console.error(`status-from-plan: ${e.message}`); return 1; }
+    mappingSummary(report.mapping, console.error);
     for (const r of d29.renames) console.log(`status-from-plan: would rename ${say(r)}`);
     console.log(JSON.stringify(plan, null, 2));
     return 0;
@@ -631,7 +731,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   try {
     if (d29.renames.length) applyRenames({ pkg, plan: d29 });
     // plan.json always comes from the (rewritten) source, so source and status cannot diverge
-    plan = buildPlan({ pkg, epicsDir, implementation: o.implementation, title: o.title });
+    plan = buildPlan({ pkg, epicsDir, implementation: o.implementation, title: o.title, defaultWave: o.defaultWave, onWarn: warn, report });
   } catch (e) {
     console.error(`status-from-plan: ${e.message}`);
     return 1;
@@ -639,6 +739,7 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   {
     for (const r of d29.renames) console.log(`status-from-plan: renamed ${say(r)}`);
   }
+  mappingSummary(report.mapping, console.log);
   // R-1: plan.json is kept in the package (commit it with the package). build-it's `status-write recheck`
   // reads each task's check command from this file as committed at HEAD, never from status.json.
   const planFile = path.join(pkg, PLAN_NAME);

@@ -52,7 +52,7 @@ test("R-1 owner-gated, judgement, live and prod cases get kind none and never a 
   assert.deepEqual(t["C3-01"].check.unchecked.map((u) => u.reason), ["live ([REAL] without Verify auto)", "prod"]);
   assert.equal(t["C3-01"].check.command, undefined, "a live/prod command in the cell is never carried");
   assert.equal(t["CK-03"].check.kind, "none", "a checklist task no case names stays unchecked");
-  assert.equal(t["C4-02"].check.reason, "no check column");
+  assert.equal(t["C4-02"].check.reason, "no Check column in the Test Contract");
 });
 
 test("R-1 every task of an old-style package gets kind none (no check column)", () => {
