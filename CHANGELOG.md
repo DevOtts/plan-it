@@ -3,6 +3,45 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.1.0 — 2026-10-18
+
+Minor release. plan-it now creates a machine-readable `status.json` for every implementation,
+decides how many review-it checkpoints it gets, and records a check command for each mechanical
+test case. No statechart state, transition or existing verb changes.
+
+### Added
+- **ST-02** `scripts/status-from-plan.mjs` creates `status.json` from the epics through build-it's
+  shared writer: one task per checklist item (or per Test Contract group), all `not-started`, plus
+  pieces. Re-running merges into an existing board. plan-it never writes `done` or `verified`.
+- **CP-G4** gate G4 decides the number and position of review-it checkpoints from size,
+  complexity and importance (`scripts/review-checkpoints.mjs`) and writes it to READINESS.json as
+  `review_checkpoints`, which build-it reads.
+- **R-1** a Test Contract case can carry a `Check` command. `plan.json` records it per task:
+  `kind: command` for mechanical cases, `kind: none` with a reason for owner-gated, judgement, live
+  or prod cases. `status-write recheck` reads the command from the committed plan, never from
+  `status.json`.
+- **O-7** every task plan-it creates gets a `created` history entry, and Phase 10 runs a gate
+  (`status-from-plan --gate`): the hand-off is refused when `status.json` is missing, invalid, or
+  its task count differs from the epics' checklists.
+- **INIT-06** the hand-off ends with one line naming the registration step:
+  `run /init-it <implementation name> --role build`. plan-it itself calls nothing in init-it.
+- **V14** the variables-contract-item governance line (ontology-governed-variables) in
+  `references/formats.md` and `references/templates.md`.
+
+### Changed
+- **D-29** duplicate task ids in a plan are renamed consistently. The first keeps its id, later
+  ones take the next free number, written into the epic source, `status.json` and
+  `id-renames.json` (append-only). An ambiguous reference, or one outside the package, fails loudly
+  and changes nothing.
+- Version bump in `plugin.json`, `marketplace.json`, both `SKILL.md` frontmatters, both
+  `machine.json` copies, `CLAUDE.md` and the version-pinned tests.
+
+### Known limits
+- A check command proves the command passed at that commit, not that it tests the right thing. A
+  weak command committed in the plan passes easily; it stays visible in `plan.json` and git history.
+- Cases marked `[REAL]` get no check unless the row says `Verify: auto`, so most plan-it epics that
+  use `[REAL]` for local files have none until someone marks them.
+
 ## 5.0.0 — 2026-10-14
 
 Major release: plan-it moves to 5.0.0 together with the rest of the *-it lifecycle

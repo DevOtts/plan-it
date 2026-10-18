@@ -37,11 +37,11 @@ if (headIdx === -1) {
   const end = lines.findIndex((l, i) => i > headIdx && /^##\s/.test(l));
   const section = lines.slice(headIdx, end === -1 ? undefined : end).join("\n");
 
-  // Required ID set for the current (5.0.0) release. When cutting a later
+  // Required ID set for the current (5.1.0) release. When cutting a later
   // release, move these to that release's shipped IDs (same pattern as the
   // version literal in version-triple-match.mjs). The 3.0.1 patch's IDs
   // (M1, M2) now live in that release's own section.
-  const required = ["DI1", "DI2", "DI3", "DI4"];
+  const required = ["ST-02", "CP-G4", "R-1", "O-7", "INIT-06", "D-29", "V14"];
   for (const id of required) {
     // Escape regex metachars (the W3.1-x IDs contain '.' and '-').
     const re = new RegExp(`\\b${id.replace(/[.\-]/g, "\\$&")}\\b`);
@@ -54,5 +54,5 @@ if (problems.length > 0) {
   for (const p of problems) console.error(`  ✗ ${p}`);
   process.exit(1);
 }
-console.log("PASS — CHANGELOG.md has a dated top section enumerating the current release's shipped IDs (DI1–DI4).");
+console.log("PASS — CHANGELOG.md has a dated top section enumerating the current release's shipped IDs (ST-02, CP-G4, R-1, O-7, INIT-06, D-29, V14).");
 process.exit(0);
