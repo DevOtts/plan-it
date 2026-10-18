@@ -506,6 +506,12 @@ backbone **first**, because squads build their PRDs against it:
 2. `delivery/00-program-plan.md` — squads, epic backlog, waves, test standard,
    branching, the build-it runbook, the board pointer.
 3. `delivery/STATUS.md` — the live board, all epics in backlog.
+   Once the epics exist, create the machine-readable board: run
+   `node ${CLAUDE_PLUGIN_ROOT}/scripts/status-from-plan.mjs --package <implementation dir>`
+   (`--dry-run` previews). It calls build-it's shared `status-write` to create
+   `status.json` (one task per epic checklist item, all `not-started`) and renders
+   `STATUS.md` from it. `STATUS.md` is generated — never hand-edit it; plan-it never
+   writes `done` or `verified` and never edits `status.json` directly.
 
 (For size S/M, fold these into fewer files — a contract section + a single plan.)
 
