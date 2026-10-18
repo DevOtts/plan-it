@@ -97,6 +97,25 @@ its only values are `auto`, `attended`, `judgement` (anything else is a
 | T-X1-03 | copy matches brand voice | reviewer judgement | edge | judgement |
 ```
 
+**`Check` column (optional, any grammar; R-1 re-check)** — a mechanical case
+names the one command that proves it, in backticks, in a column headed `Check`
+(or `run:` / `Command`). Escape a pipe inside it as `\|`; join steps with `&&`
+inside the one span. `status-from-plan` turns these into a `check` per task in
+`<package>/plan.json` (commit it with the package): `{kind:"command", command,
+cases}` when the task's cases are mechanical, `{kind:"none", reason}` otherwise.
+build-it's `status-write recheck` re-runs that command from the plan committed
+at HEAD, so a `verified` claim can be re-proved without trusting the verdict
+file. A case never gets a command when it is owner-gated (`Verify: attended`,
+`@owner`), `judgement`, live (`@live`, `[LIVE]`, `Kind: live`, or `[REAL]`
+without `Verify: auto`) or prod (`@prod`, `[PROD]`, `Kind: prod`); it stays
+unchecked and is listed as such. Cases map to tasks by Test Contract group, or
+to checklist tasks by a `Task` column naming the task id (never guessed):
+```
+| ID | Task | Case | Verify | Check |
+| T-X1-01 | X1-01 | parser round-trips | auto | `node tests/rt.mjs` |
+| T-X1-02 | X1-02 | owner reads the copy | attended | — |
+```
+
 **Stress / agentic contract** — use the six-axes scenarios (§4c). **Pure logic** —
 add property-based invariants alongside enumerated cases.
 

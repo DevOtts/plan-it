@@ -7,6 +7,13 @@
  * plan-it never writes status.json itself (single-writer rule) and never emits
  * done/verified: every task is created not-started by the writer.
  *
+ * R-1: the plan.json handed to the writer is kept at <package>/plan.json (commit
+ * it with the package). Each task carries `check`: {kind:"command", command,
+ * cases, unchecked?} when its Test Contract cases are mechanical (a backticked
+ * command in a Check / run: column), else {kind:"none", reason}. Owner-gated,
+ * judgement, live and prod cases are never given a command. build-it's
+ * `status-write recheck` reads the command from this file as committed at HEAD.
+ *
  * Usage:
  *   status-from-plan --package <impl dir> [--epics <dir>] [--implementation <name>]
  *                    [--title T] [--dry-run]
@@ -125,8 +132,53 @@ function stripId(text) {
   return { id: m[1], title: rest || text.trim() };
 }
 
+// "\|" is an escaped pipe inside a cell (a check command may need one).
 function splitCells(line) {
-  return line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").split("|").map((c) => c.trim());
+  return line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").replace(/\\\|/g, "\u0000").split("|").map((c) => c.replace(/\u0000/g, "|").trim());
+}
+
+// ---------------------------------------------------------------- R-1 checks
+// A Test Contract row is mechanical when a machine can re-run it unattended: it carries a backticked command in
+// a Check / run: / Command column and nothing marks it owner-gated, judgement, live or prod. Everything else gets
+// kind "none" with the reason, and stays unchecked.
+const CHECK_COL_RE = /^(check|run:?|command|cmd)$/i;
+const NO_COLS = { check: -1, verify: -1, kind: -1, task: -1 };
+const NONE_CELL_RE = /^(none|n\/a|na|—|–|-|)$/i;
+
+export function caseCheck(cells, cols) {
+  const text = cells.join(" ");
+  const cellAt = (i) => (i >= 0 && i < cells.length ? cells[i] : "");
+  const verify = cellAt(cols.verify).replace(/[`*]/g, "").trim().toLowerCase();
+  const kind = cellAt(cols.kind).replace(/[`*\[\]]/g, "").trim().toLowerCase();
+  if (verify === "attended" || /@owner\b|\bowner-gated\b|\[OWNER\]/i.test(text)) return { kind: "none", reason: "owner-gated" };
+  if (verify === "judgement" || verify === "judgment") return { kind: "none", reason: "judgement" };
+  if (kind === "prod" || /@prod\b|\[PROD\]/i.test(text)) return { kind: "none", reason: "prod" };
+  if (kind === "live" || /@live\b|\[LIVE\]/i.test(text)) return { kind: "none", reason: "live" };
+  // [REAL] means "needs a live target" (formats.md): mechanical only when the row says Verify: auto.
+  if (/\[REAL\]/i.test(text) && verify !== "auto") return { kind: "none", reason: "live ([REAL] without Verify auto)" };
+  if (cols.check < 0) return { kind: "none", reason: "no check column" };
+  const cell = cellAt(cols.check);
+  if (NONE_CELL_RE.test(cell.replace(/[`*]/g, "").trim())) return { kind: "none", reason: "no check command" };
+  const spans = [...cell.matchAll(/`([^`]+)`/g)].map((m) => m[1].trim()).filter(Boolean);
+  if (!spans.length) return { kind: "none", reason: "check cell is not a backticked command" };
+  // One span only: a second span is usually a path or a note, never guessed into a command.
+  if (spans.length > 1) return { kind: "none", reason: "check cell has more than one backticked span (write one command, join with &&)" };
+  return { kind: "command", command: spans[0] };
+}
+
+/** Task check from its cases (R-1): the mechanical cases' commands joined with &&; the rest listed unchecked. */
+export function composeCheck(cases) {
+  if (!cases || !cases.length) return { kind: "none", reason: "no Test Contract case maps to this task" };
+  const mech = cases.filter((c) => c.check.kind === "command");
+  const unchecked = cases.filter((c) => c.check.kind !== "command").map((c) => ({ case: c.id, reason: c.check.reason }));
+  if (!mech.length) {
+    const reasons = [...new Set(unchecked.map((u) => u.reason))];
+    return { kind: "none", reason: reasons.join(", "), unchecked };
+  }
+  const command = mech.length === 1 ? mech[0].check.command : mech.map((c) => `(${c.check.command})`).join(" && ");
+  const out = { kind: "command", command, cases: mech.map((c) => c.id) };
+  if (unchecked.length) out.unchecked = unchecked;
+  return out;
 }
 
 /** Parse one epic markdown text into [{eid,title,wave,items[],groups[]}]. */
@@ -137,6 +189,7 @@ export function parseEpicText(text) {
   let inTC = false;
   let tcLevel = 0;
   let sub = null; // current TC sub-heading group
+  let cols = null; // column roles of the current Test Contract table (R-1)
   let inFence = false;
   for (let li = 0; li < lines.length; li++) {
     const raw = lines[li];
@@ -145,10 +198,10 @@ export function parseEpicText(text) {
     if (inFence) continue;
     const em = EPIC_RE.exec(raw);
     if (em && /^##\s/.test(raw) && !/^###/.test(raw)) {
-      cur = { eid: em[1], title: em[2], line: lineNo, endLine: lines.length + 1, header: [], items: [], itemLines: [], groups: [], typeCounts: new Map() };
+      cur = { eid: em[1], title: em[2], line: lineNo, endLine: lines.length + 1, header: [], items: [], itemLines: [], groups: [], typeCounts: new Map(), cases: [] };
       if (epics.length) epics[epics.length - 1].endLine = lineNo; // block = [line, endLine)
       epics.push(cur);
-      inTC = false; sub = null;
+      inTC = false; sub = null; cols = null;
       continue;
     }
     if (!cur) continue;
@@ -156,7 +209,7 @@ export function parseEpicText(text) {
     if (h) {
       const level = h[1].length;
       if (TC_HEAD_RE.test(raw)) {
-        inTC = true; tcLevel = level; sub = null;
+        inTC = true; tcLevel = level; sub = null; cols = null;
         cur.groups.push({ title: h[2].replace(/^Test Contract\s*[—–:-]*\s*/i, "").trim() || cur.eid, rows: 0, whole: true });
         continue;
       }
@@ -173,12 +226,25 @@ export function parseEpicText(text) {
     if (inTC) {
       if (/^\s*\|/.test(raw)) {
         const cells = splitCells(raw);
-        if (/^[-: ]+$/.test(cells.join("")) || /^id$/i.test(cells[0])) continue;
+        if (/^[-: ]+$/.test(cells.join(""))) continue;
+        if (/^(id|uc)$/i.test(cells[0])) {
+          const low = cells.map((c) => c.replace(/[`*]/g, "").trim());
+          cols = {
+            check: low.findIndex((c) => CHECK_COL_RE.test(c)),
+            verify: low.findIndex((c) => /^verify$/i.test(c)),
+            kind: low.findIndex((c) => /^kind$/i.test(c)),
+            task: low.findIndex((c) => /^task$/i.test(c)),
+          };
+          continue;
+        }
         if (!/^T-/i.test(cells[0] || "")) continue;
         const target = sub ?? cur.groups[cur.groups.length - 1];
         if (target) target.rows += 1;
         const type = (cells.find((c) => /^\[?(unit|e2e|use-?case|stress|property|golden|integration)\]?$/i.test(c)) || "").replace(/[\[\]]/g, "").toLowerCase();
         if (type) cur.typeCounts.set(type, (cur.typeCounts.get(type) || 0) + 1);
+        const c = cols ?? NO_COLS;
+        const taskRef = c.task >= 0 ? (cells[c.task] || "").replace(/[`*\[\]]/g, "").trim() : "";
+        cur.cases.push({ id: cells[0].replace(/[`*]/g, "").trim(), group: target, type, task: taskRef || null, check: caseCheck(cells, c) });
       }
       continue;
     }
@@ -208,6 +274,7 @@ export function findEpicFiles(pkg, epicsDir) {
 
 // ---------------------------------------------------------------- D-29 ids
 const MAP_NAME = "id-renames.json";
+const PLAN_NAME = "plan.json";
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const tokenRe = (id, flags = "") => new RegExp(`(?<![A-Za-z0-9-])${esc(id)}(?![0-9])`, flags);
 const posix = (p) => p.split(path.sep).join("/");
@@ -245,19 +312,24 @@ export function collectTasks({ pkg, epicsDir, texts, genRenames = [] }) {
       return { id: mapped ?? id, title, generated, line, epic: e, from: mapped ? id : undefined };
     };
     let tasks = [];
+    const cases = e.cases || [];
     if (e.items.length) {
       e.items.forEach((it, i) => {
         const { id, title: t } = stripId(it);
         tasks.push(id ? mk(id, t, false, e.itemLines[i]) : mk(`${e.eid}-${String(i + 1).padStart(2, "0")}`, t, true, e.line));
       });
+      // Checklist tasks: a case belongs to a task only when its Task column names it (R-1; never guessed).
+      for (const t of tasks) t.cases = cases.filter((c) => c.task && (c.task === t.id || c.task === t.from));
     } else {
       let groups = e.groups.filter((g) => g.rows > 0 || !g.whole);
       if (groups.length === 1 && groups[0].whole && e.typeCounts.size > 1) {
-        groups = [...e.typeCounts].map(([t, n]) => ({ title: `${t} cases`, rows: n }));
+        groups = [...e.typeCounts].map(([t, n]) => ({ title: `${t} cases`, rows: n, cases: cases.filter((c) => c.type === t) }));
       } else if (groups.length === 1 && groups[0].whole) {
-        groups = [{ title: `Test Contract (${groups[0].rows} cases)`, rows: groups[0].rows }];
+        groups = [{ title: `Test Contract (${groups[0].rows} cases)`, rows: groups[0].rows, cases }];
+      } else {
+        groups = groups.map((g) => ({ ...g, cases: cases.filter((c) => c.group === g) }));
       }
-      tasks = groups.map((g, i) => mk(`${e.eid}-${String(i + 1).padStart(2, "0")}`, `${e.eid}: ${g.title}`.slice(0, 200), true, e.line));
+      tasks = groups.map((g, i) => Object.assign(mk(`${e.eid}-${String(i + 1).padStart(2, "0")}`, `${e.eid}: ${g.title}`.slice(0, 200), true, e.line), { cases: g.cases }));
     }
     out.push(...tasks);
   }
@@ -345,7 +417,7 @@ export function planRenames({ pkg, epicsDir, texts }) {
   };
   const epicFiles = new Set(epics.map((e) => e.file));
   const scan = [...new Set([...walkFiles(pkg), ...epicFiles])];
-  const SKIP = new Set(["status.json", MAP_NAME, "STATUS.md"]);
+  const SKIP = new Set(["status.json", MAP_NAME, "STATUS.md", PLAN_NAME]); // plan.json is regenerated from the epics
   const fileLines = new Map();
   for (const f of scan) {
     if (SKIP.has(path.basename(f)) && !epicFiles.has(f)) continue;
@@ -428,7 +500,9 @@ export function buildPlan({ pkg, epicsDir, implementation, title, texts, genRena
   const waves = new Map();
   const pieces = [];
   for (const e of epics) {
-    const mine = tasks.filter((t) => t.epic === e).map((t) => ({ id: t.id, title: t.title }));
+    // R-1: every task carries `check` ({kind:"command",command,...} or {kind:"none",reason}) so the recheck
+    // runner can re-run the mechanical Test Contract cases from this committed plan.
+    const mine = tasks.filter((t) => t.epic === e).map((t) => ({ id: t.id, title: t.title, check: composeCheck(t.cases) }));
     if (!waves.has(e.wave)) waves.set(e.wave, []);
     waves.get(e.wave).push(...mine);
     pieces.push({
@@ -565,11 +639,14 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   {
     for (const r of d29.renames) console.log(`status-from-plan: renamed ${say(r)}`);
   }
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "status-from-plan-"));
-  const planFile = path.join(tmp, "plan.json");
-  fs.writeFileSync(planFile, JSON.stringify(plan, null, 2));
+  // R-1: plan.json is kept in the package (commit it with the package). build-it's `status-write recheck`
+  // reads each task's check command from this file as committed at HEAD, never from status.json.
+  const planFile = path.join(pkg, PLAN_NAME);
+  const planTmp = `${planFile}.${process.pid}.tmp`;
+  fs.writeFileSync(planTmp, JSON.stringify(plan, null, 2) + "\n");
+  fs.renameSync(planTmp, planFile);
   const run = (args) => spawnSync(process.execPath, [writer.path, ...args], { stdio: "inherit", env });
-  try {
+  {
     // Re-running plan-it on an existing board only adds tasks it does not have yet (idempotent recovery).
     const initArgs = ["init", "--file", file, "--plan", planFile, "--by", "plan-it"];
     if (fs.existsSync(file)) initArgs.push("--merge");
@@ -582,11 +659,10 @@ export function main(argv = process.argv.slice(2), env = process.env) {
       r = run(["render", "--file", file]);
       if (r.status !== 0) return r.status || 1;
     }
-    const n = plan.waves.reduce((s, w) => s + w.tasks.length, 0);
-    console.log(`status-from-plan: wrote ${file} (${n} tasks, writer: ${writer.path})`);
+    const all = plan.waves.flatMap((w) => w.tasks);
+    const checked = all.filter((t) => t.check && t.check.kind === "command").length;
+    console.log(`status-from-plan: wrote ${file} (${all.length} tasks, ${checked} with a check command, plan: ${planFile}, writer: ${writer.path})`);
     return 0;
-  } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
 
