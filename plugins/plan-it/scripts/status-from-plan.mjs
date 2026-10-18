@@ -136,9 +136,29 @@ function stripId(text) {
   return { id: m[1], title: rest || text.trim() };
 }
 
-// "\|" is an escaped pipe inside a cell (a check command may need one).
-function splitCells(line) {
-  return line.replace(/^\s*\|/, "").replace(/\|\s*$/, "").replace(/\\\|/g, "\u0000").split("|").map((c) => c.replace(/\u0000/g, "|").trim());
+// A table row split into cells: "\|" is a literal pipe and a "|" inside an inline code span (backticks) does
+// not split the cell. status-from-plan.mjs and gate-check.mjs carry the same splitter so they agree.
+export function splitCells(line) {
+  const s = line.trim().replace(/^\|/, "");
+  const cells = [];
+  let cur = "";
+  let open = 0; // length of the backtick run that opened the current code span, 0 outside one
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "\\" && s[i + 1] === "|") { cur += "|"; i++; continue; }
+    if (ch === "`") {
+      let n = 1;
+      while (s[i + n] === "`") n++;
+      if (!open) open = n; else if (n === open) open = 0;
+      cur += "`".repeat(n);
+      i += n - 1;
+      continue;
+    }
+    if (ch === "|" && !open) { cells.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur.trim() !== "" || !/\|\s*$/.test(line)) cells.push(cur.trim());
+  return cells;
 }
 
 // ---------------------------------------------------------------- R-1 checks
@@ -247,6 +267,7 @@ export function parseEpicText(text) {
         if (/^(id|uc)$/i.test(cells[0])) {
           const low = cells.map((c) => c.replace(/[`*]/g, "").trim());
           cols = {
+            n: cells.length,
             check: low.findIndex((c) => CHECK_COL_RE.test(c)),
             verify: low.findIndex((c) => /^verify$/i.test(c)),
             kind: low.findIndex((c) => /^kind$/i.test(c)),
@@ -259,9 +280,11 @@ export function parseEpicText(text) {
         if (target) target.rows += 1;
         const type = (cells.find((c) => /^\[?(unit|e2e|use-?case|stress|property|golden|integration)\]?$/i.test(c)) || "").replace(/[\[\]]/g, "").toLowerCase();
         if (type) cur.typeCounts.set(type, (cur.typeCounts.get(type) || 0) + 1);
-        const c = cols ?? NO_COLS;
+        // A row whose cell count differs from the header has shifted columns: report it, read nothing from it.
+        const bad = cols && cols.n !== cells.length ? { cells: cells.length, expected: cols.n } : null;
+        const c = bad ? NO_COLS : (cols ?? NO_COLS);
         const taskRef = c.task >= 0 ? (cells[c.task] || "").replace(/[`*\[\]]/g, "").trim() : "";
-        cur.cases.push({ id: cells[0].replace(/[`*]/g, "").trim(), line: lineNo, group: target, type, task: taskRef || null, check: caseCheck(cells, c) });
+        cur.cases.push({ id: cells[0].replace(/[`*]/g, "").trim(), line: lineNo, group: target, type, task: taskRef || null, bad, check: bad ? { kind: "none", reason: `table row has ${bad.cells} cells, header has ${bad.expected}` } : caseCheck(cells, c) });
       }
       continue;
     }
@@ -370,9 +393,10 @@ export function collectTasks({ pkg, epicsDir, texts, genRenames = [] }) {
   }
   if (!epics.length) throw new Error("no epics parsed (expected '## E1 — title' headings)");
   const out = [];
-  const mapping = { column: 0, id: 0, epic: 0, unmapped: 0, inherited: 0, unmappedList: [] };
+  const mapping = { column: 0, id: 0, epic: 0, unmapped: 0, inherited: 0, unmappedList: [], badRows: [] };
   for (const e of epics) {
     const rel = posix(path.relative(pkg, e.file));
+    for (const c of e.cases || []) if (c.bad) mapping.badRows.push(`${rel}:${c.line} ${c.id} (${c.bad.cells} cells, header has ${c.bad.expected})`);
     const mk = (id, title, generated, line) => {
       const mapped = generated ? genMap.get(`${rel}|${e.eid}|${id}`) : undefined;
       return { id: mapped ?? id, title, generated, line, epic: e, from: mapped ? id : undefined };
@@ -638,6 +662,11 @@ export function gateCheck({ pkg, epicsDir, env = process.env }) {
     add("every task has a Test Contract case", bare.length === 0,
       bare.length === 0 ? "no task is left without a case" : `${bare.length} task(s) have no case although their epic has cases: ${bare.slice(0, 8).map((t) => t.id).join(", ")}${bare.length > 8 ? ", ..." : ""}`);
   } catch (e) { add("every task has a Test Contract case", false, e.message); }
+  try {
+    const { mapping } = collectTasks({ pkg, epicsDir });
+    add("Test Contract rows match their header", mapping.badRows.length === 0,
+      mapping.badRows.length === 0 ? "every row has the header's cell count" : `${mapping.badRows.length} row(s) with a different cell count: ${mapping.badRows.slice(0, 5).join("; ")}`);
+  } catch (e) { add("Test Contract rows match their header", false, e.message); }
   return done();
 }
 
@@ -663,6 +692,7 @@ function mappingSummary(m, out) {
   if (!m) return;
   out(`status-from-plan: Test Contract cases mapped: ${m.column} by Task column, ${m.id} by id, ${m.epic} by epic fallback, ${m.unmapped} unmapped; ${m.inherited} task(s) with no case of their own carry their epic's Test Contract`);
   for (const u of m.unmappedList.slice(0, 20)) console.error(`status-from-plan: warning: unmapped case ${u}`);
+  for (const b of m.badRows) console.error(`status-from-plan: warning: table row not read (cell count differs from its header, columns would shift): ${b}`);
   if (m.unmappedList.length > 20) console.error(`status-from-plan: warning: ... and ${m.unmappedList.length - 20} more unmapped cases`);
 }
 

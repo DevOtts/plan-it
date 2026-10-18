@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { buildPlan, collectTasks, waveOf } from "../../plugins/plan-it/scripts/status-from-plan.mjs";
+import { buildPlan, collectTasks, waveOf, splitCells } from "../../plugins/plan-it/scripts/status-from-plan.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, "..", "..");
@@ -80,7 +80,7 @@ test("H-12/H-13 synthetic package in plan-it's own format: waves follow the head
     assert.equal(t.check.reason, "no Check column in the Test Contract");
   }
   // A1: 4 cases/3 tasks -> 3 by id + 1 epic; A2: 2/2 -> 2 id; B1: 4/4; C1: 5 cases/2 tasks -> 2 id + 3 epic; D1: 1/1
-  assert.deepEqual({ ...report.mapping, unmappedList: undefined }, { column: 0, id: 3 + 2 + 4 + 2 + 1, epic: 1 + 3, unmapped: 0, inherited: 0, unmappedList: undefined });
+  assert.deepEqual({ ...report.mapping, unmappedList: undefined, badRows: undefined }, { column: 0, id: 3 + 2 + 4 + 2 + 1, epic: 1 + 3, unmapped: 0, inherited: 0, unmappedList: undefined, badRows: undefined });
   // an epic fallback case rides on every task of its epic
   const a1 = tasks.filter((t) => t.epic.eid === "A1");
   assert.ok(a1.every((t) => t.cases.some((c) => c.id === "T-A1-04")));
@@ -217,4 +217,51 @@ test("H-14 a hand-written board that merely imitates the marker lower in the fil
   const h = handoff(pkg);
   assert.notEqual(h.status, 0);
   assert.match(h.stdout + h.stderr, /outside the 4-term vocabulary/);
+});
+
+// ------------------------------------------------------------------ row splitting
+const PIPES = [
+  "## P1 — pipes", "**Wave:** W0", "", "### Scope", "- [ ] P1-01 first", "- [ ] P1-02 second", "- [ ] P1-03 third", "",
+  "### Test Contract — P1", "| ID | Task | Assertion | Check |", "|---|---|---|---|",
+  "| T-P1-01 | P1-01 | output matches `a | b` exactly | `node t1.mjs | grep -q ok` |",
+  "| T-P1-02 | P1-02 | escaped \\| pipe in prose | `node t2.mjs \\| grep -q ok` |",
+  "| T-P1-03 | P1-03 | has | one | cell | too many | `node t3.mjs` |", "",
+].join("\n");
+
+test("row splitting: escaped pipe is literal, a pipe inside backticks does not split, a wrong cell count is reported", () => {
+  assert.deepEqual(splitCells("| a | `x | y` | c \\| d | e |"), ["a", "`x | y`", "c | d", "e"]);
+  assert.deepEqual(splitCells("| a | `` x | y `` | |"), ["a", "`` x | y ``", ""]);
+  const pkg = mkpkg([PIPES]);
+  const report = {};
+  const p = buildPlan({ pkg, report });
+  const t = Object.fromEntries(p.waves[0].tasks.map((x) => [x.id, x]));
+  assert.equal(t["P1-01"].check.command, "node t1.mjs | grep -q ok");
+  assert.equal(t["P1-02"].check.command, "node t2.mjs | grep -q ok");
+  assert.equal(t["P1-03"].check.kind, "none");
+  assert.match(t["P1-03"].check.unchecked[0].reason, /7 cells, header has 4/);
+  assert.equal(report.mapping.unmapped, 0);
+  assert.equal(report.mapping.column, 2);
+  assert.equal(report.mapping.badRows.length, 1);
+  assert.match(report.mapping.badRows[0], /epics-1\.md:\d+ T-P1-03 \(7 cells, header has 4\)/);
+  const r = cli(["--package", pkg, "--dry-run"]);
+  assert.equal(r.status, 0, "a bad row alone does not change the exit code");
+  assert.match(r.stderr, /warning: table row not read .*T-P1-03/);
+});
+
+test("row splitting: --gate fails on a row with the wrong cell count", { skip: SKIP }, () => {
+  const pkg = mkpkg([PIPES]);
+  assert.equal(cli(["--package", pkg]).status, 0);
+  const g = cli(["--gate", "--package", pkg]);
+  assert.equal(g.status, 1);
+  assert.match(g.stderr, /Test Contract rows match their header.*T-P1-03/);
+});
+
+test("row splitting: handoff reads the Verify column with the same splitter", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "wch-v-"));
+  fs.writeFileSync(path.join(dir, "epics.md"), [
+    "## V1 — verify", "", "- [ ] V1-01 x", "", "### Test Contract — V1 (BINDING: 100% pass or /iterate)", "Types: [unit] · Count: 1", "",
+    "| ID | Check | Verify |", "|---|---|---|", "| T-V1-01 | `a | b` | auto |", "",
+  ].join("\n"));
+  const h = handoff(dir);
+  assert.ok(!/Verify must be/.test(h.stdout + h.stderr), h.stdout + h.stderr);
 });

@@ -2711,13 +2711,38 @@ function cmdRuns(rawArgs) {
 // start on an unresolved plan (G-8).
 const VERIFY_VALUES = ["auto", "attended", "judgement"];
 
+// A table row split into cells: "\|" is a literal pipe and a "|" inside an inline code span (backticks) does
+// not split the cell. status-from-plan.mjs and gate-check.mjs carry the same splitter so they agree.
+function splitTableRow(line) {
+  const s = line.trim().replace(/^\|/, "");
+  const cells = [];
+  let cur = "";
+  let open = 0; // length of the backtick run that opened the current code span, 0 outside one
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "\\" && s[i + 1] === "|") { cur += "|"; i++; continue; }
+    if (ch === "`") {
+      let n = 1;
+      while (s[i + n] === "`") n++;
+      if (!open) open = n; else if (n === open) open = 0;
+      cur += "`".repeat(n);
+      i += n - 1;
+      continue;
+    }
+    if (ch === "|" && !open) { cells.push(cur.trim()); cur = ""; continue; }
+    cur += ch;
+  }
+  if (cur.trim() !== "" || !/\|\s*$/.test(line)) cells.push(cur.trim());
+  return cells;
+}
+
 export function lintVerifyColumn(text) {
   const errs = [];
   const lines = stripCode(text).split("\n");
   let col = -1;
   for (const line of lines) {
     if (!/^\s*\|/.test(line)) { col = -1; continue; }
-    const cells = line.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+    const cells = splitTableRow(line);
     if (col === -1) {
       col = cells.findIndex((c) => c.toLowerCase() === "verify");
       continue;
