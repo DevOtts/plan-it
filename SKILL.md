@@ -617,6 +617,17 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   `DEFAULTED`, `preflight.passed` true, `owner_dependent_slices` 0). Run
   `node scripts/gate-check.mjs readiness --dir .` — a build cannot start without
   both files (G-8).
+- **Decide the review checkpoints** (right after the readiness pair): write
+  `plan/CHECKPOINT-INPUTS.json` (`tasks`, `epics`, `waves`, and each
+  complexity/importance flag as a one-line reason or `null`: `cross_cutting`,
+  `owner_gated`, `new_surface`, `data`, `money`, `security`, `prod_facing`), then run
+  `node ${CLAUDE_PLUGIN_ROOT}/scripts/review-checkpoints.mjs decide --inputs plan/CHECKPOINT-INPUTS.json --write plan/READINESS.json`
+  (add `--status <status.json>` to count tasks and waves from the board). It writes
+  `review_checkpoints` into READINESS.json: how many review-it checkpoints this
+  implementation gets and where each sits (phase, wave boundary, adversarial,
+  pre-merge, pre-release), each with the verdict file path build-it must produce.
+  The count scales with size, complexity and importance; it is never fixed per
+  wave and never typed by hand. A flag without a reason is refused.
 - **Fill the board:** `STATUS.md` rows reflect Wave-0 in-progress, rest backlog.
 - **Hand off** (the terminal phase — the build runs in a *fresh* session):
   - Wire the repo to your knowledge base (`/sync-obsidian` or equivalent), if your
