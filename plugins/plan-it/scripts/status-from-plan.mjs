@@ -299,7 +299,10 @@ export function main(argv = process.argv.slice(2), env = process.env) {
   const file = path.join(pkg, "status.json");
   const run = (args) => spawnSync(process.execPath, [writer.path, ...args], { stdio: "inherit", env });
   try {
-    let r = run(["init", "--file", file, "--plan", planFile, "--by", "plan-it"]);
+    // Re-running plan-it on an existing board only adds tasks it does not have yet (idempotent recovery).
+    const initArgs = ["init", "--file", file, "--plan", planFile, "--by", "plan-it"];
+    if (fs.existsSync(file)) initArgs.push("--merge");
+    let r = run(initArgs);
     if (r.status !== 0) return r.status || 1;
     const md = statusMdPath(pkg);
     let rendered = false;

@@ -61,6 +61,22 @@ test("AT-01 / T-B-16 plan-it on fixture: full CLI writes valid status.json", { s
   assert.equal(v.status, 0, v.stderr);
 });
 
+test("re-running plan-it on an existing board merges and keeps build progress", { skip: SKIP }, () => {
+  const pkg = copyPkg("pkg");
+  const env = { ...process.env, DOIT_STATUS_WRITE: WRITER };
+  assert.equal(spawnSync(process.execPath, [CLI, "--package", pkg], { encoding: "utf8", env }).status, 0);
+  const file = path.join(pkg, "status.json");
+  const first = JSON.parse(fs.readFileSync(file, "utf8")).waves.flatMap((w) => w.tasks)[0].id;
+  const s = runWriter(["set", first, "--status", "in-progress", "--by", "build-it", "--file", file]);
+  assert.equal(s.status, 0, s.stderr);
+  const r = spawnSync(process.execPath, [CLI, "--package", pkg], { encoding: "utf8", env });
+  assert.equal(r.status, 0, r.stderr + r.stdout);
+  const tasks = JSON.parse(fs.readFileSync(file, "utf8")).waves.flatMap((w) => w.tasks);
+  assert.equal(tasks.length, 6);
+  assert.equal(tasks.find((t) => t.id === first).status, "in-progress");
+  assert.equal(runWriter(["validate", "--file", file]).status, 0);
+});
+
 test("AT-02 STATUS.md rendered from JSON", { skip: SKIP }, () => {
   const pkg = copyPkg("pkg");
   const r = spawnSync(process.execPath, [CLI, "--package", pkg], {
