@@ -634,6 +634,10 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   pre-merge, pre-release), each with the verdict file path build-it must produce.
   The count scales with size, complexity and importance; it is never fixed per
   wave and never typed by hand. A flag without a reason is refused.
+- **Gate the board after delivery:** `node ${CLAUDE_PLUGIN_ROOT}/scripts/status-from-plan.mjs --gate --package <implementation dir>`
+  — `status.json` must exist, pass `status-write validate`, and hold exactly as many
+  tasks as the epics' checklists. A refusal names the failed check; fix it (re-run
+  `status-from-plan`) before handoff.
 - **Fill the board:** `STATUS.md` rows reflect Wave-0 in-progress, rest backlog.
 - **Hand off** (the terminal phase — the build runs in a *fresh* session):
   - Wire the repo to your knowledge base (`/sync-obsidian` or equivalent), if your

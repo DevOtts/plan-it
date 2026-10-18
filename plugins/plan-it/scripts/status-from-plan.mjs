@@ -10,6 +10,9 @@
  * Usage:
  *   status-from-plan --package <impl dir> [--epics <dir>] [--implementation <name>]
  *                    [--title T] [--dry-run]
+ *   status-from-plan --gate --package <impl dir> [--epics <dir>]
+ *     Post-delivery gate: status.json exists, `status-write validate` passes, and
+ *     its task count equals the epics' checklist count. Exit 1 naming the failed check.
  *
  * Writer resolution (D-09): env DOIT_STATUS_WRITE -> sibling install of build-it
  * next to ${CLAUDE_PLUGIN_ROOT} -> ~/.claude/plugins/**\/build-it/**\/scripts/status/
@@ -442,11 +445,46 @@ export function buildPlan({ pkg, epicsDir, implementation, title, texts, genRena
 }
 
 // ---------------------------------------------------------------- CLI
+/**
+ * Gate after delivery (Phase 10). Pure apart from running the writer's validate.
+ * Returns { ok, checks: [{name, ok, detail}], failed: first failing check or null }.
+ */
+export function gateCheck({ pkg, epicsDir, env = process.env }) {
+  const checks = [];
+  const add = (name, ok, detail) => { checks.push({ name, ok, detail }); return ok; };
+  const file = path.join(pkg, "status.json");
+  const done = () => ({ ok: checks.every((c) => c.ok), checks, failed: checks.find((c) => !c.ok) ?? null });
+  if (!add("status.json exists", isFile(file), isFile(file) ? file : `missing ${file}; run status-from-plan --package ${pkg}`)) return done();
+  let writer;
+  try { writer = resolveWriter({ env }); } catch (e) {
+    add("status-write validate", false, e.message);
+    return done();
+  }
+  const v = spawnSync(process.execPath, [writer.path, "validate", "--file", file], { encoding: "utf8", env });
+  const vout = `${v.stderr || ""}${v.stdout || ""}`.trim();
+  if (!add("status-write validate", v.status === 0, v.status === 0 ? "valid" : vout || `exit ${v.status}`)) return done();
+  let have;
+  try {
+    have = JSON.parse(fs.readFileSync(file, "utf8")).waves.reduce((n, w) => n + w.tasks.length, 0);
+  } catch (e) {
+    add("task count matches epics", false, `cannot read tasks from status.json: ${e.message}`);
+    return done();
+  }
+  let want;
+  try { want = collectTasks({ pkg, epicsDir }).tasks.length; } catch (e) {
+    add("task count matches epics", false, e.message);
+    return done();
+  }
+  add("task count matches epics", have === want, have === want ? `${have} tasks` : `status.json has ${have} tasks but the epics' checklists have ${want}; re-run status-from-plan --package ${pkg}`);
+  return done();
+}
+
 function parseArgs(argv) {
-  const o = { dry: false };
+  const o = { dry: false, gate: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "--dry-run") o.dry = true;
+    else if (a === "--gate") o.gate = true;
     else if (["--package", "--epics", "--implementation", "--title"].includes(a)) {
       const v = argv[++i];
       if (v === undefined) throw new Error(`${a} needs a value`);
@@ -464,11 +502,20 @@ function statusMdPath(pkg) {
 export function main(argv = process.argv.slice(2), env = process.env) {
   let o;
   try { o = parseArgs(argv); } catch (e) {
-    console.error(`status-from-plan: ${e.message}\nusage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run]`);
+    console.error(`status-from-plan: ${e.message}\nusage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run] | --gate --package <dir>`);
     return 2;
   }
   const pkg = path.resolve(o.package);
   const epicsDir = o.epics && path.resolve(o.epics);
+  if (o.gate) {
+    const g = gateCheck({ pkg, epicsDir, env });
+    if (g.ok) {
+      for (const c of g.checks) console.log(`status-from-plan gate: ok - ${c.name} (${c.detail})`);
+      return 0;
+    }
+    console.error(`status-from-plan gate: REFUSED - ${g.failed.name}: ${g.failed.detail}`);
+    return 1;
+  }
   const file = path.join(pkg, "status.json");
   let plan;
   let d29;
