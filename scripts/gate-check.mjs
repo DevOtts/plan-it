@@ -2467,6 +2467,9 @@ function checkGlossaryDir(dir) {
   for (const name of GLOSSARY_SCAN_FILES) {
     const p = join(dir, name);
     if (!existsSync(p)) continue;
+    // A STATUS.md generated from status.json lists task ids that the epics define, not the glossary: it is
+    // validated through status.json (handoff does that), never as hand-written prose (finding H-23).
+    if (isGeneratedStatus(p)) continue;
     const lines = stripCode(readFileSync(p, "utf8")).split("\n");
     lines.forEach((line, i) => {
       for (const m of line.matchAll(GLOSSARY_TOKEN_RE)) {
