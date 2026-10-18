@@ -3,6 +3,18 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.1.2 — 2026-10-18
+
+Patch release. A defect left over from 5.1.1's handoff work, found when the real package of the first
+real run went through it.
+
+### Fixed
+- **H-23** the glossary first-use check scanned a `STATUS.md` generated from `status.json` as if it
+  were hand-written prose, and failed with 47 unknown ids on a real package: the task ids, which the
+  epics define and the glossary does not list. It now skips a file whose first line is the generated
+  marker, as `handoff` already did for the board lint. A hand-written board, a marker that is not on
+  the first line, and every other file are still checked.
+
 ## 5.1.1 — 2026-10-18
 
 Patch release. The first real run of the do-it harness on a 23-epic, 5-wave program found defects in

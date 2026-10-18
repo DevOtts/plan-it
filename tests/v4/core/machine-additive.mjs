@@ -33,7 +33,7 @@ const edge = (t) => (Array.isArray(t) ? t[0] : t) ?? {};
 
 // T-V4B1-01 — shape: version, initial, 25 states, exactly two finals, every
 // transition target exists.
-assert(machine.version === "5.1.1", `version is "${machine.version}", expected "5.1.1"`);
+assert(machine.version === "5.1.2", `version is "${machine.version}", expected "5.1.2"`);
 assert(machine.initial === "intake", `initial is "${machine.initial}", expected "intake"`);
 const stateNames = Object.keys(machine.states ?? {});
 assert(stateNames.length === 25, `expected exactly 25 states, found ${stateNames.length}: ${stateNames.join(", ")}`);
