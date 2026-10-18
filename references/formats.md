@@ -44,6 +44,10 @@ G-1 No PII column ever stores message content.   (test: assert no content column
 G-2 …
 ## Credential boundaries
 CB-1 The autonomous plane never holds production write creds.
+## Variables
+V-1 This package reads/mints: <ids>. Point at the registry that owns
+    them — a package inventing its own store for a value the platform
+    already governs fails this line.
 ```
 Reference rule: every G-/CB- id must map to ≥1 (often negative) test in the
 coverage map.

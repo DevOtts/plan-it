@@ -158,7 +158,10 @@ live-grounding pass before freezing, which adds a phase">
 
 ### `CONTRACT.md` — the law (frozen before parallel work)
 ```
-1. Vocabulary (the canonical entities)
+1. Vocabulary (the canonical entities) — for any package that touches config/tunable state, name
+   which client-scoped variables it reads or mints, and point at the owning registry; never invent
+   a local store when a registry already exists (Engine's own instance:
+   `brain-docs/concepts/governed-variables.md`, an example generalizable to other programs).
 2. Schema (authoritative columns/types per entity)
 3. The verb/interface contract (HTTP + MCP / events — exact shapes)
 4. The reusable primitive interface (the core type)
