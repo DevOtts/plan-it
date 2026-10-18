@@ -3,6 +3,44 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.1.1 — 2026-10-18
+
+Patch release. The first real run of the do-it harness on a 23-epic, 5-wave program found defects in
+what 5.1.0 shipped: review checkpoints locked the next wave, the status generator put every epic in
+W1 without saying so, and cases were not tied to tasks. IDs below are the run's findings.
+
+### Fixed
+- **H-10** the checkpoint emitter no longer writes `blocks: start of <next wave>`. A wave checkpoint
+  now carries `gates` (`dependents`, `promotion`; `merge` and `release` for the closing reviews),
+  `covers` (the wave it reviews) and a truthful `blocks` text, and slices get a `wave` so build-it's
+  `checkpoints.mjs gate` can resolve it. A checkpoint holds the slices that depend on the reviewed
+  work and its promotion, never independent work.
+- **H-12** `status-from-plan` reads the wave of an epic in every spelling plan-it itself writes
+  (`**Wave:** W0`, `**Wave: W0**`, `Wave: W0`, `- Wave: W0`, a table row). 5.1.0 read the first
+  spelling as "no wave" and put every epic in W1 silently. Now an epic with no wave while others
+  have one is refused with `file:line`; with no waves anywhere it uses one wave `W1` and warns.
+- **H-13** cases are tied to tasks by the `Task` column, then by case id (`T-<EID>-NN` to task
+  `<EID>-NN`), then by the epic. The counts are printed, `--gate` fails when a task ends with no
+  case, and `Check` stays optional (`kind: none` with the reason when absent). The Test Contract
+  template now documents the `Task` and `Check` columns and the `**Wave:**` header.
+- **H-14** `gate-check handoff` no longer lints a generated `STATUS.md` as a hand-written board
+  (342 false errors on a real package); it validates `status.json` instead.
+- Table rows: a `|` inside backticks or an escaped `\|` no longer splits a cell, and a row whose cell
+  count differs from the header is reported with `file:line` (and fails `--gate`) instead of being
+  guessed.
+
+### Changed
+- **MK-1** the marketplace is named `plan-it`, and the install line is `plan-it@plan-it`. plan-it,
+  review-it, conclude-it and do-it all called theirs `devotts`, so adding two of them clashed; `devotts`
+  is now only the do-it hub. Someone who added this repo as `devotts` should remove that entry and add
+  `plan-it`.
+- Version bump in `plugin.json`, `marketplace.json`, both `SKILL.md` frontmatters, both `machine.json`
+  copies, `CLAUDE.md` and the version-pinned tests.
+
+### Known limits
+- A check command is only as strong as its text, and a plan with no `Check` column gets none.
+- `[REAL]` cases get no check unless the row says `Verify: auto`.
+
 ## 5.1.0 — 2026-10-18
 
 Minor release. plan-it now creates a machine-readable `status.json` for every implementation,
