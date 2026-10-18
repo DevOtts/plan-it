@@ -644,6 +644,9 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
     the KICKOFF doc **and** the exact copy-paste launch
     prompt (this is the `sample-prompt-prd.txt`-style artifact that `/build-it`
     consumes). Done.
+  - End the hand-off with one line naming the registration step for the build
+    session: `run /init-it <implementation name> --role build` (plan-it itself calls
+    nothing in init-it).
 - **Optional handoff enrichments** (playbooks §E): a `README.md` consolidation hub
   (reading-order table + decisions-in-one-screen + GATING items); a `KICKOFFS.md`
   archiving the launch prompt per PRD/phase; a `DELIVERY-LOG.md` truth board; and
