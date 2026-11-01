@@ -594,7 +594,7 @@ function cmdAdversary(rawArgs) {
   // CONTRACT itself (the CONTRACT *declares* the machine; it is never coverage).
   const files = collectMdFiles(deliveryDir);
   const contractAbs = resolve(contractPath);
-  const caseRe = /\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b/;
+  const caseRe = /\bT-[A-Z]{1,3}\d+[A-Za-z0-9.]*-\d{2}\b/;
   const epicParts = [];
   for (const f of files) {
     if (resolve(f) === contractAbs) continue;
@@ -820,7 +820,7 @@ function cmdHandoff(rawArgs) {
     texts.set(f, text);
     // [A-Z] (not literal E): coordinator ruling on PROPOSED-AMENDMENT-2,
     // epics-1-gatecheck-fd.md addendum 2026-07-08 — v3 A*/B*/C* IDs recognized.
-    for (const m of text.matchAll(/\bT-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\b/g)) {
+    for (const m of text.matchAll(/\bT-[A-Z]{1,3}\d+[A-Za-z0-9.]*-\d{2}\b/g)) {
       if (allCaseIds.has(m[0]) && allCaseIds.get(m[0]) !== f) continue; // same id across files is allowed (cross-refs)
       allCaseIds.set(m[0], f);
     }
@@ -859,7 +859,7 @@ function cmdHandoff(rawArgs) {
       const rest = text.slice(hm.index);
       const blockEnd = rest.search(/\n#{1,2}\s(?!#)/); // next h1/h2
       const block = blockEnd === -1 ? rest : rest.slice(0, blockEnd);
-      const counted = (block.match(/\|\s*T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
+      const counted = (block.match(/\|\s*T-[A-Z]{1,3}\d+[A-Za-z0-9.]*-\d{2}\s*\|/g) || []).length;
       if (counted > 0 && counted !== declared) {
         fail(`${f}: contract header declares Count: ${declared} but ${counted} case rows counted — count tags, don't hand-type`);
       } else if (counted > 0) {
@@ -898,7 +898,7 @@ function cmdHandoff(rawArgs) {
       const rest2 = text.slice(from + eh[0].length);
       const nextHead = rest2.search(new RegExp(`^#{1,${eh[0].match(/^#+/)[0].length}}\\s`, "m"));
       const section = nextHead === -1 ? rest2 : rest2.slice(0, nextHead);
-      const coveredInSection = /test contract/i.test(section) || /\|\s*T-[A-Z]\d+/.test(section);
+      const coveredInSection = /test contract/i.test(section) || /\|\s*T-[A-Z]{1,3}\d+/.test(section);
       const coveredCentrally = epicsWithCases.has(eid);
       if (!coveredInSection && !coveredCentrally) {
         fail(`${f}: epic "${eh[1].trim().slice(0, 60)}" has no Test Contract — no block in its section and no T-${eid}-NN cases anywhere in the package. The contract is the heart of the epic, not a footnote`);
@@ -1905,7 +1905,7 @@ function reconcileScan(root, slug) {
       // `C-META-01`), or the v4 enhancement-scoped form (`C-E7-01`) — epics
       // that bind straight to contract rows (e.g. A2, or any v4 epic) use
       // one of the C-* forms (decisions.md 2026-07-07/-08; v4 D-B13).
-      const rows = (section.match(/\|\s*(?:T-[A-Z]\d+[A-Za-z0-9.]*-(?:[A-Z]\d+|\d{2})|C-(?:W\d+|META|E\d+)-\d{2})\s*\|/g) || []).length;
+      const rows = (section.match(/\|\s*(?:T-[A-Z]{1,3}\d+[A-Za-z0-9.]*-(?:[A-Z]\d+|\d{2})|C-(?:W\d+|META|E\d+)-\d{2})\s*\|/g) || []).length;
       if (rows === 0) fail(`C-W5-03: epic ${eh[2]} in ${f} has zero Binding Test Contract case rows`);
     }
   }
@@ -2751,7 +2751,7 @@ export function lintVerifyColumn(text) {
       continue;
     }
     if (cells.every((c) => /^:?-{2,}:?$/.test(c))) continue; // separator row
-    if (!/^T-[A-Z]\d+[A-Za-z0-9.]*-\d{2}$/.test(cells[0])) continue;
+    if (!/^T-[A-Z]{1,3}\d+[A-Za-z0-9.]*-\d{2}$/.test(cells[0])) continue;
     const v = cells[col];
     if (!VERIFY_VALUES.includes(v)) {
       errs.push(`${cells[0]}: Verify must be one of ${VERIFY_VALUES.join(" | ")}, got "${v ?? ""}"`);
