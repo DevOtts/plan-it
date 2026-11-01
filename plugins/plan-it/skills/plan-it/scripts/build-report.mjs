@@ -1078,5 +1078,14 @@ function main() {
   process.exit(result.warnings.length ? 2 : 0);
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
+// Symlink-safe main-module check (same as gate-check.mjs isMainModule): a skill
+// invoked through its ~/.claude/skills symlink must still run its CLI.
+const isMain = (() => {
+  if (!process.argv[1]) return false;
+  try {
+    return fs.realpathSync(process.argv[1]) === fs.realpathSync(__filename);
+  } catch {
+    return path.resolve(process.argv[1]) === __filename;
+  }
+})();
 if (isMain) main();
