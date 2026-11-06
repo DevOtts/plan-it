@@ -244,6 +244,12 @@ export function main(argv) {
   const [cmd, ...args] = argv;
   const out = (s) => process.stdout.write(s + "\n");
   const err = (s) => process.stderr.write(s + "\n");
+  if (cmd === "--help" || cmd === "-h") {
+    out("usage: review-checkpoints.mjs <decide|check> ...");
+    out("  decide --inputs <file> [--status <status.json>] [--evidence-dir <dir>] [--write <READINESS.json>]");
+    out("  check <READINESS.json>");
+    return 0;
+  }
   try {
     if (cmd === "decide") {
       const inputsFile = arg(args, "--inputs");
