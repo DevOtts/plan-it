@@ -2870,21 +2870,25 @@ export function docItSkipLine(what) {
   return `[skip] doc-it not installed: ${what}`;
 }
 
-// The tier enum is read at runtime from `doc-it tiers --json`, never copied.
+// The tier enum, its aliases and fact_ok flags are read at runtime from
+// `doc-it tiers --json` (X13), never copied. Returns null without doc-it.
 export function readDocItTiers(cli) {
   if (!cli) return null;
   const r = spawnSync("node", [cli, "tiers", "--json"], { encoding: "utf8", timeout: 15000 });
   if (r.status !== 0) return null;
   try {
-    const t = JSON.parse(r.stdout).tiers;
-    return Array.isArray(t) && t.length ? t : null;
+    const j = JSON.parse(r.stdout);
+    if (!Array.isArray(j.tiers) || !j.tiers.length) return null;
+    const alias = new Map();
+    const factOk = new Map();
+    for (const d of j.details ?? []) {
+      factOk.set(d.id, d.fact_ok !== false);
+      for (const a of d.aliases ?? []) alias.set(String(a).replace(/@.*$/, "").toLowerCase(), d.id);
+    }
+    return { ids: j.tiers, alias, factOk };
   } catch { return null; }
 }
 
-// Legacy ledger words (CONTRACT §1) resolve to a doc-it tier id before the enum
-// check; the id itself must still be in the enum doc-it prints.
-const TIER_ALIASES = { "durable-doc": "durable", "program-doc": "program", git: "code", local: "live", transcript: "pointer" };
-const WEAK_TIER_WORDS = new Set(["program", "program-doc", "pointer", "transcript"]);
 const SHA_RE = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/;
 const PATH_LINE_RE = /[\w./-]+\.\w{1,6}:\d+/;
 const FILE_PATH_RE = /[\w.-]+\/[\w./-]*\.\w{1,6}\b|\b[\w-]+\.(?:mjs|js|ts|md|json|yaml|yml|sh|py|html)\b/;
@@ -2924,7 +2928,7 @@ export function lintLedger(text, file, tiers) {
   const skipped = [];
   const led = parseLedger(text);
   if (!led) return { findings: [`${file}: no claim-ledger table found (header must be | ID | Claim | Tier | Source |)`], skipped, rows: 0 };
-  if (!tiers) skipped.push(docItSkipLine("tier enum"));
+  if (!tiers) { skipped.push(docItSkipLine("tier enum")); skipped.push(docItSkipLine("fact rule (tier fact_ok flags)")); }
   const pinned = SHA_RE.test(led.preamble);
   for (const r of led.rows) {
     const at = `${file}:${r.line}: row ${r.id || "(no id)"}`;
@@ -2932,23 +2936,23 @@ export function lintLedger(text, file, tiers) {
     if (!r.claim) findings.push(`${at}: claim text missing`);
     const words = tierWords(r.tier);
     if (words.length === 0) findings.push(`${at}: tier missing — tier enum rule`);
+    const ids = words.map((w) => (tiers ? (tiers.ids.includes(w) ? w : tiers.alias.get(w) ?? w) : w));
     if (tiers) {
-      for (const w of words) {
-        const id = TIER_ALIASES[w] ?? w;
-        if (!tiers.includes(id)) findings.push(`${at}: tier "${w}" is not in the tier enum (${tiers.join(", ")}) — tier enum rule`);
-      }
+      words.forEach((w, i) => {
+        if (!tiers.ids.includes(ids[i])) findings.push(`${at}: tier "${w}" is not in the tier enum (${tiers.ids.join(", ")}) — tier enum rule`);
+      });
     }
     if (!r.source || /^[-—\s]*$/.test(r.source)) findings.push(`${at}: source missing — source present rule`);
     const rowText = `${r.claim} ${r.source}`;
-    if (words.some((w) => w === "code" || w === "git")) {
+    if (ids.some((w) => w === "code" || w === "git")) {
       if (!(SHA_RE.test(rowText) || PATH_LINE_RE.test(rowText) || FILE_PATH_RE.test(rowText) || pinned)) {
         findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
       }
     }
-    if (words.length > 0 && words.every((w) => WEAK_TIER_WORDS.has(w)) && !ATTRIBUTION_RE.test(r.claim)) {
+    if (tiers && ids.length > 0 && ids.every((id) => tiers.factOk.get(id) === false) && !ATTRIBUTION_RE.test(r.claim)) {
       findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an attribution ("the study says", "per <doc>") — fact rule`);
     }
-    if (words.includes("code")) {
+    if (ids.includes("code")) {
       const m = r.claim.replace(/`[^`]*`/g, " ").match(COUNT_RE);
       if (m) {
         const n = /^\d/.test(m[1]) ? Number(m[1]) : NUM_WORDS[m[1].toLowerCase()];
@@ -2992,7 +2996,7 @@ function cmdClaims(rawArgs) {
   }
   const cli = findDocIt();
   const tiers = readDocItTiers(cli);
-  let skipped = false;
+  const seenSkips = new Set();
   for (const f of files) {
     if (!existsSync(f)) { fail(`claims: ${f} not found`); continue; }
     const text = readFileSync(f, "utf8");
@@ -3000,7 +3004,7 @@ function cmdClaims(rawArgs) {
     if (isLedger) {
       const res = lintLedger(text, f, tiers);
       for (const m of res.findings) fail(m);
-      for (const s of res.skipped) { if (!skipped) console.log(s); skipped = true; }
+      for (const s of res.skipped) { if (!seenSkips.has(s)) console.log(s); seenSkips.add(s); }
       if (res.findings.length === 0) ok(`${f}: ${res.rows} row(s) — source, sha/path, fact and count rules clean${tiers ? ", tier enum clean" : ""}`);
     }
     for (const m of lintEvidenceAgainst(text, f)) fail(m);

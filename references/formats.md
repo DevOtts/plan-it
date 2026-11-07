@@ -310,9 +310,9 @@ ledger at `audit/claims.md`: one table, one row per factual claim in `docs/01`.
 ```
 
 - **Tier** is a source tier. The enum is read at run time from `doc-it tiers --json`
-  and is never copied into this file. Legacy ledger words resolve to a doc-it tier
-  before the check (`durable-doc` to `durable`, `program-doc` to `program`, `git` to
-  `code`, `local` to `live`, `transcript` to `pointer`). A tier may carry a suffix
+  and is never copied into this file. The aliases and the per-tier `fact_ok` flag come from
+  the same output (X13), so legacy ledger words (`git`, `local`, `durable-doc`, `program-doc`,
+  `transcript`) resolve through doc-it. A tier may carry a suffix
   (`live@2026-11-06`), a parenthetical (`code (absence)`), or be a `+` pair.
 - `gate-check claims <claims.md> [findings.md...]` exits 0 clean, 1 with one finding per
   row, each naming the row and the rule:
@@ -321,7 +321,7 @@ ledger at `audit/claims.md`: one table, one row per factual claim in `docs/01`.
   - **source present rule**: the Source cell is not empty.
   - **sha/path rule**: tier `code` or `git` needs a sha, `repo@sha`, `path:line` or a file
     path somewhere in the row (a sha pinned in the ledger preamble counts).
-  - **fact rule**: a row whose tiers are all `program`, `transcript` or `pointer` may not read
+  - **fact rule**: a row whose tiers all have `fact_ok: false` in doc-it's output may not read
     as plain fact. Prefix an attribution ("the study says", "per <doc>", "in session X").
   - **count rule**: a `code` claim that states a number of things ("5 credential ways",
     "3 layers") needs the list of that many items, or a command that counts them, in Source.
