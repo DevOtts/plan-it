@@ -16,10 +16,18 @@ const GC = join(ROOT, "scripts", "gate-check.mjs");
 const FIX = join(ROOT, "tests", "fixtures");
 
 const results = [];
+// D2 (CP-02): a case may return { skipped: [names] } — its checks did not all run. That is
+// IMPLEMENTED-NOT-VERIFIED, never PASS, and it fails the judge unless --allow-skips is given.
+// The release run does NOT pass --allow-skips.
+const ALLOW_SKIPS = process.argv.includes("--allow-skips");
 function t(id, name, fn) {
   try {
-    fn();
-    results.push({ id, name, pass: true });
+    const r = fn();
+    if (r && Array.isArray(r.skipped) && r.skipped.length > 0) {
+      results.push({ id, name, pass: false, notVerified: true, skipped: r.skipped });
+    } else {
+      results.push({ id, name, pass: true });
+    }
   } catch (e) {
     results.push({ id, name, pass: false, err: e.message });
   }
@@ -654,8 +662,15 @@ function printSection(label, { pending, manual, outcomes }) {
 // ---------- do-it 1.1 (L1 claim ledger, V1 grounding preflight, K2-03 doc-it-missing) ----------
 // node:test suites; a skipped case (doc-it CLI absent) prints IMPLEMENTED-NOT-VERIFIED and is not a pass.
 t("T-L1/V1/K2", "claims, preflight and doc-it-missing node:test suites all pass", () => {
-  const r = spawnSync("node", ["--test", "tests/claims/*.test.mjs", "tests/preflight/*.test.mjs", "tests/doc-it-missing/*.test.mjs"], { cwd: ROOT, encoding: "utf8" });
+  const r = spawnSync("node", ["--test", "--test-reporter=tap", "tests/claims/*.test.mjs", "tests/preflight/*.test.mjs", "tests/doc-it-missing/*.test.mjs"], { cwd: ROOT, encoding: "utf8" });
   assert(r.status === 0, `node --test failed:\n${(r.stdout + r.stderr).slice(-1500)}`);
+  // node --test exits 0 with skips: parse them, a skipped case is not a pass (D2).
+  const out = r.stdout + r.stderr;
+  const n = Number((out.match(/^# skipped (\d+)/m) || [])[1] || 0) + Number((out.match(/^# todo (\d+)/m) || [])[1] || 0);
+  if (n > 0) {
+    const names = [...out.matchAll(/^\s*ok \d+ - (.+?)\s+# (?:SKIP|TODO)\b/gm)].map((m) => m[1]);
+    return { skipped: names.length ? names : [`${n} unnamed`], count: n };
+  }
 });
 
 // ---------- report ----------
@@ -664,11 +679,14 @@ for (const r of results) {
   if (r.pass) {
     passCount++;
     console.log(`PASS  ${r.id}  ${r.name}`);
+  } else if (r.notVerified) {
+    console.log(`IMPLEMENTED-NOT-VERIFIED  ${r.id}  ${r.name} (${r.skipped.length} skipped: ${r.skipped.join("; ")})`);
   } else {
     console.log(`FAIL  ${r.id}  ${r.name}\n      ${r.err}`);
   }
 }
-console.log(`\n${passCount}/${results.length} passed`);
+const notVerified = results.filter((r) => r.notVerified);
+console.log(`\n${passCount}/${results.length} passed` + (notVerified.length ? `; ${notVerified.length} IMPLEMENTED-NOT-VERIFIED (skips are not passes${ALLOW_SKIPS ? "; --allow-skips given" : "; judge exits non-zero"})` : ""));
 
 const V3_CONTRACT_PATH = join(ROOT, "delivery", "v3", "CONTRACT.md");
 const V4_CONTRACT_PATH = join(ROOT, "delivery", "v4", "CONTRACT.md");
@@ -699,4 +717,4 @@ const v4FailCount = v4Report.failCount;
 // regression (a landed mechanism that fails its polarity check) does, same
 // as any v2 T-E* failure. D-B13: the v4 section is fully wired now — a v4
 // FAIL blocks exit 0 exactly like a v3 one.
-process.exit(passCount === results.length && v3FailCount === 0 && v4FailCount === 0 ? 0 : 1);
+process.exit((passCount === results.length || (ALLOW_SKIPS && results.every((r) => r.pass || r.notVerified))) && v3FailCount === 0 && v4FailCount === 0 ? 0 : 1);
