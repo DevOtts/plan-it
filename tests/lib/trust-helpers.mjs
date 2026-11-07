@@ -1,20 +1,33 @@
 // Shared helpers for the do-it 1.1 L1/V1/K2 tests (zero deps).
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, cpSync, existsSync, rmSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdtempSync, mkdirSync, writeFileSync, cpSync, existsSync, rmSync, readdirSync } from "node:fs";
+import { tmpdir, homedir } from "node:os";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const GC = join(ROOT, "scripts", "gate-check.mjs");
 export const GC_MIRROR = join(ROOT, "plugins", "plan-it", "skills", "plan-it", "scripts", "gate-check.mjs");
-export const DOC_IT_BUILD = "/Users/macbook/Workspace/Devotts/doc-it-wt/K1/plugins/doc-it/scripts/doc-it.mjs";
-
-// The doc-it CLI the dependent tests run against: DOC_IT_CLI, else the build worktree.
+// The doc-it CLI the dependent tests run against (decision X10): DOC_IT_CLI, else the newest installed copy
+// under ~/.claude/plugins/cache/<marketplace>/doc-it/<version>/scripts/doc-it.mjs, else null (tests skip with
+// IMPLEMENTED-NOT-VERIFIED). No machine-specific path.
 export function docItCli() {
   if (process.env.DOC_IT_CLI && existsSync(process.env.DOC_IT_CLI)) return process.env.DOC_IT_CLI;
-  return existsSync(DOC_IT_BUILD) ? DOC_IT_BUILD : null;
+  const cache = join(homedir(), ".claude", "plugins", "cache");
+  let best = null;
+  try {
+    for (const m of readdirSync(cache)) {
+      const base = join(cache, m, "doc-it");
+      if (!existsSync(base)) continue;
+      for (const v of readdirSync(base)) {
+        const f = join(base, v, "scripts", "doc-it.mjs");
+        if (existsSync(f) && (!best || cmpVer(v, best.v) > 0)) best = { v, f };
+      }
+    }
+  } catch { /* no cache */ }
+  return best ? best.f : null;
 }
+const cmpVer = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map(Number); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) - (y[i] || 0); return 0; };
 
 const made = [];
 process.on("exit", () => { for (const d of made) { try { rmSync(d, { recursive: true, force: true }); } catch { /* best effort */ } } });
