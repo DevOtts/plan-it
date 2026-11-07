@@ -39,7 +39,7 @@ function snapshot(dir) {
     for (const e of fs.readdirSync(d, { withFileTypes: true })) {
       if (e.name === ".git") continue;
       const f = path.join(d, e.name);
-      if (e.isDirectory()) go(f); else out[f] = fs.readFileSync(f, "utf8");
+      if (e.isDirectory()) go(f); else out[f] = fs.readFileSync(f, "utf8").replace(/^Updated: \S+$/m, "Updated: <ts>"); // the writer re-renders STATUS.md with a seconds-resolution clock
     }
   };
   go(dir);
