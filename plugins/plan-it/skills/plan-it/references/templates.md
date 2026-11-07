@@ -547,6 +547,21 @@ REVOKED (+ one FAILED)` cannot reach it, however completely its cases cover it.
 
 ---
 
+## SHIPPED-LAYERS — `research/SHIPPED-LAYERS.md` (size M/L, required at handoff)
+
+```
+# Shipped layers: <package>
+Read <date> at remote shas: <repo>@<sha>, <repo>@<sha>
+
+| Layer | Where | What it shipped (one line) | Date |
+|---|---|---|---|
+| <0-done entry, session-ledger card, ADR or CONTRACT ruling> | <path or ref> | <what it shipped> | <date> |
+```
+
+List the last few weeks of `0-done/` entries, the session-ledger cards and the decision
+registers. A proposal in `docs/02-*` that adds a road, layer or registry must cite one of these
+rows with the word "extends", or state "none applies" with a reason.
+
 ## PART C — Sizing cheat-sheet
 
 | Size | docs/ | delivery/ |

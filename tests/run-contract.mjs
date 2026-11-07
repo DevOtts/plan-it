@@ -4,7 +4,7 @@
  * Zero deps. Exit 0 only when 100% pass.
  */
 import { readFileSync, existsSync, mkdtempSync, writeFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
@@ -650,6 +650,13 @@ function printSection(label, { pending, manual, outcomes }) {
   );
   return { failCount, printed: true };
 }
+
+// ---------- do-it 1.1 (L1 claim ledger, V1 grounding preflight, K2-03 doc-it-missing) ----------
+// node:test suites; a skipped case (doc-it CLI absent) prints IMPLEMENTED-NOT-VERIFIED and is not a pass.
+t("T-L1/V1/K2", "claims, preflight and doc-it-missing node:test suites all pass", () => {
+  const r = spawnSync("node", ["--test", "tests/claims/*.test.mjs", "tests/preflight/*.test.mjs", "tests/doc-it-missing/*.test.mjs"], { cwd: ROOT, encoding: "utf8" });
+  assert(r.status === 0, `node --test failed:\n${(r.stdout + r.stderr).slice(-1500)}`);
+});
 
 // ---------- report ----------
 let passCount = 0;

@@ -352,6 +352,9 @@ instructions:
 - Resolve pointer sessions with a session-reading skill (`/read-chat` or similar)
   if one is installed; otherwise ask for the relevant transcript or summary.
 - `ls`/`grep` the named repos; find the `docs/`, schema files, entry points.
+- Read what is current, not the local checkout: list `behind-remote` (and `shipped-layers`)
+  in `ENV-PROBES.json` (`references/formats.md` §12) so the preflight compares each read repo
+  with `origin` through `doc-it check checkout`. Pin the remote sha in KICKOFF.
 - Read the wiki hot-cache/index if the repo is vault-wired (per its `CLAUDE.md`).
 
 Output: a list of `{subsystem → exact paths to read}` that seeds the research teams.
@@ -430,6 +433,12 @@ for larger runs. Keep all *synthesis* single-threaded in the main thread.
 Merge the team reports into `docs/01-current-state-and-findings.md` (every claim
 traceable to `path:line` or a table). Capture a project memory file so the thread
 survives context loss (per the memory rules in your environment).
+
+**Decision-grade packages** (findings someone will act on) also write the claim ledger
+`audit/claims.md` (`references/formats.md` §11): `| ID | Claim | Tier | Source |`, tier read
+from `doc-it tiers --json`, never copied. Run `node scripts/gate-check.mjs claims audit/claims.md docs/01-*.md`
+before the handoff; a finding that confirms a suspicion needs an `Evidence against` section.
+Size M/L also writes `research/SHIPPED-LAYERS.md` (template in `references/templates.md`).
 
 ---
 
@@ -656,6 +665,8 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   - End the hand-off with one line naming the registration step for the build
     session: `run /init-it <implementation name> --role build` (plan-it itself calls
     nothing in init-it).
+    When the init-it plugin is not installed, print `init-it not installed` and say to
+    install it first (`gate-check handoff` prints the same line).
 - **Optional handoff enrichments** (playbooks §E): a `README.md` consolidation hub
   (reading-order table + decisions-in-one-screen + GATING items); a `KICKOFFS.md`
   archiving the launch prompt per PRD/phase; a `DELIVERY-LOG.md` truth board; and
