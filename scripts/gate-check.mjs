@@ -3028,7 +3028,15 @@ export function lintLedger(text, file, tiers) {
 }
 
 // L1-03: a findings doc that confirms a suspicion must carry an "Evidence against" section.
-const CONFIRM_RE = /\b(?:suspicion|hypothesis|suspected)\b[^.\n]{0,60}\bconfirm(?:ed|s)?\b|\bconfirm(?:ed|s)?\b[^.\n]{0,40}\b(?:suspicion|hypothesis)\b/i;
+const CONFIRM_RE = new RegExp([
+  String.raw`\b(?:suspicion|hypothesis|suspected)\b[^.\n]{0,60}\bconfirm(?:ed|s)?\b`,
+  String.raw`\bconfirm(?:ed|s)?\b[^.\n]{0,40}\b(?:suspicion|hypothesis)\b`,
+  // D9: the same claim in other words
+  String.raw`\bas you (?:suspected|guessed|thought|expected)\b`,
+  String.raw`\byou(?:'re| are| were) (?:right|correct)\b`,
+  String.raw`\b(?:the )?(?:hypothesis|suspicion|hunch|theory) (?:holds|is (?:right|correct|true)|was (?:right|correct))\b`,
+  String.raw`\b(?:suspect(?:ed)?|suspicion|theory|hunch|guess|hypothesis)\b[^.\n]{0,60}\b(?:right|correct|holds|true|borne out|bears out)\b`,
+].join("|"), "i");
 export function lintEvidenceAgainst(text, file) {
   const stripped = text.replace(/```[\s\S]*?```/g, "");
   const m = stripped.match(CONFIRM_RE);
@@ -3174,7 +3182,18 @@ export function initItInstalled(env = process.env) {
 function handoffTrustChecks(dir, rootFlag, runState) {
   const pkg = basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : resolve(dir);
   const size = readSize(pkg, runState);
+  const docs02 = existsSync(join(pkg, "docs")) && readdirSync(join(pkg, "docs")).some((x) => /^02-.*\.md$/.test(x));
+  if (size === null && docs02) {
+    // D10: fail closed — an undeclared size must not silently skip the shipped-layers rule.
+    fail(`shipped-layers: size undeclared — cannot decide shipped-layers (docs/02-* exists but no size in run state, plan.json or SCOPE-BRIEF; declare S, M or L)`);
+  }
   if (size === "M" || size === "L") {
+    // D5: G-7 is not opt-in for M/L — ENV-PROBES.json must list the behind-remote probe.
+    const probesPath = [join(pkg, "ENV-PROBES.json"), join(resolve(dir), "ENV-PROBES.json")].find(existsSync);
+    let listed = false;
+    if (probesPath) { try { listed = (JSON.parse(readFileSync(probesPath, "utf8")).probes ?? []).some((q) => q && q.id === "behind-remote"); } catch { /* unparseable = not listed */ } }
+    if (!listed) fail(`preflight: size ${size} package's ${probesPath ?? join(pkg, "ENV-PROBES.json") + " (not found)"} lists no "behind-remote" probe — G-7 is not opt-in for M/L (add {"id":"behind-remote","repos":[<every repo the plan reads>]})`);
+    else ok(`preflight: behind-remote probe listed in ${probesPath}`);
     const sl = join(pkg, "research", "SHIPPED-LAYERS.md");
     let n = 0;
     try { n = readFileSync(sl, "utf8").trim().length; } catch { /* absent */ }
@@ -3272,7 +3291,7 @@ if (isMain) {
   const [, , cmd, ...args] = process.argv;
   // --help is a usage query, not an error: exit 0 with the usage on stdout (H1-06, T-H1-04).
   if (cmd === "--help" || cmd === "-h" || cmd === "help") {
-    console.log("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
+    console.log("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness|claims> [args...]");
     process.exit(0);
   }
   if (!cmd || !(cmd in commands)) {

@@ -9,10 +9,11 @@ const ENV = CLI ? { env: { DOC_IT_CLI: CLI } } : {};
 
 const EPICS = "# Epic E1 — x\n\n## Test Contract — E1\nCount: 1\n\n| ID | Task |\n|---|---|\n| T-E1-01 | a |\n";
 
-function pkg({ size = "M", shipped = true, arch } = {}) {
+function pkg({ size = "M", shipped = true, arch, probes = true, planSize = true } = {}) {
   const d = tmp("planit-pkg-");
   write(join(d, "delivery", "epics.md"), EPICS);
-  write(join(d, "plan.json"), JSON.stringify({ size, implementation: "x" }));
+  if (planSize) write(join(d, "plan.json"), JSON.stringify({ size, implementation: "x" }));
+  if (probes) write(join(d, "ENV-PROBES.json"), JSON.stringify({ probes: [{ id: "behind-remote", repos: ["."] }] }));
   if (shipped) write(join(d, "research", "SHIPPED-LAYERS.md"), "# Shipped layers\n\n| Layer | Where | What it shipped | Date |\n|---|---|---|---|\n| status board | 0-done/status | the status board | 2026-10-01 |\n");
   if (arch !== undefined) write(join(d, "docs", "02-architecture.md"), arch);
   return d;
@@ -89,4 +90,27 @@ test("V1-03 KICKOFF pinning: a repo the preflight found behind must be pinned at
   write(join(d, "delivery", "KICKOFF.md"), `# Kickoff\n\nPinned at remote ${fx.remoteSha.slice(0, 12)}\n`);
   r = gc(["handoff", join(d, "delivery")], ENV);
   assert.equal(r.code, 0, r.out);
+});
+
+test("D5 size M/L whose ENV-PROBES.json omits behind-remote fails handoff naming the probe; size S stays optional", () => {
+  for (const size of ["M", "L"]) {
+    const d = pkg({ size, probes: false });
+    write(join(d, "ENV-PROBES.json"), JSON.stringify({ probes: [{ id: "shipped-layers" }] }));
+    const r = gc(["handoff", join(d, "delivery")], ENV);
+    assert.equal(r.code, 1, r.out);
+    assert.match(r.out, /behind-remote/);
+    assert.match(r.out, /G-7/);
+    const missing = pkg({ size, probes: false });
+    assert.equal(gc(["handoff", join(missing, "delivery")], ENV).code, 1, "no ENV-PROBES.json at all is also an omission");
+  }
+  const s = pkg({ size: "S", probes: false, shipped: false });
+  assert.equal(gc(["handoff", join(s, "delivery")], ENV).code, 0);
+  assert.equal(gc(["handoff", join(pkg({ size: "M" }), "delivery")], ENV).code, 0);
+});
+
+test("D10 docs/02-* with no declared size fails closed instead of skipping shipped-layers", () => {
+  const d = pkg({ planSize: false, probes: false, shipped: false, arch: "# Architecture\n\n## A. Notes\n\nplain.\n" });
+  const r = gc(["handoff", join(d, "delivery")], ENV);
+  assert.equal(r.code, 1, r.out);
+  assert.match(r.out, /size undeclared/);
 });

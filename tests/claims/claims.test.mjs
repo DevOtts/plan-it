@@ -203,3 +203,16 @@ test("L1-04 handoff runs claims for a decision-grade package (audit/claims.md pr
   const good = gc(["handoff", join(pkg, "delivery")], withDocIt);
   assert.equal(good.code, 0, good.out);
 });
+
+test("D9 evidence-against fires on other ways to confirm a suspicion", () => {
+  for (const line of ["As you suspected, the cache never expires.", "You were right: the cache never expires.", "The hypothesis holds for the loader.", "Your hunch is correct about the TTL.", "Your suspicion about the TTL was right."]) {
+    const f = join(tmp(), "01-findings.md");
+    write(f, `# Findings\n\n${line}\n`);
+    const r = gc(["claims", f], withDocIt ?? {});
+    assert.equal(r.code, 1, `${line}: ${r.out}`);
+    assert.match(r.out, /evidence against/i);
+  }
+  const f = join(tmp(), "01-findings.md");
+  write(f, "# Findings\n\nThe loader is correct and the right default is 3 s.\n");
+  assert.equal(gc(["claims", f], withDocIt ?? {}).code, 0, "plain 'correct' / 'right' without a suspicion is not a hypothesis claim");
+});
