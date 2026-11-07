@@ -436,7 +436,7 @@ survives context loss (per the memory rules in your environment).
 
 **Decision-grade packages** (findings someone will act on) also write the claim ledger
 `audit/claims.md` (`references/formats.md` §11): `| ID | Claim | Tier | Source |`, tier read
-from `doc-it tiers --json`, never copied. Run `node scripts/gate-check.mjs claims audit/claims.md docs/01-*.md`
+from `doc-it tiers --json`, never copied. Run `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs claims audit/claims.md docs/01-*.md`
 before the handoff; a finding that confirms a suspicion needs an `Evidence against` section.
 Size M/L also writes `research/SHIPPED-LAYERS.md` (template in `references/templates.md`).
 
