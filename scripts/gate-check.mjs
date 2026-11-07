@@ -14,6 +14,7 @@
  *   runs [--dir root] [--json]        list every plan-it run, live + archived, computed counts (v4 D-B8)
  *   mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (v4 D-B9)
  *   glossary <delivery-dir>           first-use ID coverage against GLOSSARY.md (v4 D-B10)
+ *   claims <claims.md> [findings.md...]  claim-ledger lint: tier enum (read from doc-it), source, sha/path, fact and count rules; evidence-against lint (do-it 1.1 L1)
  *
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
@@ -242,7 +243,7 @@ function envFactsMarkdown(shape, rows) {
     "",
     `- shape: ${shape} (${rows.length}-probe set — formats.md §9)`,
     "- generated-by: `gate-check preflight` (deterministic; re-run to refresh)",
-    "- status vocabulary: PRESENT | ABSENT | TIMEOUT — ABSENT/TIMEOUT fail the preflight gate",
+    `- status vocabulary: PRESENT | ABSENT | TIMEOUT — ABSENT/TIMEOUT fail the preflight gate${rows.some((r) => r.status === "WARN") ? "; WARN is advisory and never counts as PASS" : ""}`,
     // v4 D-B12: optional 5th "tool" column — when a probe wraps another tool
     // (e.g. `node scripts/check-gh.mjs` really probes `gh`), an ABSENT/TIMEOUT
     // result blacklists only that declared tool, never every argv token.
@@ -289,6 +290,7 @@ function cmdPreflight(rawArgs) {
     else if (!Array.isArray(p.check) || p.check.length === 0) fail(`probe "${id}": "check" must be a non-empty argv array`);
   }
   for (const p of defs) {
+    if (GROUNDING_PROBES.includes(p.id)) continue; // do-it 1.1 V1: optional grounding probes, run after the required set
     if (!required.includes(p.id)) fail(`probe "${p.id}" is not in the ${shape}-shape set (exactly ${required.length} probes — formats.md §9)`);
   }
   if (failures.length > 0) return finish("preflight env facts");
@@ -318,6 +320,21 @@ function cmdPreflight(rawArgs) {
     }
     rows.push({ id, check: p.check.join(" "), status, evidence, tool: p.tool });
     (status === "PRESENT" ? ok : fail)(`${id}: ${status} — ${evidence}`);
+  }
+  // V1: grounding probes (opt-in by listing them in ENV-PROBES.json). WARN is advisory:
+  // it is recorded in ENV-FACTS.md and never fails the gate; doc-it missing is a WARN, never PASS.
+  const extraRows = [];
+  const br = byId.get("behind-remote");
+  if (br) {
+    const repos = Array.isArray(br.repos) && br.repos.length ? br.repos : ["."];
+    extraRows.push(...runBehindRemote(repos, target));
+  }
+  const sl = byId.get("shipped-layers");
+  if (sl) extraRows.push(runShippedLayers(sl, target, shape));
+  for (const r of extraRows) {
+    rows.push(r);
+    if (r.status === "WARN") console.log(`  ! ${r.id}: WARN — ${r.evidence}`);
+    else (r.status === "PRESENT" ? ok : fail)(`${r.id}: ${r.status} — ${r.evidence}`);
   }
   // ENV-FACTS.md is written even when probes fail: recording the facts IS the job.
   const factsPath = join(target, "ENV-FACTS.md");
@@ -1024,6 +1041,9 @@ function cmdHandoff(rawArgs) {
   } else if (allCaseIds.size > 0) {
     ok(`${allCaseIds.size} distinct test-case IDs found across ${files.length} files`);
   }
+
+  // 5d. (do-it 1.1 L1-04, V1-03) claim ledger, shipped layers, new-layer citation, KICKOFF remote pin.
+  handoffTrustChecks(dir, rootFlag, rootFlag ? readState(rootFlag, runSlug) : null);
 
   // 6. Embedded reconcile (C-W5-04, Epic A4): same internal function, same
   // shared failures array, one finish() — never a subprocess, never
@@ -2818,6 +2838,326 @@ function cmdReadiness(rawArgs) {
   finish(label);
 }
 
+
+// ---------------------------------------------------------------- do-it 1.1 L1/V1: doc-it lookup, claim ledger, grounding
+// One rule to find doc-it (do-it 1.1 X10, D14): (1) env DOC_IT_CLI = absolute path
+// to doc-it.mjs; else (2) the newest installed plugin copy
+// ~/.claude/plugins/cache/<marketplace>/doc-it/<version>/scripts/doc-it.mjs
+// (HOME-relative, so a test can point HOME at a temp dir); else (3) null — the
+// caller prints `[skip] doc-it not installed: <what>` and never reports PASS.
+function cmpVersion(a, b) {
+  const pa = String(a).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+export function findDocIt(env = process.env) {
+  const envCli = env.DOC_IT_CLI;
+  if (envCli && existsSync(envCli)) return envCli;
+  const home = env.HOME || env.USERPROFILE;
+  if (!home) return null;
+  const cache = join(home, ".claude", "plugins", "cache");
+  const found = [];
+  try {
+    for (const mk of readdirSync(cache)) {
+      const dir = join(cache, mk, "doc-it");
+      let vers;
+      try { vers = readdirSync(dir); } catch { continue; }
+      for (const v of vers) {
+        const cli = join(dir, v, "scripts", "doc-it.mjs");
+        if (existsSync(cli)) found.push({ v, cli });
+      }
+    }
+  } catch { return null; }
+  if (found.length === 0) return null;
+  found.sort((a, b) => cmpVersion(b.v, a.v));
+  return found[0].cli;
+}
+
+export function docItSkipLine(what) {
+  return `[skip] doc-it not installed: ${what}`;
+}
+
+// The tier enum, its aliases and fact_ok flags are read at runtime from
+// `doc-it tiers --json` (X13), never copied. Returns null without doc-it.
+export function readDocItTiers(cli) {
+  if (!cli) return null;
+  const r = spawnSync("node", [cli, "tiers", "--json"], { encoding: "utf8", timeout: 15000 });
+  if (r.status !== 0) return null;
+  try {
+    const j = JSON.parse(r.stdout);
+    if (!Array.isArray(j.tiers) || !j.tiers.length) return null;
+    const alias = new Map();
+    const factOk = new Map();
+    for (const d of j.details ?? []) {
+      factOk.set(d.id, d.fact_ok !== false);
+      for (const a of d.aliases ?? []) alias.set(String(a).replace(/@.*$/, "").toLowerCase(), d.id);
+    }
+    return { ids: j.tiers, alias, factOk };
+  } catch { return null; }
+}
+
+const SHA_RE = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/;
+const PATH_LINE_RE = /[\w./-]+\.\w{1,6}:\d+/;
+const FILE_PATH_RE = /[\w.-]+\/[\w./-]*\.\w{1,6}\b|\b[\w-]+\.(?:mjs|js|ts|md|json|yaml|yml|sh|py|html)\b/;
+const ATTRIBUTION_RE = /\b(?:per|according to|says?|said|states?|stated|reports?|reported|claims?|plans|proposes?|describes?|names|specifies|documents)\b|\bin (?:this|that|the) (?:run|session|chat|transcript|study|doc)\b|\bin session\b/i;
+const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
+const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks";
+const COUNT_RE = new RegExp(`\\b(\\d{1,3}|two|three|four|five|six|seven|eight|nine|ten|twelve)\\s+(?:[\\w-]+\\s+){0,2}?(?:${COUNT_NOUNS})\\b`, "i");
+const SRC_COMMAND_RE = /`\s*(?:git|grep|rg|ls|find|cat|wc|node|gh|cmp|diff|awk|jq|sed|curl|npm)\b[^`]*`/i;
+
+function splitCells(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|\s*$/, "").split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, "|"));
+}
+
+export function parseLedger(text) {
+  const lines = text.split(/\r?\n/);
+  const hi = lines.findIndex((l) => /^\s*\|\s*ID\s*\|\s*Claim\s*\|\s*Tier\s*\|\s*Source\s*\|/i.test(l));
+  if (hi === -1) return null;
+  const rows = [];
+  for (let i = hi + 2; i < lines.length && /^\s*\|/.test(lines[i]); i++) {
+    const c = splitCells(lines[i]);
+    rows.push({ line: i + 1, id: c[0] ?? "", claim: c[1] ?? "", tier: c[2] ?? "", source: c[3] ?? "", raw: lines[i] });
+  }
+  return { preamble: lines.slice(0, hi).join("\n"), rows };
+}
+
+export function tierWords(cell) {
+  return cell
+    .replace(/\([^)]*\)/g, " ")
+    .split(/\s*(?:\+|,|\/|&|\band\b)\s*/i)
+    .map((w) => w.replace(/`/g, "").replace(/@.*$/, "").trim().toLowerCase())
+    .filter(Boolean);
+}
+
+// Pure core: returns { findings: string[], skipped: string[] }.
+export function lintLedger(text, file, tiers) {
+  const findings = [];
+  const skipped = [];
+  const led = parseLedger(text);
+  if (!led) return { findings: [`${file}: no claim-ledger table found (header must be | ID | Claim | Tier | Source |)`], skipped, rows: 0 };
+  if (!tiers) { skipped.push(docItSkipLine("tier enum")); skipped.push(docItSkipLine("fact rule (tier fact_ok flags)")); }
+  const pinned = SHA_RE.test(led.preamble);
+  for (const r of led.rows) {
+    const at = `${file}:${r.line}: row ${r.id || "(no id)"}`;
+    if (!r.id) findings.push(`${at}: id missing`);
+    if (!r.claim) findings.push(`${at}: claim text missing`);
+    const words = tierWords(r.tier);
+    if (words.length === 0) findings.push(`${at}: tier missing — tier enum rule`);
+    const ids = words.map((w) => (tiers ? (tiers.ids.includes(w) ? w : tiers.alias.get(w) ?? w) : w));
+    if (tiers) {
+      words.forEach((w, i) => {
+        if (!tiers.ids.includes(ids[i])) findings.push(`${at}: tier "${w}" is not in the tier enum (${tiers.ids.join(", ")}) — tier enum rule`);
+      });
+    }
+    if (!r.source || /^[-—\s]*$/.test(r.source)) findings.push(`${at}: source missing — source present rule`);
+    const rowText = `${r.claim} ${r.source}`;
+    if (ids.some((w) => w === "code" || w === "git")) {
+      if (!(SHA_RE.test(rowText) || PATH_LINE_RE.test(rowText) || FILE_PATH_RE.test(rowText) || pinned)) {
+        findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
+      }
+    }
+    if (tiers && ids.length > 0 && ids.every((id) => tiers.factOk.get(id) === false) && !ATTRIBUTION_RE.test(r.claim)) {
+      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an attribution ("the study says", "per <doc>") — fact rule`);
+    }
+    if (ids.includes("code")) {
+      const m = r.claim.replace(/`[^`]*`/g, " ").match(COUNT_RE);
+      if (m) {
+        const n = /^\d/.test(m[1]) ? Number(m[1]) : NUM_WORDS[m[1].toLowerCase()];
+        const items = r.source.replace(/`[^`]*`/g, (x) => (SRC_COMMAND_RE.test(x) ? "" : x)).split(/[,;]|\s\+\s|\n/).filter((x) => x.trim()).length;
+        if (!SRC_COMMAND_RE.test(r.source) && !(n <= 12 && items >= n)) {
+          findings.push(`${at}: states a count ("${m[0]}") with tier code but the source gives neither the list nor a command that counts it — count rule`);
+        }
+      }
+    }
+  }
+  return { findings, skipped, rows: led.rows.length };
+}
+
+// L1-03: a findings doc that confirms a suspicion must carry an "Evidence against" section.
+const CONFIRM_RE = /\b(?:suspicion|hypothesis|suspected)\b[^.\n]{0,60}\bconfirm(?:ed|s)?\b|\bconfirm(?:ed|s)?\b[^.\n]{0,40}\b(?:suspicion|hypothesis)\b/i;
+export function lintEvidenceAgainst(text, file) {
+  const stripped = text.replace(/```[\s\S]*?```/g, "");
+  const m = stripped.match(CONFIRM_RE);
+  if (!m) return [];
+  const lines = stripped.split(/\r?\n/);
+  const hi = lines.findIndex((l) => /^#{1,6}\s.*evidence against/i.test(l));
+  if (hi !== -1) {
+    const level = lines[hi].match(/^#+/)[0].length;
+    let body = 0;
+    for (let i = hi + 1; i < lines.length; i++) {
+      const h = lines[i].match(/^(#+)\s/);
+      if (h && h[1].length <= level) break;
+      if (lines[i].trim()) body++;
+    }
+    if (body > 0) return [];
+    return [`${file}: confirms a suspicion ("${m[0].trim()}") and its "Evidence against" heading is empty — evidence against rule`];
+  }
+  return [`${file}: confirms a suspicion ("${m[0].trim()}") but has no "Evidence against" heading — evidence against rule (state what would contradict it, and what you found)`];
+}
+
+function cmdClaims(rawArgs) {
+  const files = rawArgs.filter((a) => !a.startsWith("--"));
+  if (files.length === 0) {
+    fail("claims: usage: gate-check claims <claims.md> [findings.md...]");
+    return finish("claim ledger");
+  }
+  const cli = findDocIt();
+  const tiers = readDocItTiers(cli);
+  const seenSkips = new Set();
+  for (const f of files) {
+    if (!existsSync(f)) { fail(`claims: ${f} not found`); continue; }
+    const text = readFileSync(f, "utf8");
+    const isLedger = parseLedger(text) !== null || /(^|[\\/])claims\.md$/i.test(f);
+    if (isLedger) {
+      const res = lintLedger(text, f, tiers);
+      for (const m of res.findings) fail(m);
+      for (const s of res.skipped) { if (!seenSkips.has(s)) console.log(s); seenSkips.add(s); }
+      if (res.findings.length === 0) ok(`${f}: ${res.rows} row(s) — source, sha/path, fact and count rules clean${tiers ? ", tier enum clean" : ""}`);
+    }
+    for (const m of lintEvidenceAgainst(text, f)) fail(m);
+  }
+  finish("claim ledger");
+}
+
+// ---- V1: grounding helpers
+export function readSize(pkgRoot, runState) {
+  const norm = (v) => (typeof v === "string" && /^[SML]$/i.test(v.trim()) ? v.trim().toUpperCase() : null);
+  const fromState = norm(runState?.size);
+  if (fromState) return fromState;
+  try {
+    const plan = JSON.parse(readFileSync(join(pkgRoot, "plan.json"), "utf8"));
+    const v = norm(plan.size) ?? norm(plan.implementation?.size);
+    if (v) return v;
+  } catch { /* none */ }
+  for (const rel of ["delivery/SCOPE-BRIEF.md", "SCOPE-BRIEF.md"]) {
+    try {
+      const m = readFileSync(join(pkgRoot, rel), "utf8").match(/\bsize\s*[:=]?\s*\**\s*([SML])\b/i);
+      if (m) return m[1].toUpperCase();
+    } catch { /* none */ }
+  }
+  return null;
+}
+
+// V1-03 narrow rule: a "## " section of docs/02-*.md whose prose says it adds /
+// introduces / proposes a NEW registry, layer or road (verb + up to 3 words +
+// registry|layer|road) must contain the word "extends" (or "none applies").
+const NEW_LAYER_RE = /\b(?:adds?|adding|introduc(?:e|es|ing)|propos(?:e|es|ing)|creates?|creating)\s+(?:a|an|the|one|another)?\s*(?:new\s+)?(?:[\w-]+\s+){0,2}(?:registry|layer|road)\b/i;
+export function lintNewLayers(text, file) {
+  const out = [];
+  const body = text.replace(/```[\s\S]*?```/g, "");
+  const parts = body.split(/^(?=##\s)/m);
+  for (const sec of parts) {
+    const head = (sec.match(/^##\s+([^\n]*)/) ?? [null, "(preamble)"])[1].trim();
+    if (!NEW_LAYER_RE.test(sec)) continue;
+    if (/\bextends\b/i.test(sec) || /\bnone applies\b/i.test(sec)) continue;
+    out.push(`${file}: section "${head}" proposes a new registry/layer/road with no "extends" citation — name the shipped layer it extends, or state "none applies" with a reason (shipped-layers rule)`);
+  }
+  return out;
+}
+
+function runBehindRemote(repos, cwd) {
+  const rows = [];
+  const cli = findDocIt();
+  if (!cli) {
+    console.log(docItSkipLine("behind-remote (is the checkout behind origin)"));
+    return [{ id: "behind-remote", check: "doc-it check checkout", status: "WARN", evidence: "doc-it not installed" }];
+  }
+  for (const repo of repos) {
+    const abs = resolve(cwd, repo);
+    const r = spawnSync("node", [cli, "check", "checkout", abs, "--json"], { encoding: "utf8", timeout: PROBE_TIMEOUT_MS * 3, killSignal: "SIGKILL" });
+    let j = null;
+    try { j = JSON.parse(r.stdout)[0]; } catch { /* below */ }
+    const check = `doc-it check checkout ${repo}`;
+    if (!j) {
+      rows.push({ id: "behind-remote", check, status: "ABSENT", evidence: firstLine(r.stderr || r.stdout) || `exit ${r.status}` });
+    } else if (j.status === "behind") {
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo} is ${j.behind} behind origin/${j.default_branch}: local ${j.local}, remote ${j.remote}` });
+    } else {
+      rows.push({ id: "behind-remote", check, status: "PRESENT", evidence: `${repo} up to date: local ${j.local}, remote ${j.remote}` });
+    }
+  }
+  return rows;
+}
+
+function runShippedLayers(def, cwd, shape) {
+  const rel = def.path ?? "research/SHIPPED-LAYERS.md";
+  const p = resolve(cwd, rel);
+  const check = `test -s ${rel}`;
+  if (shape === "S") return { id: "shipped-layers", check, status: "PRESENT", evidence: "not required for size S" };
+  let size = -1;
+  try { size = statSync(p).size; } catch { /* absent */ }
+  if (size > 0) return { id: "shipped-layers", check, status: "PRESENT", evidence: `${rel} present, ${size} bytes` };
+  return { id: "shipped-layers", check, status: "WARN", evidence: `${rel} ${size === 0 ? "is empty" : "not written yet"} — gate-check handoff fails size ${shape} without it` };
+}
+
+const GROUNDING_PROBES = ["behind-remote", "shipped-layers"];
+
+export function initItInstalled(env = process.env) {
+  const home = env.HOME || env.USERPROFILE;
+  if (!home) return false;
+  if (existsSync(join(home, ".claude", "skills", "init-it"))) return true;
+  const cache = join(home, ".claude", "plugins", "cache");
+  try {
+    return readdirSync(cache).some((mk) => existsSync(join(cache, mk, "init-it")));
+  } catch { return false; }
+}
+
+// handoff check: V1-03 + L1-04 (+ KICKOFF remote-sha pin). Shares the failures[] of cmdHandoff.
+function handoffTrustChecks(dir, rootFlag, runState) {
+  const pkg = basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : resolve(dir);
+  const size = readSize(pkg, runState);
+  if (size === "M" || size === "L") {
+    const sl = join(pkg, "research", "SHIPPED-LAYERS.md");
+    let n = 0;
+    try { n = readFileSync(sl, "utf8").trim().length; } catch { /* absent */ }
+    if (n === 0) fail(`shipped-layers: size ${size} package needs a non-empty ${sl} — the last weeks of shipped work, session cards and decision registers, each with a one-line "what it shipped" (template: references/templates.md)`);
+    else ok(`shipped-layers: ${sl} present`);
+  }
+  const docsDir = join(pkg, "docs");
+  if (existsSync(docsDir)) {
+    for (const n of readdirSync(docsDir).filter((x) => /^02-.*\.md$/.test(x))) {
+      const msgs = lintNewLayers(readFileSync(join(docsDir, n), "utf8"), join(docsDir, n));
+      for (const m of msgs) fail(m);
+      if (msgs.length === 0) ok(`${join(docsDir, n)}: every new registry/layer/road cites what it extends`);
+    }
+    for (const n of readdirSync(docsDir).filter((x) => /^01-.*\.md$/.test(x))) {
+      const msgs = lintEvidenceAgainst(readFileSync(join(docsDir, n), "utf8"), join(docsDir, n));
+      for (const m of msgs) fail(m);
+    }
+  }
+  // I1-03: the hand-off ends with `run /init-it <name> --role build`; say so when init-it is absent.
+  if (!initItInstalled()) console.log("  ! init-it not installed — install the init-it plugin, then run /init-it <implementation name> --role build");
+  // L1-04: decision-grade = audit/claims.md exists, or run state says run.decisionGrade === true.
+  const claims = join(pkg, "audit", "claims.md");
+  const decisionGrade = existsSync(claims) || runState?.run?.decisionGrade === true;
+  if (decisionGrade) {
+    if (!existsSync(claims)) fail(`claims: decision-grade package (run.decisionGrade) has no ${claims} — G-5`);
+    else {
+      const tiers = readDocItTiers(findDocIt());
+      const res = lintLedger(readFileSync(claims, "utf8"), claims, tiers);
+      for (const m of res.findings) fail(m);
+      for (const s of res.skipped) console.log(s);
+      if (res.findings.length === 0) ok(`${claims}: claim ledger clean (${res.rows} rows)`);
+    }
+  }
+  // KICKOFF pins the remote sha of a repo the preflight found behind.
+  const factsPath = [join(pkg, "ENV-FACTS.md"), join(resolve(dir), "ENV-FACTS.md")].find(existsSync);
+  const kickoff = [join(resolve(dir), "KICKOFF.md"), join(pkg, "KICKOFF.md")].find(existsSync);
+  if (factsPath && kickoff) {
+    const kt = readFileSync(kickoff, "utf8");
+    for (const line of readFileSync(factsPath, "utf8").split(/\r?\n/)) {
+      if (!/^\|\s*behind-remote\s*\|/.test(line) || !/\|\s*WARN\s*\|/.test(line)) continue;
+      const m = line.match(/behind origin\/\S+: local ([0-9a-f]{7,40}), remote ([0-9a-f]{7,40})/);
+      if (m && !kt.includes(m[2].slice(0, 7))) fail(`${kickoff}: pins no remote sha for a repo the preflight found behind (remote ${m[2]}, local ${m[1]}) — pin the remote sha, not the stale local checkout`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------- main
 const commands = {
   verify: cmdVerify,
@@ -2837,6 +3177,7 @@ const commands = {
   mirror: cmdMirror,
   glossary: cmdGlossary,
   readiness: cmdReadiness,
+  claims: cmdClaims,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -2864,7 +3205,7 @@ if (isMain) {
     process.exit(0);
   }
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness|claims> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -2881,6 +3222,7 @@ if (isMain) {
     console.error("  runs [--dir repo-root] [--json]      list every plan-it run (live + archived), computed counts");
     console.error("  mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (0 fresh · 2 stale · 1 unstamped/malformed)");
     console.error("  glossary <delivery-dir>              first-use ID coverage (1 = unknown ID, named file:line)");
+    console.error("  claims <claims.md> [findings.md...]  claim-ledger lint (tier enum from doc-it, source, sha/path, fact, count) + evidence-against lint");
     console.error("  readiness <READINESS.json|--dir repo-root>  G4 readiness check: plan/READINESS.json + plan/DECISIONS.md (G-8)");
     process.exit(1);
   }
