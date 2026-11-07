@@ -736,6 +736,17 @@ function collectMdFiles(dir, out = []) {
 // derived output, not a hand-written board, so the hand-written-board lint below must not read it.
 const GENERATED_STATUS_MARKER = "<!-- generated from status.json by status-write; do not edit by hand -->";
 
+// ENV-FACTS.md is written by `preflight` (envFactsMarkdown). Its probe table has a `status` column whose
+// values are PRESENT | ABSENT | TIMEOUT: a probe record, not a STATUS board, so the 4-term board vocabulary
+// lint must not read it. Recognized by its first line (the generator's heading) — H1-06.
+function isEnvFacts(file) {
+  try {
+    return /^# ENV-FACTS\b/.test(readFileSync(file, "utf8").split("\n", 1)[0]);
+  } catch {
+    return false;
+  }
+}
+
 function isGeneratedStatus(file) {
   try {
     return readFileSync(file, "utf8").split("\n", 1)[0].trim() === GENERATED_STATUS_MARKER;
@@ -806,7 +817,8 @@ function cmdHandoff(rawArgs) {
   }
   const allFiles = collectMdFiles(dir);
   const generatedStatus = allFiles.filter(isGeneratedStatus);
-  const files = allFiles.filter((f) => !generatedStatus.includes(f));
+  const envFacts = allFiles.filter(isEnvFacts);
+  const files = allFiles.filter((f) => !generatedStatus.includes(f) && !envFacts.includes(f));
   if (generatedStatus.length) checkGeneratedStatus(dir, generatedStatus);
   if (files.length === 0) fail(`no .md files under ${dir}`);
 
@@ -2846,6 +2858,11 @@ function isMainModule(argv1) {
 const isMain = isMainModule(process.argv[1]);
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
+  // --help is a usage query, not an error: exit 0 with the usage on stdout (H1-06, T-H1-04).
+  if (cmd === "--help" || cmd === "-h" || cmd === "help") {
+    console.log("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
+    process.exit(0);
+  }
   if (!cmd || !(cmd in commands)) {
     console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");

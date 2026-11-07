@@ -83,7 +83,7 @@ If you violate one, the build downstream drifts or silently fails.
    *explains* the machine. On invocation, read or initialize `.plan-it/state.json`
    (in the target project) and resume from its `state`; write it on **every**
    transition. At every guarded transition, run the guard's mapped subcommand
-   (`node scripts/gate-check.mjs <check> …`) and **never advance on a non-zero
+   (`node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs <check> …`) and **never advance on a non-zero
    exit** — fix, re-run, then transition. If Node is unavailable, perform the same
    checks manually and record them in the state file (degrade, never break). Full
    protocol: `references/machine.md`.
@@ -105,7 +105,7 @@ edges, determinism at the core*:
 - **`.plan-it/state.json`** — the persisted run: current state, gate approvals
   (owner + date), contract version, verified-artifact registry, history. This is
   what makes a run survive a crash or a fresh session.
-- **`scripts/gate-check.mjs`** — the guards as exit codes: `verify` (Rule 3,
+- **`skills/plan-it/scripts/gate-check.mjs`** — the guards as exit codes: `verify` (Rule 3,
   idle ≠ delivered), `freeze` (Rule 1, no contract → no squads), `handoff` (the
   mechanizable half of playbooks §F), `state` (Rule 2, gates recorded),
   `adversary` (Rule 6 / D4 — failure-mode depth: a modelled machine must cover-or-
@@ -239,7 +239,7 @@ or `W0`-vs-`W1` collision is one line of disambiguation, not a format change.
 ## Phase 0 — Intake
 
 **Machine first (Rule 5):** if `.plan-it/state.json` exists in the target project,
-run `node scripts/gate-check.mjs state .plan-it/state.json` and **resume from the
+run `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs state .plan-it/state.json` and **resume from the
 printed state** — do not restart phases already in `history`. If it doesn't exist,
 create it now in state `intake` (schema in `references/machine.md`) and keep it
 updated on every transition for the rest of the run.
@@ -411,7 +411,7 @@ Shared mechanics for any fan-out:
   lost to summarization.
 - **Tell each agent: "you MUST run the tools and return findings; do not stop early."**
 - **Apply Rule 3 — pull idle teammates.** After fan-out, run
-  `node scripts/gate-check.mjs verify <every expected output path>` — the
+  `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs verify <every expected output path>` — the
   `FANOUT_COMPLETE` transition is guarded by it. On failure, `SendMessage` any
   silent agent to deliver; **re-dispatch any team that did 0 work** (this happens —
   caught and recovered live during the skill's own build-out). Record each passing
@@ -516,7 +516,7 @@ backbone **first**, because squads build their PRDs against it:
 (For size S/M, fold these into fewer files — a contract section + a single plan.)
 
 Record `G3 = {approved, owner, date}` on the user's yes. Then, before any squad
-fan-out, run `node scripts/gate-check.mjs freeze delivery/CONTRACT.md` (or the
+fan-out, run `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs freeze delivery/CONTRACT.md` (or the
 file carrying the inlined contract section) — the `CONTRACT_FROZEN` transition is
 guarded by it, and Rule 1 is now an exit code, not a plea. Record the contract
 version + path in `.plan-it/state.json` → `contract`.
@@ -567,7 +567,7 @@ emit the breakdown onto a live GitHub Projects board via a `ghp.sh` helper
 (epic = parent issue, tasks = native sub-issues, status single-select; GitHub is
 source of truth, `tracker.md` a cache). Offer this when the user wants a live board.
 
-Apply Rule 3 after the fan-out — `node scripts/gate-check.mjs verify prds/ epics/`
+Apply Rule 3 after the fan-out — `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs verify prds/ epics/`
 (the `SQUADS_COMPLETE` transition is guarded by it). Each `AMENDMENT` bumps the
 contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
 `parallelPlanning` — the machine's self-loop.
@@ -581,11 +581,11 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
   cases (those needing a live target). DoD = 100% pass via `/full-qa` + `/iterate`.
   No `[REAL]` case may be marked VERIFIED on a mock — unreachable target →
   IMPLEMENTED-NOT-VERIFIED, never a fake green.
-- **Run the mechanizable lint first:** `node scripts/gate-check.mjs handoff delivery/`
+- **Run the mechanizable lint first:** `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs handoff delivery/`
   — the `LINT_CLEAN` transition is guarded by it. It checks ID grammar, declared-vs-
   counted case totals, `[REAL]` tallies, per-epic Test Contract presence, and token
   lint. The judgment half below still needs you.
-- **Then run the adversarial-depth gate:** `node scripts/gate-check.mjs adversary delivery/`
+- **Then run the adversarial-depth gate:** `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs adversary delivery/`
   — the `ADVERSARY_CLEAN` transition (verify → adversaryGate → handoff) is guarded by
   it (D4). When the CONTRACT declares a state machine, it enforces failure-mode depth:
   the machine models failures + recovery, every declared failure state is an asserted
@@ -621,7 +621,7 @@ contract version in `.plan-it/state.json` (v1.0 → v1.1 …) and stays in
 - **Write the readiness pair** (at G4, before handoff): `plan/DECISIONS.md` and
   `plan/READINESS.json` (`do-it-readiness/1`: every decision `RESOLVED` or
   `DEFAULTED`, `preflight.passed` true, `owner_dependent_slices` 0). Run
-  `node scripts/gate-check.mjs readiness --dir .` — a build cannot start without
+  `node ${CLAUDE_PLUGIN_ROOT}/skills/plan-it/scripts/gate-check.mjs readiness --dir .` — a build cannot start without
   both files (G-8).
 - **Decide the review checkpoints** (right after the readiness pair): write
   `plan/CHECKPOINT-INPUTS.json` (`tasks`, `epics`, `waves`, and each

@@ -700,10 +700,13 @@ function statusMdPath(pkg) {
   return isDir(path.join(pkg, "delivery")) ? path.join(pkg, "delivery", "STATUS.md") : path.join(pkg, "STATUS.md");
 }
 
+const USAGE = "usage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run] [--default-wave] | --gate --package <dir>";
+
 export function main(argv = process.argv.slice(2), env = process.env) {
+  if (argv.includes("--help") || argv.includes("-h")) { console.log(USAGE); return 0; }
   let o;
   try { o = parseArgs(argv); } catch (e) {
-    console.error(`status-from-plan: ${e.message}\nusage: status-from-plan --package <dir> [--epics <dir>] [--implementation <name>] [--title T] [--dry-run] [--default-wave] | --gate --package <dir>`);
+    console.error(`status-from-plan: ${e.message}\n${USAGE}`);
     return 2;
   }
   const pkg = path.resolve(o.package);
