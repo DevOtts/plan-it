@@ -2882,33 +2882,70 @@ export function docItSkipLine(what) {
   return `[skip] doc-it not installed: ${what}`;
 }
 
-// The tier enum, its aliases and fact_ok flags are read at runtime from
-// `doc-it tiers --json` (X13), never copied. Returns null without doc-it.
+// The tier enum and every Tier cell's resolution are read at runtime from doc-it (X13), never copied.
+// Returns null without doc-it, { unusable: reason } for a broken install, else
+// { ids, needsSha, resolve(cell) }. resolve() calls `doc-it tiers resolve "<cell>"` once per distinct cell.
 export function readDocItTiers(cli) {
   if (!cli) return null;
   const r = spawnSync("node", [cli, "tiers", "--json"], { encoding: "utf8", timeout: 15000 });
-  if (r.status !== 0) return null;
+  if (r.status !== 0) return { unusable: `tiers --json exited ${r.status ?? r.signal ?? "?"}: ${firstLine(r.stderr || r.stdout) || "no output"}` };
   try {
     const j = JSON.parse(r.stdout);
-    if (!Array.isArray(j.tiers) || !j.tiers.length) return null;
-    const alias = new Map();
-    const factOk = new Map();
-    for (const d of j.details ?? []) {
-      factOk.set(d.id, d.fact_ok !== false);
-      for (const a of d.aliases ?? []) alias.set(String(a).replace(/@.*$/, "").toLowerCase(), d.id);
-    }
-    return { ids: j.tiers, alias, factOk };
-  } catch { return null; }
+    if (!Array.isArray(j.tiers) || !j.tiers.length) return { unusable: "tiers --json listed no tiers" };
+    // "needs a sha" is driven by doc-it's own format string (contains <sha>), not a literal tier id.
+    const needsSha = new Set((j.details ?? []).filter((d) => /<sha>/.test(String(d.format ?? ""))).map((d) => d.id));
+    const cache = new Map();
+    const resolve = (cell) => {
+      if (cache.has(cell)) return cache.get(cell);
+      const rr = spawnSync("node", [cli, "tiers", "resolve", cell], { encoding: "utf8", timeout: 15000 });
+      let out;
+      if (rr.status === 0) {
+        try { out = { parts: JSON.parse(rr.stdout).parts ?? [] }; } catch { out = { broken: "unparseable doc-it tiers resolve output" }; }
+      } else if (rr.status === 1) {
+        let unknown = [cell];
+        try { unknown = JSON.parse(rr.stdout.split("\n")[0]).unknown ?? unknown; } catch { /* keep cell */ }
+        out = { unknown };
+      } else {
+        out = { broken: `tiers resolve exited ${rr.status ?? rr.signal ?? "?"}: ${firstLine(rr.stderr || rr.stdout) || "no output"}` };
+      }
+      cache.set(cell, out);
+      return out;
+    };
+    return { ids: j.tiers, needsSha, resolve };
+  } catch { return { unusable: "tiers --json is not valid JSON" }; }
+}
+
+// What to print when a doc-it check cannot run: "not installed" (no CLI) or "unusable (<reason>)" (broken install).
+function docItSkip(tiers, what) {
+  return tiers && tiers.unusable ? `[skip] doc-it unusable (${tiers.unusable}): ${what}` : docItSkipLine(what);
 }
 
 const SHA_RE = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/;
 const PATH_LINE_RE = /[\w./-]+\.\w{1,6}:\d+/;
 const FILE_PATH_RE = /[\w.-]+\/[\w./-]*\.\w{1,6}\b|\b[\w-]+\.(?:mjs|js|ts|md|json|yaml|yml|sh|py|html)\b/;
-const ATTRIBUTION_RE = /\b(?:per|according to|says?|said|states?|stated|reports?|reported|claims?|plans|proposes?|describes?|names|specifies|documents)\b|\bin (?:this|that|the) (?:run|session|chat|transcript|study|doc)\b|\bin session\b/i;
+// D6 (CP-02): attribution must be an explicit frame naming a source, never a bare verb. "Two machine states
+// are terminal" is a plain fact; "the study says …", "per <doc>", "<doc> states …", "according to …",
+// "in session …", "in this run …" are attributions.
+const SRC_NOUN = "(?:study|studies|doc|docs|document|plan|spec|prd|report|brief|readme|ledger|transcript|chat|session|kickoff|decisions?|contract|proposal|roadmap|memo|ticket|issue|thread|email|message|owner|author|reviewer|audit|finding|findings|handoff|guide|manual|notes?|register)";
+const ATTR_VERB = "(?:says?|said|states?|stated|describes?|described|plans?|planned|reports?|reported|names?|named|specif(?:y|ies|ied)|proposes?|proposed|claims?|claimed|documents?|documented|notes?|noted|mentions?|mentioned|writes?|wrote|lists?|listed|promises?|promised|expects?|expected|records?|recorded)";
+const ATTRIBUTION_RE = new RegExp([
+  `\\baccording to\\b`,
+  `(?:^|[,;:(\\u2014-]\\s*)per\\s+\\S+`,
+  `\\b(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?[\\w-]*${SRC_NOUN}\\s+${ATTR_VERB}\\b`,
+  `\\b[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`,
+  `\\b[\\w-]*-(?:doc|spec|plan|report|study)\\s+${ATTR_VERB}\\b`,
+  // a package / doc identifier with 2+ hyphens ("resumable-test-gates plans …") names its source; one hyphen ("long-term plans") does not
+  `\\b[a-z0-9]+(?:-[a-z0-9]+){2,}\\s+(?:says|said|states|stated|describes|described|plans|proposes|specifies|documents|reports)\\b`,
+  `\\bin (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\\b`,
+  `\\bin session\\b`,
+].join("|"), "i");
 const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
-const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks";
+const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks|entry points|entrypoints|credentials|endpoints|handlers|callers|consumers|writers|readers|tables|fields|keys|secrets|tokens|files|modules|services|workers|queues|jobs|events|states|phases";
 const COUNT_RE = new RegExp(`\\b(\\d{1,3}|two|three|four|five|six|seven|eight|nine|ten|twelve)\\s+(?:[\\w-]+\\s+){0,2}?(?:${COUNT_NOUNS})\\b`, "i");
 const SRC_COMMAND_RE = /`\s*(?:git|grep|rg|ls|find|cat|wc|node|gh|cmp|diff|awk|jq|sed|curl|npm)\b[^`]*`/i;
+// D8: a backticked command only satisfies the count rule when it actually counts.
+const COUNTING_CMD_RE = /\bwc\b|\bgrep\b[^`]*\s-\w*c\w*\b|\|\s*wc\b|\blength\b|\bcount\b|\buniq\s+-c\b|\brg\b[^`]*\s-\w*c\w*\b|\bnl\b/i;
+const isCountingCmd = (src) => [...src.matchAll(/`[^`]*`/g)].some((m) => SRC_COMMAND_RE.test(m[0]) && COUNTING_CMD_RE.test(m[0]));
 
 function splitCells(line) {
   return line.trim().replace(/^\|/, "").replace(/\|\s*$/, "").split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, "|"));
@@ -2926,56 +2963,68 @@ export function parseLedger(text) {
   return { preamble: lines.slice(0, hi).join("\n"), rows };
 }
 
-export function tierWords(cell) {
-  return cell
-    .replace(/\([^)]*\)/g, " ")
-    .split(/\s*(?:\+|,|\/|&|\band\b)\s*/i)
-    .map((w) => w.replace(/`/g, "").replace(/@.*$/, "").trim().toLowerCase())
-    .filter(Boolean);
+// No-doc-it fallback only: plan-it has no tier-cell parser of its own. With doc-it, every cell is resolved by
+// `doc-it tiers resolve` (D7); without it, only the two ids the sha/path rule needs are recognised, loosely.
+function tierWordsNoDocIt(cell) {
+  return cell.replace(/\([^)]*\)/g, " ").split(/\s*(?:\+|,|\/|&|\band\b)\s*/i).map((w) => w.replace(/`/g, "").replace(/@.*$/, "").trim().toLowerCase()).filter(Boolean);
 }
 
-// Pure core: returns { findings: string[], skipped: string[] }.
+// Pure core: returns { findings: string[], skipped: string[], rows, skippedRules: string[] }.
 export function lintLedger(text, file, tiers) {
   const findings = [];
   const skipped = [];
+  const skippedRules = [];
+  const usable = tiers && !tiers.unusable ? tiers : null;
   const led = parseLedger(text);
-  if (!led) return { findings: [`${file}: no claim-ledger table found (header must be | ID | Claim | Tier | Source |)`], skipped, rows: 0 };
-  if (!tiers) { skipped.push(docItSkipLine("tier enum")); skipped.push(docItSkipLine("fact rule (tier fact_ok flags)")); }
+  if (!led) return { findings: [`${file}: no claim-ledger table found (header must be | ID | Claim | Tier | Source |)`], skipped, skippedRules, rows: 0 };
+  if (!usable) {
+    skipped.push(docItSkip(tiers, "tier enum"));
+    skipped.push(docItSkip(tiers, "fact rule (tier fact_ok flags)"));
+    skippedRules.push("tier enum", "fact rule");
+  }
   const pinned = SHA_RE.test(led.preamble);
   for (const r of led.rows) {
     const at = `${file}:${r.line}: row ${r.id || "(no id)"}`;
     if (!r.id) findings.push(`${at}: id missing`);
     if (!r.claim) findings.push(`${at}: claim text missing`);
-    const words = tierWords(r.tier);
-    if (words.length === 0) findings.push(`${at}: tier missing — tier enum rule`);
-    const ids = words.map((w) => (tiers ? (tiers.ids.includes(w) ? w : tiers.alias.get(w) ?? w) : w));
-    if (tiers) {
-      words.forEach((w, i) => {
-        if (!tiers.ids.includes(ids[i])) findings.push(`${at}: tier "${w}" is not in the tier enum (${tiers.ids.join(", ")}) — tier enum rule`);
-      });
+    let ids = [];
+    let factOkAll = false;
+    if (!r.tier.trim()) findings.push(`${at}: tier missing — tier enum rule`);
+    else if (usable) {
+      const res = usable.resolve(r.tier);
+      if (res.broken) findings.push(`${at}: tier "${r.tier.trim()}" could not be resolved by doc-it (${res.broken}) — tier enum rule`);
+      else if (res.unknown) findings.push(`${at}: tier "${r.tier.trim()}" is refused by doc-it (${res.unknown.map((u) => `"${u}"`).join(", ")} unknown; enum: ${usable.ids.join(", ")}) — tier enum rule`);
+      else {
+        ids = res.parts.map((x) => x.id);
+        factOkAll = res.parts.length > 0 && res.parts.every((x) => x.fact_ok === false);
+      }
+    } else {
+      ids = tierWordsNoDocIt(r.tier);
     }
     if (!r.source || /^[-—\s]*$/.test(r.source)) findings.push(`${at}: source missing — source present rule`);
-    const rowText = `${r.claim} ${r.source}`;
-    if (ids.some((w) => w === "code" || w === "git")) {
+    // The Tier cell is part of the row text: `code@a1b2c3d` carries its own sha.
+    const rowText = `${r.claim} ${r.tier} ${r.source}`;
+    const shaTier = usable ? ids.some((id) => usable.needsSha.has(id)) : ids.some((w) => w === "code" || w === "git");
+    if (shaTier) {
       if (!(SHA_RE.test(rowText) || PATH_LINE_RE.test(rowText) || FILE_PATH_RE.test(rowText) || pinned)) {
         findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
       }
     }
-    if (tiers && ids.length > 0 && ids.every((id) => tiers.factOk.get(id) === false) && !ATTRIBUTION_RE.test(r.claim)) {
-      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an attribution ("the study says", "per <doc>") — fact rule`);
+    if (usable && factOkAll && !ATTRIBUTION_RE.test(r.claim)) {
+      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an explicit attribution naming the source ("the study says", "per <doc>", "<doc> states", "in session") — fact rule`);
     }
-    if (ids.includes("code")) {
+    if (shaTier) {
       const m = r.claim.replace(/`[^`]*`/g, " ").match(COUNT_RE);
       if (m) {
         const n = /^\d/.test(m[1]) ? Number(m[1]) : NUM_WORDS[m[1].toLowerCase()];
         const items = r.source.replace(/`[^`]*`/g, (x) => (SRC_COMMAND_RE.test(x) ? "" : x)).split(/[,;]|\s\+\s|\n/).filter((x) => x.trim()).length;
-        if (!SRC_COMMAND_RE.test(r.source) && !(n <= 12 && items >= n)) {
-          findings.push(`${at}: states a count ("${m[0]}") with tier code but the source gives neither the list nor a command that counts it — count rule`);
+        if (!isCountingCmd(r.source) && !(n <= 12 && items >= n)) {
+          findings.push(`${at}: states a count ("${m[0]}") with tier code but the source gives neither the list nor a command that counts it (wc -l, grep -c, | wc, length) — count rule`);
         }
       }
     }
   }
-  return { findings, skipped, rows: led.rows.length };
+  return { findings, skipped, skippedRules, rows: led.rows.length };
 }
 
 // L1-03: a findings doc that confirms a suspicion must carry an "Evidence against" section.
@@ -3000,6 +3049,14 @@ export function lintEvidenceAgainst(text, file) {
   return [`${file}: confirms a suspicion ("${m[0].trim()}") but has no "Evidence against" heading — evidence against rule (state what would contradict it, and what you found)`];
 }
 
+// D4: never say "clean" about a rule that was skipped.
+function ledgerCleanLine(f, res) {
+  return res.skippedRules.length
+    ? `${f}: ${res.rows} row(s) — source, sha/path and count rules clean; ${res.skippedRules.join(" and ")} SKIPPED (${skipReason(res)})`
+    : `${f}: ${res.rows} row(s) — source, sha/path, count, tier enum and fact rules clean`;
+}
+function skipReason(res) { return /unusable/.test(res.skipped[0] ?? "") ? "doc-it unusable" : "doc-it not installed"; }
+
 function cmdClaims(rawArgs) {
   const files = rawArgs.filter((a) => !a.startsWith("--"));
   if (files.length === 0) {
@@ -3009,6 +3066,7 @@ function cmdClaims(rawArgs) {
   const cli = findDocIt();
   const tiers = readDocItTiers(cli);
   const seenSkips = new Set();
+  let skippedChecks = 0;
   for (const f of files) {
     if (!existsSync(f)) { fail(`claims: ${f} not found`); continue; }
     const text = readFileSync(f, "utf8");
@@ -3016,12 +3074,12 @@ function cmdClaims(rawArgs) {
     if (isLedger) {
       const res = lintLedger(text, f, tiers);
       for (const m of res.findings) fail(m);
-      for (const s of res.skipped) { if (!seenSkips.has(s)) console.log(s); seenSkips.add(s); }
-      if (res.findings.length === 0) ok(`${f}: ${res.rows} row(s) — source, sha/path, fact and count rules clean${tiers ? ", tier enum clean" : ""}`);
+      for (const s of res.skipped) { if (!seenSkips.has(s)) { console.log(s); skippedChecks++; } seenSkips.add(s); }
+      if (res.findings.length === 0) ok(ledgerCleanLine(f, res));
     }
     for (const m of lintEvidenceAgainst(text, f)) fail(m);
   }
-  finish("claim ledger");
+  finish(skippedChecks ? `claim ledger (${skippedChecks} checks skipped)` : "claim ledger");
 }
 
 // ---- V1: grounding helpers
@@ -3147,7 +3205,7 @@ function handoffTrustChecks(dir, rootFlag, runState) {
       const res = lintLedger(readFileSync(claims, "utf8"), claims, tiers);
       for (const m of res.findings) fail(m);
       for (const s of res.skipped) console.log(s);
-      if (res.findings.length === 0) ok(`${claims}: claim ledger clean (${res.rows} rows)`);
+      if (res.findings.length === 0) ok(res.skippedRules.length ? `${claims}: claim ledger ${res.rows} rows — source, sha/path and count rules clean; ${res.skippedRules.join(" and ")} SKIPPED (${skipReason(res)})` : `${claims}: claim ledger clean (${res.rows} rows)`);
     }
   }
   // KICKOFF pins the remote sha of a repo the preflight found behind.
