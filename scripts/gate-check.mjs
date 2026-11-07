@@ -3065,7 +3065,7 @@ function runBehindRemote(repos, cwd) {
   const cli = findDocIt();
   if (!cli) {
     console.log(docItSkipLine("behind-remote (is the checkout behind origin)"));
-    return [{ id: "behind-remote", check: "doc-it check checkout", status: "WARN", evidence: "doc-it not installed" }];
+    return repos.map((repo) => ({ id: "behind-remote", check: "doc-it check checkout", status: "WARN", evidence: `doc-it not installed — ${repo}: UNVERIFIED — behind-origin check not run` }));
   }
   for (const repo of repos) {
     const abs = resolve(cwd, repo);
@@ -3074,11 +3074,16 @@ function runBehindRemote(repos, cwd) {
     try { j = JSON.parse(r.stdout)[0]; } catch { /* below */ }
     const check = `doc-it check checkout ${repo}`;
     if (!j) {
-      rows.push({ id: "behind-remote", check, status: "ABSENT", evidence: firstLine(r.stderr || r.stdout) || `exit ${r.status}` });
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo}: UNVERIFIED — unparseable doc-it output: ${(firstLine(r.stderr || r.stdout) || `exit ${r.status}`).replace(/\|/g, "/").slice(0, 160)}` });
     } else if (j.status === "behind") {
       rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo} is ${j.behind} behind origin/${j.default_branch}: local ${j.local}, remote ${j.remote}` });
-    } else {
+    } else if (j.status === "ok" && /^[0-9a-f]{7,40}$/.test(String(j.local)) && /^[0-9a-f]{7,40}$/.test(String(j.remote))) {
       rows.push({ id: "behind-remote", check, status: "PRESENT", evidence: `${repo} up to date: local ${j.local}, remote ${j.remote}` });
+    } else {
+      // D3 (CP-02): only doc-it's own ok/up-to-date answer is PRESENT. error (not a repo, fetch failed,
+      // offline), an unknown status or a malformed ok is UNVERIFIED: WARN with the reason, never PRESENT.
+      const why = j.status === "error" ? String(j.message ?? "doc-it reported an error") : `unknown status ${j.status}`;
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo}: UNVERIFIED — ${why.replace(/\s+/g, " ").replace(/\|/g, "/").slice(0, 200)}` });
     }
   }
   return rows;
@@ -3152,6 +3157,14 @@ function handoffTrustChecks(dir, rootFlag, runState) {
     const kt = readFileSync(kickoff, "utf8");
     for (const line of readFileSync(factsPath, "utf8").split(/\r?\n/)) {
       if (!/^\|\s*behind-remote\s*\|/.test(line) || !/\|\s*WARN\s*\|/.test(line)) continue;
+      // D3: an UNVERIFIED repo (doc-it could not tell) still needs the pin, or the KICKOFF must say so explicitly.
+      const un = line.match(/(\S+): UNVERIFIED — /);
+      if (un) {
+        const said = kt.split(/\r?\n/).some((l) => l.includes(un[1]) && /unverified|not verified|could not verify/i.test(l));
+        const pinned = /\b[0-9a-f]{40}\b/.test(kt) || /\b(?:remote|origin)[^\n]{0,40}\b[0-9a-f]{7,40}\b/i.test(kt);
+        if (!said && !pinned) fail(`${kickoff}: preflight could not verify ${un[1]} is current (${line.split("UNVERIFIED — ")[1]?.split("|")[0].trim()}) — pin the remote sha, or state in the KICKOFF that ${un[1]} is unverified`);
+        continue;
+      }
       const m = line.match(/behind origin\/\S+: local ([0-9a-f]{7,40}), remote ([0-9a-f]{7,40})/);
       if (m && !kt.includes(m[2].slice(0, 7))) fail(`${kickoff}: pins no remote sha for a repo the preflight found behind (remote ${m[2]}, local ${m[1]}) — pin the remote sha, not the stale local checkout`);
     }
