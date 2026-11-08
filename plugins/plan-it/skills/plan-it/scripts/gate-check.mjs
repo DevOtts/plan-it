@@ -2978,7 +2978,7 @@ const OPENERS = [
   /^in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\s*[,:]/i,                     // 4
   new RegExp(`^(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?\\b${NOUN_WORD}\\s+${PLAIN_VERB}\\b`, "i"), // 5
   // 6a file.ext subject: an unambiguous verb, or an attribution verb followed by a determiner/number/backtick/that/":"
-  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}(?=\\s+(?:the|a|an|that|every|each|all|no|\\d|two|three|four|five|six|seven|eight|nine|ten|\x60)|\\s*:))`, "i"),
+  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}(?=\\s+(?:(?:the|a|an|that|every|each|all|no|two|three|four|five|six|seven|eight|nine|ten)\\b|\\d|\x60)|\\s*:))`, "i"),
   new RegExp(`^\x60[^\x60]+\x60\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}\\s*:)`, "i"),                     // 6b backticked subject
 ];
 function startsWithAttribution(claim, source) {
