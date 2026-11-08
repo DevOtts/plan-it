@@ -2928,14 +2928,24 @@ const FILE_PATH_RE = /[\w.-]+\/[\w./-]*\.\w{1,6}\b|\b[\w-]+\.(?:mjs|js|ts|md|jso
 // "in session …", "in this run …" are attributions.
 const SRC_NOUN = "(?:study|studies|doc|docs|document|plan|spec|prd|report|brief|readme|ledger|transcript|chat|session|kickoff|decisions?|contract|proposal|roadmap|memo|ticket|issue|thread|email|message|owner|author|reviewer|audit|finding|findings|handoff|guide|manual|notes?|register)";
 const ATTR_VERB = "(?:says?|said|states?|stated|describes?|described|plans?|planned|reports?|reported|names?|named|specif(?:y|ies|ied)|proposes?|proposed|claims?|claimed|documents?|documented|notes?|noted|mentions?|mentioned|writes?|wrote|lists?|listed|promises?|promised|expects?|expected|records?|recorded)";
+// Present-tense verbs that are also plural nouns ("states", "records", "names", "reports"…) only count when
+// followed by "that" or ":"; unambiguous verbs count on their own (CP-02 round 2, R2-M1).
+const VERB_AMBIG = "(?:states|plans|names|records|reports|notes|lists|documents|claims|promises|expects|writes)";
+const VERB_PLAIN = "(?:says|said|stated|describes|described|proposes|proposed|specifies|specified|mentions|mentioned|wrote|reported|planned|documented|claimed|noted|listed|recorded|promised|expected|names\\s+`)";
+const VERB_OK = `(?:${VERB_PLAIN}|${VERB_AMBIG}(?=\\s+that\\b|\\s*:))`;
 const ATTRIBUTION_RE = new RegExp([
   `\\baccording to\\b`,
-  `(?:^|[,;:(\\u2014-]\\s*)per\\s+\\S+`,
-  `\\b(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?[\\w-]*${SRC_NOUN}\\s+${ATTR_VERB}\\b`,
+  // "per <path | `x` | the <source noun>>", never "per run" / "per day"
+  `(?:^|[,;:(\\u2014-]\\s*)per\\s+(?:\x60[^\x60]+\x60|[\\w-]*[./][\\w./-]+|the\\s+(?:[\\w-]+\\s+){0,2}?${SRC_NOUN}\\b)`,
+  `\\b(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?[\\w-]*${SRC_NOUN}\\s+${VERB_OK}`,
+  // a file path is always a subject, so any attribution verb counts after it
   `\\b[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`,
-  `\\b[\\w-]*-(?:doc|spec|plan|report|study)\\s+${ATTR_VERB}\\b`,
-  `\\bin (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\\b`,
-  `\\bin session\\b`,
+  `\\b[\\w-]*-(?:doc|spec|plan|report|study)\\s+${VERB_OK}`,
+  // "in this run …" / "in session …" open the claim, or close a clause ("in this run:"), or name the session
+  `^\\s*in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\\b`,
+  `\\bin (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)(?=\\s*[,:;.)]|\\s*$)`,
+  `^\\s*in session\\b`,
+  `\\bin session\\s+(?:\x60[^\x60]+\x60|"[^"]+"|[a-z0-9]+(?:-[a-z0-9]+)+)`,
 ].join("|"), "i");
 // A hyphenated package/doc identifier followed by an attribution verb ("resumable-test-gates plans …") counts as
 // attribution ONLY when that identifier also appears in the row's own Source cell: it then names the source.

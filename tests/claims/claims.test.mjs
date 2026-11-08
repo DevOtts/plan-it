@@ -228,3 +228,20 @@ test("D6 round 2: a hyphenated word + verb is attribution only when it names the
   const wrongSrc = run([`| C23 | resumable-test-gates plans a nightly run | program-doc | \`docs/other.md\` |`]);
   assert.equal(wrongSrc.code, 1, wrongSrc.out);
 });
+
+test("D6 round 2 (R2-M1): noun/verb ambiguity and location frames are plain facts; real frames still pass", { skip: skipNoDocIt }, () => {
+  const plain = ["End-to-end reports are written to disk nightly", "Out-of-band reports are dropped after a day",
+    "The issue states are open and closed", "The session records expire after 30 days", "The ticket names must be unique",
+    "Tokens are stored in session storage", "Locks are released in the run loop", "Per run, two machine states are terminal"];
+  for (const claim of plain) {
+    const r = run([`| C3 | ${claim} | program-doc | \`docs/plan.md\` |`]);
+    assert.equal(r.code, 1, `${claim}: ${r.out}`);
+    assert.match(r.out, /fact rule/);
+  }
+  const framed = ["The issue states that two machine states are terminal", "The study records: two machine states are terminal",
+    "In session `abc-123` the hook refused 7 stops", "The audit chain's cost in this run: 132,544 tokens", "Per the plan doc, two states are terminal"];
+  for (const claim of framed) {
+    const r = run([`| C3 | ${claim} | transcript | \`docs/plan.md\` |`]);
+    assert.equal(r.code, 0, `${claim}: ${r.out}`);
+  }
+});
