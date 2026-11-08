@@ -2967,6 +2967,25 @@ function namesOwnSource(claim, source) {
   for (const m of String(claim || "").matchAll(ID_VERB_RE)) if (ids.has(m[1].toLowerCase())) return true;
   return false;
 }
+// CP-02 round 3 (structural): for a tier that may not be stated as fact, the claim must BEGIN with one of seven
+// closed attribution openers. A pattern found anywhere else in the claim never counts (formats.md §11).
+const PLAIN_VERB = "(?:says|said|describes|described|proposes|proposed|specifies|specified|mentions|mentioned|wrote|explains|explained)";
+const NOUN_WORD = `(?:[\\w]+-)*${SRC_NOUN}`; // "program-doc" ok; "possession" is not "session" (word boundary)
+const OPENERS = [
+  /^according to\s+[^,]{2,},/i,                                                                    // 1
+  new RegExp(`^per\\s+(?:\x60[^\x60]+\x60|\\S*\\/\\S*|[\\w-]+\\.[a-z]{1,6}|the\\s+(?:[\\w-]+\\s+){0,3}?\\b${NOUN_WORD}\\b)\\s*,`, "i"), // 2
+  /^in session\s+(?:`[^`]+`|"[^"]+"|[a-z0-9]+(?:-[a-z0-9]+)+)/i,                                   // 3
+  /^in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\s*[,:]/i,                     // 4
+  new RegExp(`^(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?\\b${NOUN_WORD}\\s+${PLAIN_VERB}\\b`, "i"), // 5
+  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`, "i"),                  // 6a file.ext subject
+  new RegExp(`^\x60[^\x60]+\x60\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}\\s*:)`, "i"),                     // 6b backticked subject
+];
+function startsWithAttribution(claim, source) {
+  const c = String(claim || "").trim();
+  if (OPENERS.some((re) => re.test(c))) return true;
+  const m = c.match(new RegExp(`^([a-z0-9]+(?:-[a-z0-9]+){2,})\\s+${ATTR_VERB}\\b`, "i"));            // 7
+  return Boolean(m && sourceIds(source).has(m[1].toLowerCase()));
+}
 const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
 const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks|entry points|entrypoints|credentials|endpoints|handlers|callers|consumers|writers|readers|tables|fields|keys|secrets|tokens|files|modules|services|workers|queues|jobs|events|states|phases";
 const COUNT_RE = new RegExp(`\\b(\\d{1,3}|two|three|four|five|six|seven|eight|nine|ten|twelve)\\s+(?:[\\w-]+\\s+){0,2}?(?:${COUNT_NOUNS})\\b`, "i");
@@ -3038,8 +3057,8 @@ export function lintLedger(text, file, tiers) {
         findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
       }
     }
-    if (usable && factOkAll && !ATTRIBUTION_RE.test(r.claim) && !namesOwnSource(r.claim, r.source)) {
-      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an explicit attribution naming the source ("the study says", "per <doc>", "<doc> states", "in session") — fact rule`);
+    if (usable && factOkAll && !startsWithAttribution(r.claim, r.source)) {
+      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — start the claim with an attribution opener ("According to <source>,", "Per <doc>,", "In session \`<id>\`", "In this run,", "The <doc> says/describes …", "<file.md> states …") — fact rule`);
     }
     if (shaTier) {
       const m = r.claim.replace(/`[^`]*`/g, " ").match(COUNT_RE);

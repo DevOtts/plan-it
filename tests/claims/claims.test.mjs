@@ -151,7 +151,7 @@ test("D6 plain facts with a bare verb or noun are refused as plain fact for a pr
 });
 
 test("D6 explicit attribution phrases naming a source pass", { skip: skipNoDocIt }, () => {
-  for (const claim of ["The study says two machine states are terminal", "Per docs/plan.md two machine states are terminal", "docs/plan.md states two machine states are terminal", "According to the owner two machine states are terminal", "In session the owner confirmed two machine states are terminal", "In this run the harness reported two machine states", "The program doc describes two terminal machine states"]) {
+  for (const claim of ["The study says two machine states are terminal", "Per docs/plan.md, two machine states are terminal", "docs/plan.md states two machine states are terminal", "According to the owner, two machine states are terminal", "In session `s-1`, the owner confirmed two machine states are terminal", "In this run, the harness reported two machine states", "The program doc describes two terminal machine states"]) {
     const r = run([`| C3 | ${claim} | program-doc | \`docs/plan.md\` |`]);
     assert.equal(r.code, 0, `${claim}: ${r.out}`);
   }
@@ -238,8 +238,8 @@ test("D6 round 2 (R2-M1): noun/verb ambiguity and location frames are plain fact
     assert.equal(r.code, 1, `${claim}: ${r.out}`);
     assert.match(r.out, /fact rule/);
   }
-  const framed = ["The issue states that two machine states are terminal", "The study records: two machine states are terminal",
-    "In session `abc-123` the hook refused 7 stops", "The audit chain's cost in this run: 132,544 tokens", "Per the plan doc, two states are terminal"];
+  const framed = ["The issue says that two machine states are terminal", "The study says: two machine states are terminal",
+    "In session `abc-123` the hook refused 7 stops", "In this run, the audit chain cost 132,544 tokens", "Per the plan doc, two states are terminal"];
   for (const claim of framed) {
     const r = run([`| C3 | ${claim} | transcript | \`docs/plan.md\` |`]);
     assert.equal(r.code, 0, `${claim}: ${r.out}`);
@@ -263,5 +263,31 @@ test("D6 round 3: the own-source identifier must be a whole path segment or back
   for (const src of ["`docs/implementation/resumable-test-gates/README.md` §3", "`resumable-test-gates`"]) {
     const r = run([`| C23 | resumable-test-gates plans a nightly run | program-doc | ${src} |`]);
     assert.equal(r.code, 0, `${src}: ${r.out}`);
+  }
+});
+
+test("CP-02 round 3 (structural): only a closed opener at the START of the claim attributes it", { skip: skipNoDocIt }, () => {
+  const leaks = [
+    ["The issue states that are terminal are closed and merged", "read docs"], ["The session records that expire are purged nightly", "read docs"],
+    ["The issue states: open, closed", "read docs"], ["The issue reported upstream is fixed in 1.2", "read docs"],
+    ["The ticket listed below is still open", "read docs"], ["The message expected by the hook is never sent", "read docs"],
+    ["The ticket names `a` and `b` are reserved", "read docs"], ["In the run loop, locks are released", "read docs"],
+    ["In session storage, tokens persist", "read docs"], ["Locks are released after each step in the run.", "read docs"],
+    ["Retries fire once, per 2.5 seconds", "read docs"], ["The possession described is transferable", "read docs"],
+    ["The footnotes described are optional", "read docs"], ["Status-write records are appended atomically", "`status-write.mjs:40`"],
+    ["Re-run states are terminal", "`scripts/pre-run-hook.mjs`"], ["Two machine states are terminal, the study says", "read docs"],
+    ["`foo` lists are cached", "read docs"],
+  ];
+  for (const [claim, src] of leaks) {
+    const r = run([`| C3 | ${claim} | program-doc | ${src} |`]);
+    assert.equal(r.code, 1, `${claim} / ${src}: ${r.out}`);
+    assert.match(r.out, /fact rule/);
+  }
+  const openers = ["According to the README, two states are terminal", "Per the KICKOFF, two states are terminal", "Per `docs/plan.md`, two states are terminal",
+    "In session `abc-123` the hook refused 7 stops", "In this run, the audit chain cost 132,544 tokens", "The study says two states are terminal",
+    "The program doc describes two terminal states", "README.md lists three commands", "`docs/plan.md` describes two states"];
+  for (const claim of openers) {
+    const r = run([`| C3 | ${claim} | transcript | \`docs/plan.md\` |`]);
+    assert.equal(r.code, 0, `${claim}: ${r.out}`);
   }
 });

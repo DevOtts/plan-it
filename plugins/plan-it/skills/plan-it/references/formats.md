@@ -322,7 +322,13 @@ ledger at `audit/claims.md`: one table, one row per factual claim in `docs/01`.
   - **sha/path rule**: tier `code` or `git` needs a sha, `repo@sha`, `path:line` or a file
     path somewhere in the row (a sha pinned in the ledger preamble counts).
   - **fact rule**: a row whose tiers all have `fact_ok: false` in doc-it's output may not read
-    as plain fact. Prefix an attribution ("the study says", "per <doc>", "in session X").
+    as plain fact. The claim must START with one of these openers (case-insensitive):
+    1. `According to <source>,` · 2. `Per <`x` | path | file.ext | the <source noun>>,` (comma required) ·
+    3. ``In session `<id>` `` (or a quoted or hyphenated id) · 4. `In this|that|the|our run|session|chat|transcript|study|doc` then `,` or `:` ·
+    5. `The|This|That|Our|Its|Their [≤3 words] <source noun> says|said|describes|proposes|specifies|mentions|wrote|explains` ·
+    6. a `file.ext` subject with any attribution verb, or a backticked subject with an unambiguous verb (or verb + `:`) ·
+    7. a 2+-hyphen identifier subject + attribution verb, only when that identifier is a whole `/` segment of a path or
+    backticked token in the row's Source. An attribution anywhere else in the claim does not count (CP-02 round 3).
   - **count rule**: a `code` claim that states a number of things ("5 credential ways",
     "3 layers") needs the list of that many items, or a command that counts them, in Source.
     Detection is by a fixed noun list (ways, kinds, types, modes, layers, methods, routes,
