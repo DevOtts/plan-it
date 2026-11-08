@@ -291,3 +291,15 @@ test("CP-02 round 3 (structural): only a closed opener at the START of the claim
     assert.equal(r.code, 0, `${claim}: ${r.out}`);
   }
 });
+
+test("CP-02 round 4: no participles in form 5; a file.ext subject needs an unambiguous verb or a following determiner", { skip: skipNoDocIt }, () => {
+  for (const claim of ["The issue described above is fixed in 1.2", "status.json records expire after 30 days", "package.json names must be unique", "README.md lists are short"]) {
+    const r = run([`| C3 | ${claim} | program-doc | read docs |`]);
+    assert.equal(r.code, 1, `${claim}: ${r.out}`);
+    assert.match(r.out, /fact rule/);
+  }
+  for (const claim of ["README.md lists three commands", "docs/plan.md states two machine states are terminal", "README.md says the CLI is zero-dependency", "plan.md states: two waves"]) {
+    const r = run([`| C3 | ${claim} | program-doc | \`docs/plan.md\` |`]);
+    assert.equal(r.code, 0, `${claim}: ${r.out}`);
+  }
+});

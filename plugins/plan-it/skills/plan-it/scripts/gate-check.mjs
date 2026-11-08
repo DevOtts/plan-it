@@ -2969,7 +2969,7 @@ function namesOwnSource(claim, source) {
 }
 // CP-02 round 3 (structural): for a tier that may not be stated as fact, the claim must BEGIN with one of seven
 // closed attribution openers. A pattern found anywhere else in the claim never counts (formats.md §11).
-const PLAIN_VERB = "(?:says|said|describes|described|proposes|proposed|specifies|specified|mentions|mentioned|wrote|explains|explained)";
+const PLAIN_VERB = "(?:says|said|describes|proposes|specifies|mentions|wrote|explains)";
 const NOUN_WORD = `(?:[\\w]+-)*${SRC_NOUN}`; // "program-doc" ok; "possession" is not "session" (word boundary)
 const OPENERS = [
   /^according to\s+[^,]{2,},/i,                                                                    // 1
@@ -2977,7 +2977,8 @@ const OPENERS = [
   /^in session\s+(?:`[^`]+`|"[^"]+"|[a-z0-9]+(?:-[a-z0-9]+)+)/i,                                   // 3
   /^in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\s*[,:]/i,                     // 4
   new RegExp(`^(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?\\b${NOUN_WORD}\\s+${PLAIN_VERB}\\b`, "i"), // 5
-  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`, "i"),                  // 6a file.ext subject
+  // 6a file.ext subject: an unambiguous verb, or an attribution verb followed by a determiner/number/backtick/that/":"
+  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}(?=\\s+(?:the|a|an|that|every|each|all|no|\\d|two|three|four|five|six|seven|eight|nine|ten|\x60)|\\s*:))`, "i"),
   new RegExp(`^\x60[^\x60]+\x60\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}\\s*:)`, "i"),                     // 6b backticked subject
 ];
 function startsWithAttribution(claim, source) {
