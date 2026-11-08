@@ -2950,10 +2950,21 @@ const ATTRIBUTION_RE = new RegExp([
 // A hyphenated package/doc identifier followed by an attribution verb ("resumable-test-gates plans …") counts as
 // attribution ONLY when that identifier also appears in the row's own Source cell: it then names the source.
 // "Up-to-date states are terminal" names nothing in its Source, so it stays a plain fact (CP-02 round 2, D6).
-const ID_VERB_RE = new RegExp(`\\b([a-z0-9]+(?:-[a-z0-9]+)+)\\s+${ATTR_VERB}\\b`, "gi");
+// A package/program identifier (2+ hyphens) followed by an attribution verb counts as attribution only when the
+// row's Source names that identifier as a whole PATH SEGMENT or a whole backticked token (a file, folder or
+// package), never in prose and never as a substring: `docs/x/resumable-test-gates/README.md` names it; "the
+// up-to-date check" and `pre-run-hook.mjs` do not (CP-02 rounds 2-3).
+const ID_VERB_RE = new RegExp(`(?:^|[^\\w-])([a-z0-9]+(?:-[a-z0-9]+){2,})\\s+${ATTR_VERB}\\b`, "gi");
+function sourceIds(source) {
+  const ids = new Set();
+  const s = String(source || "").toLowerCase();
+  for (const m of s.matchAll(/`([^`]+)`/g)) ids.add(m[1].trim());
+  for (const m of s.matchAll(/[\w.-]*\/[\w./-]+|[\w-]+\.[a-z]{1,6}\b/g)) for (const seg of m[0].split("/")) { ids.add(seg); ids.add(seg.replace(/\.[a-z0-9]{1,6}$/, "")); }
+  return ids;
+}
 function namesOwnSource(claim, source) {
-  const src = String(source || "").toLowerCase();
-  for (const m of String(claim || "").matchAll(ID_VERB_RE)) if (src.includes(m[1].toLowerCase())) return true;
+  const ids = sourceIds(source);
+  for (const m of String(claim || "").matchAll(ID_VERB_RE)) if (ids.has(m[1].toLowerCase())) return true;
   return false;
 }
 const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };

@@ -245,3 +245,23 @@ test("D6 round 2 (R2-M1): noun/verb ambiguity and location frames are plain fact
     assert.equal(r.code, 0, `${claim}: ${r.out}`);
   }
 });
+
+test("D6 round 3: the own-source identifier must be a whole path segment or backticked token in Source", { skip: skipNoDocIt }, () => {
+  const bad = [
+    ["Status-write records are appended atomically", "`status-write.mjs:40`"],
+    ["Up-to-date states are terminal", "the up-to-date check"],
+    ["Re-run states are terminal", "`scripts/pre-run-hook.mjs`"],
+    ["The audit records are kept forever", "read docs"],
+    ["Up-to-date-check states are terminal", "the up-to-date-check doc"],
+    ["Pre-run-hook states are terminal", "`scripts/my-pre-run-hook.mjs`"],
+  ];
+  for (const [claim, src] of bad) {
+    const r = run([`| C3 | ${claim} | program-doc | ${src} |`]);
+    assert.equal(r.code, 1, `${claim} / ${src}: ${r.out}`);
+    assert.match(r.out, /fact rule/);
+  }
+  for (const src of ["`docs/implementation/resumable-test-gates/README.md` §3", "`resumable-test-gates`"]) {
+    const r = run([`| C23 | resumable-test-gates plans a nightly run | program-doc | ${src} |`]);
+    assert.equal(r.code, 0, `${src}: ${r.out}`);
+  }
+});
