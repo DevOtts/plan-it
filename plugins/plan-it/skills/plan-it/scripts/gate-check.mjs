@@ -2934,11 +2934,18 @@ const ATTRIBUTION_RE = new RegExp([
   `\\b(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?[\\w-]*${SRC_NOUN}\\s+${ATTR_VERB}\\b`,
   `\\b[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`,
   `\\b[\\w-]*-(?:doc|spec|plan|report|study)\\s+${ATTR_VERB}\\b`,
-  // a package / doc identifier with 2+ hyphens ("resumable-test-gates plans …") names its source; one hyphen ("long-term plans") does not
-  `\\b[a-z0-9]+(?:-[a-z0-9]+){2,}\\s+(?:says|said|states|stated|describes|described|plans|proposes|specifies|documents|reports)\\b`,
   `\\bin (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\\b`,
   `\\bin session\\b`,
 ].join("|"), "i");
+// A hyphenated package/doc identifier followed by an attribution verb ("resumable-test-gates plans …") counts as
+// attribution ONLY when that identifier also appears in the row's own Source cell: it then names the source.
+// "Up-to-date states are terminal" names nothing in its Source, so it stays a plain fact (CP-02 round 2, D6).
+const ID_VERB_RE = new RegExp(`\\b([a-z0-9]+(?:-[a-z0-9]+)+)\\s+${ATTR_VERB}\\b`, "gi");
+function namesOwnSource(claim, source) {
+  const src = String(source || "").toLowerCase();
+  for (const m of String(claim || "").matchAll(ID_VERB_RE)) if (src.includes(m[1].toLowerCase())) return true;
+  return false;
+}
 const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
 const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks|entry points|entrypoints|credentials|endpoints|handlers|callers|consumers|writers|readers|tables|fields|keys|secrets|tokens|files|modules|services|workers|queues|jobs|events|states|phases";
 const COUNT_RE = new RegExp(`\\b(\\d{1,3}|two|three|four|five|six|seven|eight|nine|ten|twelve)\\s+(?:[\\w-]+\\s+){0,2}?(?:${COUNT_NOUNS})\\b`, "i");
@@ -3010,7 +3017,7 @@ export function lintLedger(text, file, tiers) {
         findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
       }
     }
-    if (usable && factOkAll && !ATTRIBUTION_RE.test(r.claim)) {
+    if (usable && factOkAll && !ATTRIBUTION_RE.test(r.claim) && !namesOwnSource(r.claim, r.source)) {
       findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — prefix an explicit attribution naming the source ("the study says", "per <doc>", "<doc> states", "in session") — fact rule`);
     }
     if (shaTier) {

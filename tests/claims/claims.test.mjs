@@ -216,3 +216,15 @@ test("D9 evidence-against fires on other ways to confirm a suspicion", () => {
   write(f, "# Findings\n\nThe loader is correct and the right default is 3 s.\n");
   assert.equal(gc(["claims", f], withDocIt ?? {}).code, 0, "plain 'correct' / 'right' without a suspicion is not a hypothesis claim");
 });
+
+test("D6 round 2: a hyphenated word + verb is attribution only when it names the row's own Source", { skip: skipNoDocIt }, () => {
+  for (const claim of ["Up-to-date states are terminal", "Long-running-job plans are rare", "Well-known-tool states its limits"]) {
+    const r = run([`| C3 | ${claim} | program-doc | \`docs/plan.md\` |`]);
+    assert.equal(r.code, 1, `${claim}: ${r.out}`);
+    assert.match(r.out, /fact rule/);
+  }
+  const ok = run([`| C23 | resumable-test-gates plans a nightly run | program-doc | \`docs/implementation/resumable-test-gates/README.md\` §3 |`]);
+  assert.equal(ok.code, 0, ok.out);
+  const wrongSrc = run([`| C23 | resumable-test-gates plans a nightly run | program-doc | \`docs/other.md\` |`]);
+  assert.equal(wrongSrc.code, 1, wrongSrc.out);
+});
