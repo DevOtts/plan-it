@@ -56,7 +56,7 @@ test("AT-01 / T-B-16 plan-it on fixture: full CLI writes valid status.json", { s
   assert.equal(tasks.length, 6);
   assert.ok(tasks.every((t) => t.status === "not-started"));
   assert.deepEqual(doc.sessions, []);
-  assert.equal(doc.history.length, 6);
+  assert.equal(doc.history.length, 6, `the writer recorded no "created" history entry per new task (writer: ${WRITER}); plan-it needs build-it's feat/created-history (463b656) merged`);
   for (const t of tasks) {
     const h = doc.history.filter((e) => e.task === t.id);
     assert.deepEqual(h.map((e) => [e.from, e.to, e.by, e.note]), [["not-started", "not-started", "plan-it", "created"]]);

@@ -14,6 +14,7 @@
  *   runs [--dir root] [--json]        list every plan-it run, live + archived, computed counts (v4 D-B8)
  *   mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (v4 D-B9)
  *   glossary <delivery-dir>           first-use ID coverage against GLOSSARY.md (v4 D-B10)
+ *   claims <claims.md> [findings.md...]  claim-ledger lint: tier enum (read from doc-it), source, sha/path, fact and count rules; evidence-against lint (do-it 1.1 L1)
  *
  * Zero npm dependencies — node: builtins only. Portable across macOS/Linux/Windows.
  * Authored by DevOtts (https://github.com/DevOtts).
@@ -242,7 +243,7 @@ function envFactsMarkdown(shape, rows) {
     "",
     `- shape: ${shape} (${rows.length}-probe set — formats.md §9)`,
     "- generated-by: `gate-check preflight` (deterministic; re-run to refresh)",
-    "- status vocabulary: PRESENT | ABSENT | TIMEOUT — ABSENT/TIMEOUT fail the preflight gate",
+    `- status vocabulary: PRESENT | ABSENT | TIMEOUT — ABSENT/TIMEOUT fail the preflight gate${rows.some((r) => r.status === "WARN") ? "; WARN is advisory and never counts as PASS" : ""}`,
     // v4 D-B12: optional 5th "tool" column — when a probe wraps another tool
     // (e.g. `node scripts/check-gh.mjs` really probes `gh`), an ABSENT/TIMEOUT
     // result blacklists only that declared tool, never every argv token.
@@ -289,6 +290,7 @@ function cmdPreflight(rawArgs) {
     else if (!Array.isArray(p.check) || p.check.length === 0) fail(`probe "${id}": "check" must be a non-empty argv array`);
   }
   for (const p of defs) {
+    if (GROUNDING_PROBES.includes(p.id)) continue; // do-it 1.1 V1: optional grounding probes, run after the required set
     if (!required.includes(p.id)) fail(`probe "${p.id}" is not in the ${shape}-shape set (exactly ${required.length} probes — formats.md §9)`);
   }
   if (failures.length > 0) return finish("preflight env facts");
@@ -318,6 +320,21 @@ function cmdPreflight(rawArgs) {
     }
     rows.push({ id, check: p.check.join(" "), status, evidence, tool: p.tool });
     (status === "PRESENT" ? ok : fail)(`${id}: ${status} — ${evidence}`);
+  }
+  // V1: grounding probes (opt-in by listing them in ENV-PROBES.json). WARN is advisory:
+  // it is recorded in ENV-FACTS.md and never fails the gate; doc-it missing is a WARN, never PASS.
+  const extraRows = [];
+  const br = byId.get("behind-remote");
+  if (br) {
+    const repos = Array.isArray(br.repos) && br.repos.length ? br.repos : ["."];
+    extraRows.push(...runBehindRemote(repos, target));
+  }
+  const sl = byId.get("shipped-layers");
+  if (sl) extraRows.push(runShippedLayers(sl, target, shape));
+  for (const r of extraRows) {
+    rows.push(r);
+    if (r.status === "WARN") console.log(`  ! ${r.id}: WARN — ${r.evidence}`);
+    else (r.status === "PRESENT" ? ok : fail)(`${r.id}: ${r.status} — ${r.evidence}`);
   }
   // ENV-FACTS.md is written even when probes fail: recording the facts IS the job.
   const factsPath = join(target, "ENV-FACTS.md");
@@ -736,6 +753,17 @@ function collectMdFiles(dir, out = []) {
 // derived output, not a hand-written board, so the hand-written-board lint below must not read it.
 const GENERATED_STATUS_MARKER = "<!-- generated from status.json by status-write; do not edit by hand -->";
 
+// ENV-FACTS.md is written by `preflight` (envFactsMarkdown). Its probe table has a `status` column whose
+// values are PRESENT | ABSENT | TIMEOUT: a probe record, not a STATUS board, so the 4-term board vocabulary
+// lint must not read it. Recognized by its first line (the generator's heading) — H1-06.
+function isEnvFacts(file) {
+  try {
+    return /^# ENV-FACTS\b/.test(readFileSync(file, "utf8").split("\n", 1)[0]);
+  } catch {
+    return false;
+  }
+}
+
 function isGeneratedStatus(file) {
   try {
     return readFileSync(file, "utf8").split("\n", 1)[0].trim() === GENERATED_STATUS_MARKER;
@@ -806,7 +834,8 @@ function cmdHandoff(rawArgs) {
   }
   const allFiles = collectMdFiles(dir);
   const generatedStatus = allFiles.filter(isGeneratedStatus);
-  const files = allFiles.filter((f) => !generatedStatus.includes(f));
+  const envFacts = allFiles.filter(isEnvFacts);
+  const files = allFiles.filter((f) => !generatedStatus.includes(f) && !envFacts.includes(f));
   if (generatedStatus.length) checkGeneratedStatus(dir, generatedStatus);
   if (files.length === 0) fail(`no .md files under ${dir}`);
 
@@ -1012,6 +1041,9 @@ function cmdHandoff(rawArgs) {
   } else if (allCaseIds.size > 0) {
     ok(`${allCaseIds.size} distinct test-case IDs found across ${files.length} files`);
   }
+
+  // 5d. (do-it 1.1 L1-04, V1-03) claim ledger, shipped layers, new-layer citation, KICKOFF remote pin.
+  handoffTrustChecks(dir, rootFlag, rootFlag ? readState(rootFlag, runSlug) : null);
 
   // 6. Embedded reconcile (C-W5-04, Epic A4): same internal function, same
   // shared failures array, one finish() — never a subprocess, never
@@ -2806,6 +2838,464 @@ function cmdReadiness(rawArgs) {
   finish(label);
 }
 
+
+// ---------------------------------------------------------------- do-it 1.1 L1/V1: doc-it lookup, claim ledger, grounding
+// One rule to find doc-it (do-it 1.1 X10, D14): (1) env DOC_IT_CLI = absolute path
+// to doc-it.mjs; else (2) the newest installed plugin copy
+// ~/.claude/plugins/cache/<marketplace>/doc-it/<version>/scripts/doc-it.mjs
+// (HOME-relative, so a test can point HOME at a temp dir); else (3) null — the
+// caller prints `[skip] doc-it not installed: <what>` and never reports PASS.
+function cmpVersion(a, b) {
+  const pa = String(a).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  const pb = String(b).split(/[.-]/).map((x) => parseInt(x, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+export function findDocIt(env = process.env) {
+  const envCli = env.DOC_IT_CLI;
+  if (envCli && existsSync(envCli)) return envCli;
+  const home = env.HOME || env.USERPROFILE;
+  if (!home) return null;
+  const cache = join(home, ".claude", "plugins", "cache");
+  const found = [];
+  try {
+    for (const mk of readdirSync(cache)) {
+      const dir = join(cache, mk, "doc-it");
+      let vers;
+      try { vers = readdirSync(dir); } catch { continue; }
+      for (const v of vers) {
+        const cli = join(dir, v, "scripts", "doc-it.mjs");
+        if (existsSync(cli)) found.push({ v, cli });
+      }
+    }
+  } catch { return null; }
+  if (found.length === 0) return null;
+  found.sort((a, b) => cmpVersion(b.v, a.v));
+  return found[0].cli;
+}
+
+export function docItSkipLine(what) {
+  return `[skip] doc-it not installed: ${what}`;
+}
+
+// The tier enum and every Tier cell's resolution are read at runtime from doc-it (X13), never copied.
+// Returns null without doc-it, { unusable: reason } for a broken install, else
+// { ids, needsSha, resolve(cell) }. resolve() calls `doc-it tiers resolve "<cell>"` once per distinct cell.
+export function readDocItTiers(cli) {
+  if (!cli) return null;
+  const r = spawnSync("node", [cli, "tiers", "--json"], { encoding: "utf8", timeout: 15000 });
+  if (r.status !== 0) return { unusable: `tiers --json exited ${r.status ?? r.signal ?? "?"}: ${firstLine(r.stderr || r.stdout) || "no output"}` };
+  try {
+    const j = JSON.parse(r.stdout);
+    if (!Array.isArray(j.tiers) || !j.tiers.length) return { unusable: "tiers --json listed no tiers" };
+    // "needs a sha" is driven by doc-it's own format string (contains <sha>), not a literal tier id.
+    const needsSha = new Set((j.details ?? []).filter((d) => /<sha>/.test(String(d.format ?? ""))).map((d) => d.id));
+    const cache = new Map();
+    const resolve = (cell) => {
+      if (cache.has(cell)) return cache.get(cell);
+      const rr = spawnSync("node", [cli, "tiers", "resolve", cell], { encoding: "utf8", timeout: 15000 });
+      let out;
+      if (rr.status === 0) {
+        try { out = { parts: JSON.parse(rr.stdout).parts ?? [] }; } catch { out = { broken: "unparseable doc-it tiers resolve output" }; }
+      } else if (rr.status === 1) {
+        let unknown = [cell];
+        try { unknown = JSON.parse(rr.stdout.split("\n")[0]).unknown ?? unknown; } catch { /* keep cell */ }
+        out = { unknown };
+      } else {
+        out = { broken: `tiers resolve exited ${rr.status ?? rr.signal ?? "?"}: ${firstLine(rr.stderr || rr.stdout) || "no output"}` };
+      }
+      cache.set(cell, out);
+      return out;
+    };
+    return { ids: j.tiers, needsSha, resolve };
+  } catch { return { unusable: "tiers --json is not valid JSON" }; }
+}
+
+// What to print when a doc-it check cannot run: "not installed" (no CLI) or "unusable (<reason>)" (broken install).
+function docItSkip(tiers, what) {
+  return tiers && tiers.unusable ? `[skip] doc-it unusable (${tiers.unusable}): ${what}` : docItSkipLine(what);
+}
+
+const SHA_RE = /\b(?=[0-9a-f]*\d)(?=[0-9a-f]*[a-f])[0-9a-f]{7,40}\b/;
+const PATH_LINE_RE = /[\w./-]+\.\w{1,6}:\d+/;
+const FILE_PATH_RE = /[\w.-]+\/[\w./-]*\.\w{1,6}\b|\b[\w-]+\.(?:mjs|js|ts|md|json|yaml|yml|sh|py|html)\b/;
+// D6 (CP-02): attribution must be an explicit frame naming a source, never a bare verb. "Two machine states
+// are terminal" is a plain fact; "the study says …", "per <doc>", "<doc> states …", "according to …",
+// "in session …", "in this run …" are attributions.
+const SRC_NOUN = "(?:study|studies|doc|docs|document|plan|spec|prd|report|brief|readme|ledger|transcript|chat|session|kickoff|decisions?|contract|proposal|roadmap|memo|ticket|issue|thread|email|message|owner|author|reviewer|audit|finding|findings|handoff|guide|manual|notes?|register)";
+const ATTR_VERB = "(?:says?|said|states?|stated|describes?|described|plans?|planned|reports?|reported|names?|named|specif(?:y|ies|ied)|proposes?|proposed|claims?|claimed|documents?|documented|notes?|noted|mentions?|mentioned|writes?|wrote|lists?|listed|promises?|promised|expects?|expected|records?|recorded)";
+// Present-tense verbs that are also plural nouns ("states", "records", "names", "reports"…) only count when
+// followed by "that" or ":"; unambiguous verbs count on their own (CP-02 round 2, R2-M1).
+const VERB_AMBIG = "(?:states|plans|names|records|reports|notes|lists|documents|claims|promises|expects|writes)";
+const VERB_PLAIN = "(?:says|said|stated|describes|described|proposes|proposed|specifies|specified|mentions|mentioned|wrote|reported|planned|documented|claimed|noted|listed|recorded|promised|expected|names\\s+`)";
+const VERB_OK = `(?:${VERB_PLAIN}|${VERB_AMBIG}(?=\\s+that\\b|\\s*:))`;
+const ATTRIBUTION_RE = new RegExp([
+  `\\baccording to\\b`,
+  // "per <path | `x` | the <source noun>>", never "per run" / "per day"
+  `(?:^|[,;:(\\u2014-]\\s*)per\\s+(?:\x60[^\x60]+\x60|[\\w-]*[./][\\w./-]+|the\\s+(?:[\\w-]+\\s+){0,2}?${SRC_NOUN}\\b)`,
+  `\\b(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?[\\w-]*${SRC_NOUN}\\s+${VERB_OK}`,
+  // a file path is always a subject, so any attribution verb counts after it
+  `\\b[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+${ATTR_VERB}\\b`,
+  `\\b[\\w-]*-(?:doc|spec|plan|report|study)\\s+${VERB_OK}`,
+  // "in this run …" / "in session …" open the claim, or close a clause ("in this run:"), or name the session
+  `^\\s*in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\\b`,
+  `\\bin (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)(?=\\s*[,:;.)]|\\s*$)`,
+  `^\\s*in session\\b`,
+  `\\bin session\\s+(?:\x60[^\x60]+\x60|"[^"]+"|[a-z0-9]+(?:-[a-z0-9]+)+)`,
+].join("|"), "i");
+// A hyphenated package/doc identifier followed by an attribution verb ("resumable-test-gates plans …") counts as
+// attribution ONLY when that identifier also appears in the row's own Source cell: it then names the source.
+// "Up-to-date states are terminal" names nothing in its Source, so it stays a plain fact (CP-02 round 2, D6).
+// A package/program identifier (2+ hyphens) followed by an attribution verb counts as attribution only when the
+// row's Source names that identifier as a whole PATH SEGMENT or a whole backticked token (a file, folder or
+// package), never in prose and never as a substring: `docs/x/resumable-test-gates/README.md` names it; "the
+// up-to-date check" and `pre-run-hook.mjs` do not (CP-02 rounds 2-3).
+const ID_VERB_RE = new RegExp(`(?:^|[^\\w-])([a-z0-9]+(?:-[a-z0-9]+){2,})\\s+${ATTR_VERB}\\b`, "gi");
+function sourceIds(source) {
+  const ids = new Set();
+  const s = String(source || "").toLowerCase();
+  for (const m of s.matchAll(/`([^`]+)`/g)) ids.add(m[1].trim());
+  for (const m of s.matchAll(/[\w.-]*\/[\w./-]+|[\w-]+\.[a-z]{1,6}\b/g)) for (const seg of m[0].split("/")) { ids.add(seg); ids.add(seg.replace(/\.[a-z0-9]{1,6}$/, "")); }
+  return ids;
+}
+function namesOwnSource(claim, source) {
+  const ids = sourceIds(source);
+  for (const m of String(claim || "").matchAll(ID_VERB_RE)) if (ids.has(m[1].toLowerCase())) return true;
+  return false;
+}
+// CP-02 round 3 (structural): for a tier that may not be stated as fact, the claim must BEGIN with one of seven
+// closed attribution openers. A pattern found anywhere else in the claim never counts (formats.md §11).
+const PLAIN_VERB = "(?:says|said|describes|proposes|specifies|mentions|wrote|explains)";
+const NOUN_WORD = `(?:[\\w]+-)*${SRC_NOUN}`; // "program-doc" ok; "possession" is not "session" (word boundary)
+const OPENERS = [
+  /^according to\s+[^,]{2,},/i,                                                                    // 1
+  new RegExp(`^per\\s+(?:\x60[^\x60]+\x60|\\S*\\/\\S*|[\\w-]+\\.[a-z]{1,6}|the\\s+(?:[\\w-]+\\s+){0,3}?\\b${NOUN_WORD}\\b)\\s*,`, "i"), // 2
+  /^in session\s+(?:`[^`]+`|"[^"]+"|[a-z0-9]+(?:-[a-z0-9]+)+)/i,                                   // 3
+  /^in (?:this|that|the|our) (?:run|session|chat|transcript|study|doc)\s*[,:]/i,                     // 4
+  new RegExp(`^(?:the|this|that|our|its|their)\\s+(?:[\\w./-]+\\s+){0,3}?\\b${NOUN_WORD}\\s+${PLAIN_VERB}\\b`, "i"), // 5
+  // 6a file.ext subject: an unambiguous verb, or an attribution verb followed by a determiner/number/backtick/that/":"
+  new RegExp(`^[\\w./-]+\\.(?:md|json|mjs|ya?ml|html|txt)\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}(?=\\s+(?:(?:the|a|an|that|every|each|all|no|two|three|four|five|six|seven|eight|nine|ten)\\b|\\d|\x60)|\\s*:))`, "i"),
+  new RegExp(`^\x60[^\x60]+\x60\\s+(?:${PLAIN_VERB}\\b|${ATTR_VERB}\\s*:)`, "i"),                     // 6b backticked subject
+];
+function startsWithAttribution(claim, source) {
+  const c = String(claim || "").trim();
+  if (OPENERS.some((re) => re.test(c))) return true;
+  const m = c.match(new RegExp(`^([a-z0-9]+(?:-[a-z0-9]+){2,})\\s+${ATTR_VERB}\\b`, "i"));            // 7
+  return Boolean(m && sourceIds(source).has(m[1].toLowerCase()));
+}
+const NUM_WORDS = { two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12 };
+const COUNT_NOUNS = "ways|kinds|types|modes|layers|methods|routes|paths|sources|options|steps|stages|roads|tiers|commands|flags|hooks|variants|places|registries|channels|mechanisms|checks|entry points|entrypoints|credentials|endpoints|handlers|callers|consumers|writers|readers|tables|fields|keys|secrets|tokens|files|modules|services|workers|queues|jobs|events|states|phases";
+const COUNT_RE = new RegExp(`\\b(\\d{1,3}|two|three|four|five|six|seven|eight|nine|ten|twelve)\\s+(?:[\\w-]+\\s+){0,2}?(?:${COUNT_NOUNS})\\b`, "i");
+const SRC_COMMAND_RE = /`\s*(?:git|grep|rg|ls|find|cat|wc|node|gh|cmp|diff|awk|jq|sed|curl|npm)\b[^`]*`/i;
+// D8: a backticked command only satisfies the count rule when it actually counts.
+const COUNTING_CMD_RE = /\bwc\b|\bgrep\b[^`]*\s-\w*c\w*\b|\|\s*wc\b|\blength\b|\bcount\b|\buniq\s+-c\b|\brg\b[^`]*\s-\w*c\w*\b|\bnl\b/i;
+const isCountingCmd = (src) => [...src.matchAll(/`[^`]*`/g)].some((m) => SRC_COMMAND_RE.test(m[0]) && COUNTING_CMD_RE.test(m[0]));
+
+function splitCells(line) {
+  return line.trim().replace(/^\|/, "").replace(/\|\s*$/, "").split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, "|"));
+}
+
+export function parseLedger(text) {
+  const lines = text.split(/\r?\n/);
+  const hi = lines.findIndex((l) => /^\s*\|\s*ID\s*\|\s*Claim\s*\|\s*Tier\s*\|\s*Source\s*\|/i.test(l));
+  if (hi === -1) return null;
+  const rows = [];
+  for (let i = hi + 2; i < lines.length && /^\s*\|/.test(lines[i]); i++) {
+    const c = splitCells(lines[i]);
+    rows.push({ line: i + 1, id: c[0] ?? "", claim: c[1] ?? "", tier: c[2] ?? "", source: c[3] ?? "", raw: lines[i] });
+  }
+  return { preamble: lines.slice(0, hi).join("\n"), rows };
+}
+
+// No-doc-it fallback only: plan-it has no tier-cell parser of its own. With doc-it, every cell is resolved by
+// `doc-it tiers resolve` (D7); without it, only the two ids the sha/path rule needs are recognised, loosely.
+function tierWordsNoDocIt(cell) {
+  return cell.replace(/\([^)]*\)/g, " ").split(/\s*(?:\+|,|\/|&|\band\b)\s*/i).map((w) => w.replace(/`/g, "").replace(/@.*$/, "").trim().toLowerCase()).filter(Boolean);
+}
+
+// Pure core: returns { findings: string[], skipped: string[], rows, skippedRules: string[] }.
+export function lintLedger(text, file, tiers) {
+  const findings = [];
+  const skipped = [];
+  const skippedRules = [];
+  const usable = tiers && !tiers.unusable ? tiers : null;
+  const led = parseLedger(text);
+  if (!led) return { findings: [`${file}: no claim-ledger table found (header must be | ID | Claim | Tier | Source |)`], skipped, skippedRules, rows: 0 };
+  if (!usable) {
+    skipped.push(docItSkip(tiers, "tier enum"));
+    skipped.push(docItSkip(tiers, "fact rule (tier fact_ok flags)"));
+    skippedRules.push("tier enum", "fact rule");
+  }
+  const pinned = SHA_RE.test(led.preamble);
+  for (const r of led.rows) {
+    const at = `${file}:${r.line}: row ${r.id || "(no id)"}`;
+    if (!r.id) findings.push(`${at}: id missing`);
+    if (!r.claim) findings.push(`${at}: claim text missing`);
+    let ids = [];
+    let factOkAll = false;
+    if (!r.tier.trim()) findings.push(`${at}: tier missing — tier enum rule`);
+    else if (usable) {
+      const res = usable.resolve(r.tier);
+      if (res.broken) findings.push(`${at}: tier "${r.tier.trim()}" could not be resolved by doc-it (${res.broken}) — tier enum rule`);
+      else if (res.unknown) findings.push(`${at}: tier "${r.tier.trim()}" is refused by doc-it (${res.unknown.map((u) => `"${u}"`).join(", ")} unknown; enum: ${usable.ids.join(", ")}) — tier enum rule`);
+      else {
+        ids = res.parts.map((x) => x.id);
+        factOkAll = res.parts.length > 0 && res.parts.every((x) => x.fact_ok === false);
+      }
+    } else {
+      ids = tierWordsNoDocIt(r.tier);
+    }
+    if (!r.source || /^[-—\s]*$/.test(r.source)) findings.push(`${at}: source missing — source present rule`);
+    // The Tier cell is part of the row text: `code@a1b2c3d` carries its own sha.
+    const rowText = `${r.claim} ${r.tier} ${r.source}`;
+    const shaTier = usable ? ids.some((id) => usable.needsSha.has(id)) : ids.some((w) => w === "code" || w === "git");
+    if (shaTier) {
+      if (!(SHA_RE.test(rowText) || PATH_LINE_RE.test(rowText) || FILE_PATH_RE.test(rowText) || pinned)) {
+        findings.push(`${at}: tier ${r.tier.trim()} has no sha, repo@sha, path:line or file path anywhere in the row — sha/path rule`);
+      }
+    }
+    if (usable && factOkAll && !startsWithAttribution(r.claim, r.source)) {
+      findings.push(`${at}: tier ${r.tier.trim()} stated as plain fact — start the claim with an attribution opener ("According to <source>,", "Per <doc>,", "In session \`<id>\`", "In this run,", "The <doc> says/describes …", "<file.md> states …") — fact rule`);
+    }
+    if (shaTier) {
+      const m = r.claim.replace(/`[^`]*`/g, " ").match(COUNT_RE);
+      if (m) {
+        const n = /^\d/.test(m[1]) ? Number(m[1]) : NUM_WORDS[m[1].toLowerCase()];
+        const items = r.source.replace(/`[^`]*`/g, (x) => (SRC_COMMAND_RE.test(x) ? "" : x)).split(/[,;]|\s\+\s|\n/).filter((x) => x.trim()).length;
+        if (!isCountingCmd(r.source) && !(n <= 12 && items >= n)) {
+          findings.push(`${at}: states a count ("${m[0]}") with tier code but the source gives neither the list nor a command that counts it (wc -l, grep -c, | wc, length) — count rule`);
+        }
+      }
+    }
+  }
+  return { findings, skipped, skippedRules, rows: led.rows.length };
+}
+
+// L1-03: a findings doc that confirms a suspicion must carry an "Evidence against" section.
+const CONFIRM_RE = new RegExp([
+  String.raw`\b(?:suspicion|hypothesis|suspected)\b[^.\n]{0,60}\bconfirm(?:ed|s)?\b`,
+  String.raw`\bconfirm(?:ed|s)?\b[^.\n]{0,40}\b(?:suspicion|hypothesis)\b`,
+  // D9: the same claim in other words
+  String.raw`\bas you (?:suspected|guessed|thought|expected)\b`,
+  String.raw`\byou(?:'re| are| were) (?:right|correct)\b`,
+  String.raw`\b(?:the )?(?:hypothesis|suspicion|hunch|theory) (?:holds|is (?:right|correct|true)|was (?:right|correct))\b`,
+  String.raw`\b(?:suspect(?:ed)?|suspicion|theory|hunch|guess|hypothesis)\b[^.\n]{0,60}\b(?:right|correct|holds|true|borne out|bears out)\b`,
+].join("|"), "i");
+export function lintEvidenceAgainst(text, file) {
+  const stripped = text.replace(/```[\s\S]*?```/g, "");
+  const m = stripped.match(CONFIRM_RE);
+  if (!m) return [];
+  const lines = stripped.split(/\r?\n/);
+  const hi = lines.findIndex((l) => /^#{1,6}\s.*evidence against/i.test(l));
+  if (hi !== -1) {
+    const level = lines[hi].match(/^#+/)[0].length;
+    let body = 0;
+    for (let i = hi + 1; i < lines.length; i++) {
+      const h = lines[i].match(/^(#+)\s/);
+      if (h && h[1].length <= level) break;
+      if (lines[i].trim()) body++;
+    }
+    if (body > 0) return [];
+    return [`${file}: confirms a suspicion ("${m[0].trim()}") and its "Evidence against" heading is empty — evidence against rule`];
+  }
+  return [`${file}: confirms a suspicion ("${m[0].trim()}") but has no "Evidence against" heading — evidence against rule (state what would contradict it, and what you found)`];
+}
+
+// D4: never say "clean" about a rule that was skipped.
+function ledgerCleanLine(f, res) {
+  return res.skippedRules.length
+    ? `${f}: ${res.rows} row(s) — source, sha/path and count rules clean; ${res.skippedRules.join(" and ")} SKIPPED (${skipReason(res)})`
+    : `${f}: ${res.rows} row(s) — source, sha/path, count, tier enum and fact rules clean`;
+}
+function skipReason(res) { return /unusable/.test(res.skipped[0] ?? "") ? "doc-it unusable" : "doc-it not installed"; }
+
+function cmdClaims(rawArgs) {
+  const files = rawArgs.filter((a) => !a.startsWith("--"));
+  if (files.length === 0) {
+    fail("claims: usage: gate-check claims <claims.md> [findings.md...]");
+    return finish("claim ledger");
+  }
+  const cli = findDocIt();
+  const tiers = readDocItTiers(cli);
+  const seenSkips = new Set();
+  let skippedChecks = 0;
+  for (const f of files) {
+    if (!existsSync(f)) { fail(`claims: ${f} not found`); continue; }
+    const text = readFileSync(f, "utf8");
+    const isLedger = parseLedger(text) !== null || /(^|[\\/])claims\.md$/i.test(f);
+    if (isLedger) {
+      const res = lintLedger(text, f, tiers);
+      for (const m of res.findings) fail(m);
+      for (const s of res.skipped) { if (!seenSkips.has(s)) { console.log(s); skippedChecks++; } seenSkips.add(s); }
+      if (res.findings.length === 0) ok(ledgerCleanLine(f, res));
+    }
+    for (const m of lintEvidenceAgainst(text, f)) fail(m);
+  }
+  finish(skippedChecks ? `claim ledger (${skippedChecks} checks skipped)` : "claim ledger");
+}
+
+// ---- V1: grounding helpers
+export function readSize(pkgRoot, runState) {
+  const norm = (v) => (typeof v === "string" && /^[SML]$/i.test(v.trim()) ? v.trim().toUpperCase() : null);
+  const fromState = norm(runState?.size);
+  if (fromState) return fromState;
+  try {
+    const plan = JSON.parse(readFileSync(join(pkgRoot, "plan.json"), "utf8"));
+    const v = norm(plan.size) ?? norm(plan.implementation?.size);
+    if (v) return v;
+  } catch { /* none */ }
+  for (const rel of ["delivery/SCOPE-BRIEF.md", "SCOPE-BRIEF.md"]) {
+    try {
+      const m = readFileSync(join(pkgRoot, rel), "utf8").match(/\bsize\s*[:=]?\s*\**\s*([SML])\b/i);
+      if (m) return m[1].toUpperCase();
+    } catch { /* none */ }
+  }
+  return null;
+}
+
+// V1-03 narrow rule: a "## " section of docs/02-*.md whose prose says it adds /
+// introduces / proposes a NEW registry, layer or road (verb + up to 3 words +
+// registry|layer|road) must contain the word "extends" (or "none applies").
+const NEW_LAYER_RE = /\b(?:adds?|adding|introduc(?:e|es|ing)|propos(?:e|es|ing)|creates?|creating)\s+(?:a|an|the|one|another)?\s*(?:new\s+)?(?:[\w-]+\s+){0,2}(?:registry|layer|road)\b/i;
+export function lintNewLayers(text, file) {
+  const out = [];
+  const body = text.replace(/```[\s\S]*?```/g, "");
+  const parts = body.split(/^(?=##\s)/m);
+  for (const sec of parts) {
+    const head = (sec.match(/^##\s+([^\n]*)/) ?? [null, "(preamble)"])[1].trim();
+    if (!NEW_LAYER_RE.test(sec)) continue;
+    if (/\bextends\b/i.test(sec) || /\bnone applies\b/i.test(sec)) continue;
+    out.push(`${file}: section "${head}" proposes a new registry/layer/road with no "extends" citation — name the shipped layer it extends, or state "none applies" with a reason (shipped-layers rule)`);
+  }
+  return out;
+}
+
+function runBehindRemote(repos, cwd) {
+  const rows = [];
+  const cli = findDocIt();
+  if (!cli) {
+    console.log(docItSkipLine("behind-remote (is the checkout behind origin)"));
+    return repos.map((repo) => ({ id: "behind-remote", check: "doc-it check checkout", status: "WARN", evidence: `doc-it not installed — ${repo}: UNVERIFIED — behind-origin check not run` }));
+  }
+  for (const repo of repos) {
+    const abs = resolve(cwd, repo);
+    const r = spawnSync("node", [cli, "check", "checkout", abs, "--json"], { encoding: "utf8", timeout: PROBE_TIMEOUT_MS * 3, killSignal: "SIGKILL" });
+    let j = null;
+    try { j = JSON.parse(r.stdout)[0]; } catch { /* below */ }
+    const check = `doc-it check checkout ${repo}`;
+    if (!j) {
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo}: UNVERIFIED — unparseable doc-it output: ${(firstLine(r.stderr || r.stdout) || `exit ${r.status}`).replace(/\|/g, "/").slice(0, 160)}` });
+    } else if (j.status === "behind") {
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo} is ${j.behind} behind origin/${j.default_branch}: local ${j.local}, remote ${j.remote}` });
+    } else if (j.status === "ok" && /^[0-9a-f]{7,40}$/.test(String(j.local)) && /^[0-9a-f]{7,40}$/.test(String(j.remote))) {
+      rows.push({ id: "behind-remote", check, status: "PRESENT", evidence: `${repo} up to date: local ${j.local}, remote ${j.remote}` });
+    } else {
+      // D3 (CP-02): only doc-it's own ok/up-to-date answer is PRESENT. error (not a repo, fetch failed,
+      // offline), an unknown status or a malformed ok is UNVERIFIED: WARN with the reason, never PRESENT.
+      const why = j.status === "error" ? String(j.message ?? "doc-it reported an error") : `unknown status ${j.status}`;
+      rows.push({ id: "behind-remote", check, status: "WARN", evidence: `${repo}: UNVERIFIED — ${why.replace(/\s+/g, " ").replace(/\|/g, "/").slice(0, 200)}` });
+    }
+  }
+  return rows;
+}
+
+function runShippedLayers(def, cwd, shape) {
+  const rel = def.path ?? "research/SHIPPED-LAYERS.md";
+  const p = resolve(cwd, rel);
+  const check = `test -s ${rel}`;
+  if (shape === "S") return { id: "shipped-layers", check, status: "PRESENT", evidence: "not required for size S" };
+  let size = -1;
+  try { size = statSync(p).size; } catch { /* absent */ }
+  if (size > 0) return { id: "shipped-layers", check, status: "PRESENT", evidence: `${rel} present, ${size} bytes` };
+  return { id: "shipped-layers", check, status: "WARN", evidence: `${rel} ${size === 0 ? "is empty" : "not written yet"} — gate-check handoff fails size ${shape} without it` };
+}
+
+const GROUNDING_PROBES = ["behind-remote", "shipped-layers"];
+
+export function initItInstalled(env = process.env) {
+  const home = env.HOME || env.USERPROFILE;
+  if (!home) return false;
+  if (existsSync(join(home, ".claude", "skills", "init-it"))) return true;
+  const cache = join(home, ".claude", "plugins", "cache");
+  try {
+    return readdirSync(cache).some((mk) => existsSync(join(cache, mk, "init-it")));
+  } catch { return false; }
+}
+
+// handoff check: V1-03 + L1-04 (+ KICKOFF remote-sha pin). Shares the failures[] of cmdHandoff.
+function handoffTrustChecks(dir, rootFlag, runState) {
+  const pkg = basename(resolve(dir)) === "delivery" ? dirname(resolve(dir)) : resolve(dir);
+  const size = readSize(pkg, runState);
+  const docs02 = existsSync(join(pkg, "docs")) && readdirSync(join(pkg, "docs")).some((x) => /^02-.*\.md$/.test(x));
+  if (size === null && docs02) {
+    // D10: fail closed — an undeclared size must not silently skip the shipped-layers rule.
+    fail(`shipped-layers: size undeclared — cannot decide shipped-layers (docs/02-* exists but no size in run state, plan.json or SCOPE-BRIEF; declare S, M or L)`);
+  }
+  if (size === "M" || size === "L") {
+    // D5: G-7 is not opt-in for M/L — ENV-PROBES.json must list the behind-remote probe.
+    const probesPath = [join(pkg, "ENV-PROBES.json"), join(resolve(dir), "ENV-PROBES.json")].find(existsSync);
+    let listed = false;
+    if (probesPath) { try { listed = (JSON.parse(readFileSync(probesPath, "utf8")).probes ?? []).some((q) => q && q.id === "behind-remote"); } catch { /* unparseable = not listed */ } }
+    if (!listed) fail(`preflight: size ${size} package's ${probesPath ?? join(pkg, "ENV-PROBES.json") + " (not found)"} lists no "behind-remote" probe — G-7 is not opt-in for M/L (add {"id":"behind-remote","repos":[<every repo the plan reads>]})`);
+    else ok(`preflight: behind-remote probe listed in ${probesPath}`);
+    const sl = join(pkg, "research", "SHIPPED-LAYERS.md");
+    let n = 0;
+    try { n = readFileSync(sl, "utf8").trim().length; } catch { /* absent */ }
+    if (n === 0) fail(`shipped-layers: size ${size} package needs a non-empty ${sl} — the last weeks of shipped work, session cards and decision registers, each with a one-line "what it shipped" (template: references/templates.md)`);
+    else ok(`shipped-layers: ${sl} present`);
+  }
+  const docsDir = join(pkg, "docs");
+  if (existsSync(docsDir)) {
+    for (const n of readdirSync(docsDir).filter((x) => /^02-.*\.md$/.test(x))) {
+      const msgs = lintNewLayers(readFileSync(join(docsDir, n), "utf8"), join(docsDir, n));
+      for (const m of msgs) fail(m);
+      if (msgs.length === 0) ok(`${join(docsDir, n)}: every new registry/layer/road cites what it extends`);
+    }
+    for (const n of readdirSync(docsDir).filter((x) => /^01-.*\.md$/.test(x))) {
+      const msgs = lintEvidenceAgainst(readFileSync(join(docsDir, n), "utf8"), join(docsDir, n));
+      for (const m of msgs) fail(m);
+    }
+  }
+  // I1-03: the hand-off ends with `run /init-it <name> --role build`; say so when init-it is absent.
+  if (!initItInstalled()) console.log("  ! init-it not installed — install the init-it plugin, then run /init-it <implementation name> --role build");
+  // L1-04: decision-grade = audit/claims.md exists, or run state says run.decisionGrade === true.
+  const claims = join(pkg, "audit", "claims.md");
+  const decisionGrade = existsSync(claims) || runState?.run?.decisionGrade === true;
+  if (decisionGrade) {
+    if (!existsSync(claims)) fail(`claims: decision-grade package (run.decisionGrade) has no ${claims} — G-5`);
+    else {
+      const tiers = readDocItTiers(findDocIt());
+      const res = lintLedger(readFileSync(claims, "utf8"), claims, tiers);
+      for (const m of res.findings) fail(m);
+      for (const s of res.skipped) console.log(s);
+      if (res.findings.length === 0) ok(res.skippedRules.length ? `${claims}: claim ledger ${res.rows} rows — source, sha/path and count rules clean; ${res.skippedRules.join(" and ")} SKIPPED (${skipReason(res)})` : `${claims}: claim ledger clean (${res.rows} rows)`);
+    }
+  }
+  // KICKOFF pins the remote sha of a repo the preflight found behind.
+  const factsPath = [join(pkg, "ENV-FACTS.md"), join(resolve(dir), "ENV-FACTS.md")].find(existsSync);
+  const kickoff = [join(resolve(dir), "KICKOFF.md"), join(pkg, "KICKOFF.md")].find(existsSync);
+  if (factsPath && kickoff) {
+    const kt = readFileSync(kickoff, "utf8");
+    for (const line of readFileSync(factsPath, "utf8").split(/\r?\n/)) {
+      if (!/^\|\s*behind-remote\s*\|/.test(line) || !/\|\s*WARN\s*\|/.test(line)) continue;
+      // D3: an UNVERIFIED repo (doc-it could not tell) still needs the pin, or the KICKOFF must say so explicitly.
+      const un = line.match(/(\S+): UNVERIFIED — /);
+      if (un) {
+        const said = kt.split(/\r?\n/).some((l) => l.includes(un[1]) && /unverified|not verified|could not verify/i.test(l));
+        const pinned = /\b[0-9a-f]{40}\b/.test(kt) || /\b(?:remote|origin)[^\n]{0,40}\b[0-9a-f]{7,40}\b/i.test(kt);
+        if (!said && !pinned) fail(`${kickoff}: preflight could not verify ${un[1]} is current (${line.split("UNVERIFIED — ")[1]?.split("|")[0].trim()}) — pin the remote sha, or state in the KICKOFF that ${un[1]} is unverified`);
+        continue;
+      }
+      const m = line.match(/behind origin\/\S+: local ([0-9a-f]{7,40}), remote ([0-9a-f]{7,40})/);
+      if (m && !kt.includes(m[2].slice(0, 7))) fail(`${kickoff}: pins no remote sha for a repo the preflight found behind (remote ${m[2]}, local ${m[1]}) — pin the remote sha, not the stale local checkout`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------- main
 const commands = {
   verify: cmdVerify,
@@ -2825,6 +3315,7 @@ const commands = {
   mirror: cmdMirror,
   glossary: cmdGlossary,
   readiness: cmdReadiness,
+  claims: cmdClaims,
 };
 
 // Import-safe: dispatch only when run as a CLI, so tests can import the
@@ -2846,8 +3337,13 @@ function isMainModule(argv1) {
 const isMain = isMainModule(process.argv[1]);
 if (isMain) {
   const [, , cmd, ...args] = process.argv;
+  // --help is a usage query, not an error: exit 0 with the usage on stdout (H1-06, T-H1-04).
+  if (cmd === "--help" || cmd === "-h" || cmd === "help") {
+    console.log("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness|claims> [args...]");
+    process.exit(0);
+  }
   if (!cmd || !(cmd in commands)) {
-    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness> [args...]");
+    console.error("usage: gate-check <verify|freeze|handoff|state|contract|testconv|reconcile|preflight|machine-diff|adversary|pluginlint|mirror-check|archive|runs|mirror|glossary|readiness|claims> [args...]");
     console.error("  verify  <path...>                    files/dirs exist and are non-empty");
     console.error("  freeze  <CONTRACT.md|--dir repo-root> [--draft] [--run <slug>]  frozen-contract structural check (+ casesReviewed in --dir mode, skipped under --draft; incl. RUN-POLICY)");
     console.error("  handoff <delivery-dir|--dir repo-root>  pre-handoff consistency lint (+ embedded reconcile)");
@@ -2864,6 +3360,7 @@ if (isMain) {
     console.error("  runs [--dir repo-root] [--json]      list every plan-it run (live + archived), computed counts");
     console.error("  mirror <md> <html> | mirror --dir <delivery> [--require-html]  stamp freshness (0 fresh · 2 stale · 1 unstamped/malformed)");
     console.error("  glossary <delivery-dir>              first-use ID coverage (1 = unknown ID, named file:line)");
+    console.error("  claims <claims.md> [findings.md...]  claim-ledger lint (tier enum from doc-it, source, sha/path, fact, count) + evidence-against lint");
     console.error("  readiness <READINESS.json|--dir repo-root>  G4 readiness check: plan/READINESS.json + plan/DECISIONS.md (G-8)");
     process.exit(1);
   }

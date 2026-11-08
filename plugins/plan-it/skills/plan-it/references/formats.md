@@ -298,5 +298,80 @@ A measurement with `read_only:false` in a rendered manifest is a render
 error (G-12) — this grammar never lets an unverified-write measurement
 move a verdict silently.
 
+## 11. Claim ledger and source tiers (`audit/claims.md`)
+
+A decision-grade package (one whose findings someone will act on) carries a claim
+ledger at `audit/claims.md`: one table, one row per factual claim in `docs/01`.
+
+```
+| ID | Claim | Tier | Source |
+|---|---|---|---|
+| C1 | do-it `origin/main` is at `d38cedb` | git | `git log origin/main -1` |
+```
+
+- **Tier** is a source tier. The enum is read at run time from `doc-it tiers --json`
+  and is never copied into this file. The aliases and the per-tier `fact_ok` flag come from
+  the same output (X13), so legacy ledger words (`git`, `local`, `durable-doc`, `program-doc`,
+  `transcript`) resolve through doc-it. A tier may carry a suffix
+  (`live@2026-11-06`), a parenthetical (`code (absence)`), or be a `+` pair.
+- `gate-check claims <claims.md> [findings.md...]` exits 0 clean, 1 with one finding per
+  row, each naming the row and the rule:
+  - **tier enum rule**: every tier is in the enum doc-it prints. Without doc-it the check
+    prints `[skip] doc-it not installed: tier enum` and the rule is neither run nor passed.
+  - **source present rule**: the Source cell is not empty.
+  - **sha/path rule**: tier `code` or `git` needs a sha, `repo@sha`, `path:line` or a file
+    path somewhere in the row (a sha pinned in the ledger preamble counts).
+  - **fact rule**: a row whose tiers all have `fact_ok: false` in doc-it's output may not read
+    as plain fact. The claim must START with one of these openers (case-insensitive):
+    1. `According to <source>,` · 2. `Per <`x` | path | file.ext | the <source noun>>,` (comma required) ·
+    3. ``In session `<id>` `` (or a quoted or hyphenated id) · 4. `In this|that|the|our run|session|chat|transcript|study|doc` then `,` or `:` ·
+    5. `The|This|That|Our|Its|Their [≤3 words] <source noun> says|said|describes|proposes|specifies|mentions|wrote|explains` ·
+    6. a `file.ext` subject with says|said|describes|proposes|specifies|mentions|wrote|explains, or another attribution verb followed by a determiner, a number, a backtick or `:`; a backticked subject with an unambiguous verb (or verb + `:`) ·
+    7. a 2+-hyphen identifier subject + attribution verb, only when that identifier is a whole `/` segment of a path or
+    backticked token in the row's Source. An attribution anywhere else in the claim does not count (CP-02 round 3).
+    Documented limits (accepted at CP-02 round 5, LOW): the idiom "According to plan, …"; "In session <hyphenated-word>";
+    "In the run, …" (form 4 by design); a deliberately evasive opener ("X says nothing; <fact>"); an identifier that is also a
+    code-file segment of the Source. The rule is strict and fails safe ("The issue tracker says …" is refused).
+  - **count rule**: a `code` claim that states a number of things ("5 credential ways",
+    "3 layers") needs the list of that many items, or a command that counts them, in Source.
+    Detection is by a fixed noun list (ways, kinds, types, modes, layers, methods, routes,
+    paths, sources, options, steps, stages, roads, tiers, commands, flags, hooks, variants,
+    places, registries, channels, mechanisms, checks, entry points, credentials, endpoints, handlers,
+    callers, consumers, writers, readers, tables, fields, keys, secrets, tokens, files, modules,
+    services, workers, queues, jobs, events, states, phases); a counting command must actually count
+    (`wc`, `grep -c`, `length`, `count`, `uniq -c`).
+- **Decision-grade** means `audit/claims.md` exists in the package, or the run state sets
+  `run.decisionGrade: true`. `gate-check handoff` then runs the same lint (G-5).
+- **Evidence against the hypothesis.** A findings doc that confirms a suspicion ("your
+  suspicion is confirmed", "the hypothesis is confirmed") must carry an `Evidence against`
+  heading with at least one line under it: what would contradict the suspicion and what was
+  found. `gate-check claims` and `gate-check handoff` (on `docs/01-*.md`) fail with
+  "evidence against rule" otherwise.
+
+## 12. Grounding probes (`behind-remote`, `shipped-layers`)
+
+Optional entries in `ENV-PROBES.json`, run by `gate-check preflight` after the required set.
+They have no `check` argv; the id selects a built-in probe.
+
+```
+{ "id": "behind-remote", "repos": ["../repo-a", "../repo-b"] }
+{ "id": "shipped-layers", "path": "research/SHIPPED-LAYERS.md" }
+```
+
+- `behind-remote` calls `doc-it check checkout <repo>` per repo. Behind gives status `WARN`
+  with the repo, local sha and remote sha; the `ENV-FACTS.md` row records both. Up to date
+  records the remote sha as PRESENT. Without doc-it the row is `WARN doc-it not installed`
+  and the `[skip]` line is printed; it is never PASS. `WARN` never fails the gate.
+- `shipped-layers` is PRESENT for size M/L when `research/SHIPPED-LAYERS.md` exists and is
+  non-empty, `WARN` while it is not written yet. `gate-check handoff` is the hard gate.
+- Pin the remote sha, not the stale local checkout, in KICKOFF. `gate-check handoff` fails a
+  KICKOFF that omits the remote sha of a repo the preflight found behind.
+
+Handoff also fails a size M/L package without `research/SHIPPED-LAYERS.md` (naming the file),
+and a `docs/02-*.md` section that adds or proposes a new registry, layer or road without the
+word `extends` (naming the section). Detection is narrow: a verb (adds, introduces, proposes,
+creates) plus up to three words plus `registry`, `layer` or `road`. State `none applies`, with
+a reason, when nothing shipped fits.
+
 ---
 _Authored by [DevOtts](https://github.com/DevOtts)._
