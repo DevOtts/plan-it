@@ -326,14 +326,20 @@ ledger at `audit/claims.md`: one table, one row per factual claim in `docs/01`.
     1. `According to <source>,` · 2. `Per <`x` | path | file.ext | the <source noun>>,` (comma required) ·
     3. ``In session `<id>` `` (or a quoted or hyphenated id) · 4. `In this|that|the|our run|session|chat|transcript|study|doc` then `,` or `:` ·
     5. `The|This|That|Our|Its|Their [≤3 words] <source noun> says|said|describes|proposes|specifies|mentions|wrote|explains` ·
-    6. a `file.ext` subject with any attribution verb, or a backticked subject with an unambiguous verb (or verb + `:`) ·
+    6. a `file.ext` subject with says|said|describes|proposes|specifies|mentions|wrote|explains, or another attribution verb followed by a determiner, a number, a backtick or `:`; a backticked subject with an unambiguous verb (or verb + `:`) ·
     7. a 2+-hyphen identifier subject + attribution verb, only when that identifier is a whole `/` segment of a path or
     backticked token in the row's Source. An attribution anywhere else in the claim does not count (CP-02 round 3).
+    Documented limits (accepted at CP-02 round 5, LOW): the idiom "According to plan, …"; "In session <hyphenated-word>";
+    "In the run, …" (form 4 by design); a deliberately evasive opener ("X says nothing; <fact>"); an identifier that is also a
+    code-file segment of the Source. The rule is strict and fails safe ("The issue tracker says …" is refused).
   - **count rule**: a `code` claim that states a number of things ("5 credential ways",
     "3 layers") needs the list of that many items, or a command that counts them, in Source.
     Detection is by a fixed noun list (ways, kinds, types, modes, layers, methods, routes,
     paths, sources, options, steps, stages, roads, tiers, commands, flags, hooks, variants,
-    places, registries, channels, mechanisms, checks).
+    places, registries, channels, mechanisms, checks, entry points, credentials, endpoints, handlers,
+    callers, consumers, writers, readers, tables, fields, keys, secrets, tokens, files, modules,
+    services, workers, queues, jobs, events, states, phases); a counting command must actually count
+    (`wc`, `grep -c`, `length`, `count`, `uniq -c`).
 - **Decision-grade** means `audit/claims.md` exists in the package, or the run state sets
   `run.decisionGrade: true`. `gate-check handoff` then runs the same lint (G-5).
 - **Evidence against the hypothesis.** A findings doc that confirms a suspicion ("your
