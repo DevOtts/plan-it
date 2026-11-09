@@ -3,6 +3,31 @@
 All notable changes to plan-it are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## 5.3.0 — 2026-11-08
+
+Minor release. The do-it 1.1 plan-it slice: claims are checked against their evidence, preflight
+refuses to plan from a stale checkout, and the installed layout works. IDs are the do-it 1.1 items.
+
+### Added
+- **L1-01, L1-02, L1-03, L1-04** (L1-01..04) Claim ledger format and `gate-check claims`. The tier enum comes from doc-it (X13),
+  read through `doc-it tiers --json`. Four rules: sha/path, count, evidence-against, and the fact
+  rule, a closed, start-anchored attribution opener (formats.md §11, with its documented limits).
+- **V1-01** Preflight probe `behind-remote`: calls doc-it `check checkout`, reports UNVERIFIED on
+  error, and is required for M/L plans (G-7). PRESENT only on a doc-it ok.
+- **V1-02** Preflight probe `shipped-layers`.
+- **V1-03** Handoff requires SHIPPED-LAYERS for M/L plans and a KICKOFF remote-sha pin; an
+  undeclared size fails closed.
+- **I1-03** The "init-it not installed" hint.
+- **K2-03** The `[skip] doc-it not installed` rule (D14).
+- **H1-06** `--help` on the scripts.
+
+### Fixed
+- **H1-06** SKILL command paths resolve in the installed layout (plugin-root path, including the
+  `claims` command); handoff ignores the generated `ENV-FACTS.md`.
+- **CP-02 D2** `run-contract.mjs` never reports a skipped case as PASS; a skipped node:test case is
+  IMPLEMENTED-NOT-VERIFIED unless `--allow-skips` is passed.
+- gate-check case IDs accept 1-3 letter epic prefixes.
+
 ## 5.2.0 — 2026-10-18
 
 Minor release. The first real run showed that the closing reviews assumed one merge of the whole

@@ -37,11 +37,11 @@ if (headIdx === -1) {
   const end = lines.findIndex((l, i) => i > headIdx && /^##\s/.test(l));
   const section = lines.slice(headIdx, end === -1 ? undefined : end).join("\n");
 
-  // Required ID set for the current (5.2.0) release. When cutting a later
+  // Required ID set for the current (5.3.0) release. When cutting a later
   // release, move these to that release's shipped IDs (same pattern as the
   // version literal in version-triple-match.mjs). The 3.0.1 patch's IDs
   // (M1, M2) now live in that release's own section.
-  const required = ["H-22"];
+  const required = ["L1-01", "L1-02", "L1-03", "L1-04", "V1-01", "V1-02", "V1-03", "I1-03", "K2-03", "H1-06", "CP-02"];
   for (const id of required) {
     // Escape regex metachars (the W3.1-x IDs contain '.' and '-').
     const re = new RegExp(`\\b${id.replace(/[.\-]/g, "\\$&")}\\b`);
